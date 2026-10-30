@@ -1,0 +1,24 @@
+node_modules/
+dist/
+coverage/
+.wrangler/
+*.log
+
+# secrets
+.env
+.env.*
+.dev.vars
+*.keystore
+*.jks
+
+# Android build output
+.gradle/
+**/android/app/build/
+**/android/build/
+local.properties
+
+# personal data exports
+exports/
+
+.DS_Store
+Thumbs.db
