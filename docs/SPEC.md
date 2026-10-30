@@ -52,6 +52,8 @@ A fast, keyboard-free workout screen covers the common case (repeat a set, ±1 r
 | D24 | Languages | **UI Polish** (vue-i18n, EN addable); code, docs, spec, commits **English** | Portfolio readability |
 | D25 | Repo & CI | **GitHub only**; thin GitHub Actions calling pnpm scripts | Logic portable, CI yaml trivial |
 | D26 | Repo bootstrap | Local `git init` now; GitHub remote (private until publication) added later | Publishing is a separate, later step |
+| D27 | Repo location | Repo lives **outside cloud-synced folders** | A sync client such as OneDrive syncs thousands of `node_modules` files and locks files on rename (EPERM); folders cannot be excluded by name |
+| D28 | Toolchain | **Vite+** (`vite-plus`): Vite, Vitest, Oxlint, Oxfmt and `vp check` (TypeScript 7 type check) from one dependency and one root `vite.config.ts`; `vue-tsc` on TypeScript 6 checks `.vue` files | One config instead of ESLint + Prettier + Vitest; fast. Cost: Oxlint lints only `<script>` in SFCs, so eslint-plugin-vue template rules are dropped (template types are still checked by vue-tsc) |
 
 ## 4. Scope
 

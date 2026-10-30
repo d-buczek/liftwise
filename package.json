@@ -1,0 +1,17 @@
+{
+  "name": "liftwise",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "format": "vp check --fix",
+    "ci:check": "vp check && vp run -r typecheck && vp test",
+    "ci:build": "vp run -r build"
+  },
+  "devDependencies": {
+    "vite-plus": "catalog:"
+  },
+  "engines": {
+    "node": ">=24.11"
+  },
+  "packageManager": "pnpm@10.18.1"
+}
