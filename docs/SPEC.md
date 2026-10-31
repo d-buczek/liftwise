@@ -7,15 +7,16 @@ This file is the source of truth. When a decision changes, update the decision l
 
 ## 1. Summary
 
-LiftWise is a personal, **agent-first** strength-training log for Android and Windows, a richer successor to FitNotes for a single user.
-Instead of form-filling, an AI agent with tools over the app's data logs workouts from a sentence or voice, edits data on request, answers questions about history, and proposes today's workout from time available, wellbeing, recent sessions and progression.
-A fast, keyboard-free workout screen covers the common case (repeat a set, ±1 rep) and works offline.
+LiftWise is a personal strength-training log for Android and Windows, a richer successor to FitNotes for a single user.
+The core flow is FitNotes-style and works offline: pick a day in the calendar, copy a past workout onto it, adjust, and confirm sets on a fast, keyboard-free workout screen. Progression is suggested as one-tap hints, never applied automatically.
+On top of that, an AI agent with tools over the app's data logs and edits from a sentence or voice, copies and plans workouts, answers questions about history, and can propose a workout for an unusual day (little time, pain).
 
 ## 2. Context and constraints
 
 - **One user**, training at home.
 - **Equipment:** adjustable dumbbells + bench to start with. Equipment is a configurable profile and must be easy to extend (pull-up bar, bands, …) without code changes.
 - **Training style it serves:** flexible, no rigid program; progress in weight, reps or sets.
+- **Flow it builds on (as in FitNotes):** workouts live in a calendar; the next one is a copy of a previous workout, then adjusted (swap an exercise, change sets or reps). Workouts can be planned days ahead.
 - **No manual typing of data** during workouts (taps and voice are fine).
 - **Devices:** Android phone (primary during workouts), Windows PC (history, analysis, chat).
 - **Distribution:** own use only, sideloaded APK (not Play Store). Must not be blocked by Android developer verification (global from 2027), see §6.10.
@@ -26,14 +27,14 @@ A fast, keyboard-free workout screen covers the common case (repeat a set, ±1 r
 
 | # | Topic | Decision | Rationale |
 |---|---|---|---|
-| D1 | Logging mode | **Hybrid**: keyboard-free workout screen (repeat set, ±rep, ±weight, RIR chips) + agent for everything expressible as a sentence | Agent round-trip is 2–5 s and costs money; most sets repeat the previous one; screen works offline |
+| D1 | Logging mode | **Hybrid**: keyboard-free workout screen (confirm planned set, ±rep, ±weight, RIR chips) + agent for everything expressible as a sentence | Agent round-trip is 2–5 s and costs money; most sets match the plan; screen works offline |
 | D2 | Earlier history | **One-time import of the recent sessions (LW-16), through the sync push; no import feature in the app** | The recent sessions feed the hints and records; older data isn't needed |
-| D3 | Equipment | Plate-loaded dumbbells + bench; **extensible equipment profile** in settings | Plate calculator and exercise availability depend on it |
+| D3 | Equipment | Adjustable dumbbells + bench; **extensible equipment profile** in settings | Exercise availability and agent context depend on it |
 | D4 | Effort tracking | **Optional RIR** (0–4+) per set | Key signal for progression; never mandatory |
 | D5 | v1 extras | **Rest timer** and **charts & records**; body measurements and supersets go to backlog | Keep v1 focused |
 | D6 | Balance guard | **Muscle groups (primary/secondary) + movement patterns**; UI shows muscle groups, patterns are an extra tag mainly for the agent | Superset of plain muscle groups, fits flexible FBW |
-| D7 | Workout proposal | **Check-in → plan → prefilled workout screen** | Uses time/wellbeing; plan is a suggestion, deviations allowed |
-| D8 | Progression | **Deterministic engine + agent adjustments** (double progression with RIR) | Offline, testable baseline; agent adapts to check-in |
+| D7 | Workout proposal | **Optional** AI flow: check-in → plan → planned sets on a day; the main flow is copying (D29) | Useful on unusual days (little time, pain); overkill for a normal day |
+| D8 | Progression | **Hints, not automation**: a deterministic engine (double progression with RIR) suggests the next step, applied with one tap; the agent may adjust | Progress can come in weight, reps or sets; a copied workout stays 1:1 unless a hint is applied |
 | D9 | Confirmations | **Only risky changes** need confirmation; every change is logged and undoable | Low friction for logging, safety for destructive ops |
 | D10 | Voice | **System speech-to-text** (Android SpeechRecognizer, Web Speech API on PC) | Free, fast, Polish, no extra key |
 | D11 | Architecture | **Small cloud backend is the source of truth**; agent runs server-side; clients keep a local mirror for offline | Easy sync, API keys never on devices, natural home for MCP |
@@ -54,23 +55,34 @@ A fast, keyboard-free workout screen covers the common case (repeat a set, ±1 r
 | D26 | Repo bootstrap | Local `git init` now; GitHub remote (private until publication) added later | Publishing is a separate, later step |
 | D27 | Repo location | Repo lives **outside cloud-synced folders** | A sync client such as OneDrive syncs thousands of `node_modules` files and locks files on rename (EPERM); folders cannot be excluded by name |
 | D28 | Toolchain | **Vite+** (`vite-plus`): Vite, Vitest, Oxlint, Oxfmt and `vp check` (TypeScript 7 type check) from one dependency and one root `vite.config.ts`; `vue-tsc` on TypeScript 6 checks `.vue` files | One config instead of ESLint + Prettier + Vitest; fast. Cost: Oxlint lints only `<script>` in SFCs, so eslint-plugin-vue template rules are dropped (template types are still checked by vue-tsc) |
+| D29 | Primary flow | **Calendar + copy workout** (FitNotes-style): pick a day, copy a past workout onto it 1:1 (default: the last one), then edit | A proven flow; simplest possible; offline, no AI |
+| D30 | Set status | Sets are **planned** or **done**; only done sets count for records, charts, balance and progression | Workouts can be planned days ahead without counting as performed |
+| D31 | Weight step | **Fixed ± step**, default 1.25 kg per dumbbell, overridable per exercise; plate inventory and plate calculator moved to backlog | Matches FitNotes; a fixed step needs no plate math |
+| D32 | Timed exercises | Exercises are measured in **reps or time** (`measure`); timed sets store `duration_s` instead of reps | Planks and holds can't be logged as reps; cheap to add before the schema exists |
+| D33 | Light copy | Copy option **"Kopiuj jako lżejszy"**: one working set fewer per exercise, weight lowered by the whole steps closest to 10% | A deload or a bad day in one tap, on top of the copy flow; deterministic, offline |
+| D34 | Weekly summary | Computed in core from done sets, **no AI**; the agent comments on it only when asked | Free, offline, consistent with hints and balance |
+| D35 | Export & backup | **JSON + CSV export** generated on the device from the local mirror; server-side restore via D1 Time Travel | The user owns the data; no extra infrastructure (R2, cron) |
 
 ## 4. Scope
 
 ### 4.1 v1
 
-- Active workout screen with hybrid logging (§5.2) and rest timer (§5.3).
+- Calendar with planned and done workouts, copy workout (also as a light copy), editing planned sets with swap suggestions (§5.2).
+- Active workout screen with hybrid logging, reps or timed sets, exercise setup notes (§5.2) and rest timer (§5.3).
 - History, charts and records (§5.4).
 - Exercise catalog with seed data (§5.5).
-- Equipment profile and plate calculator (§5.6).
-- Progression engine (§5.7) and balance guard (§5.8).
-- Agent: logging, edits, history Q&A, workout proposal, clarification, confirmations, change log with undo, athlete profile, per-day threads, voice input, offline prompt queue (§5.9).
+- Equipment profile (§5.6).
+- Progression hints (§5.7), balance guard (§5.8) and weekly summary (§5.11).
+- Data export (JSON, CSV) and backup (§5.12).
+- Agent: logging, edits, copying and planning workouts, history Q&A, optional workout proposal, clarification, confirmations, change log with undo, athlete profile, per-day threads, voice input, offline prompt queue (§5.9).
 - Settings: model per role, provider status, devices, equipment, catalog, balance targets (§5.10).
 - Android APK (Capacitor) + PC PWA, synced through the backend.
 
 ### 4.2 Backlog (not v1)
 
 - MCP server (phase 2, §6.11): token auth first, then OAuth for claude.ai connectors.
+- Plate inventory and plate calculator (which plates to load; shared inventory for both dumbbells).
+- Ongoing Android notification during a workout with the next set and a **"Zrobione"** action (log without unlocking the phone).
 - Body weight and body measurements.
 - Supersets / circuits.
 - Local models (Ollama on PC via Cloudflare Tunnel).
@@ -92,72 +104,88 @@ A fast, keyboard-free workout screen covers the common case (repeat a set, ±1 r
 
 - Weights are in **kg, per dumbbell**. "Wyciskanie 24 kg 4x10" = each dumbbell 24 kg, 4 sets × 10 reps.
 - Each exercise declares `implements` (1 or 2 dumbbells) and `unilateral` (reps counted per side). Volume = weight × reps × implements.
-- Weight precision 0.25 kg. Reps are integers. RIR is optional: 0, 1, 2, 3, 4 (= "4+").
+- Weight precision 0.25 kg. Weight 0 = bodyweight. Reps are integers. RIR is optional: 0, 1, 2, 3, 4 (= "4+").
+- Exercises are measured in **reps** or **time** (`measure`, D32). Timed sets store `duration_s` (integer seconds) instead of reps, "plank 3x45 s"; they have no volume and no e1RM.
+- Sets are **planned** or **done** (§5.2). Only done sets count for progression, records, charts and balance.
 - Sets can be marked **warm-up**; warm-ups are excluded from progression, records and balance.
 - Time zone: device local; the client sends local date/time with agent requests.
 - IDs are UUIDv7 generated on the client (offline-safe, time-ordered).
 
-### 5.2 Active workout (hybrid logging)
+### 5.2 Calendar, planning and active workout
 
-- Start: empty session, from an accepted plan (§5.9.6), or implicitly when the first set is logged.
-- Current exercise card shows the target (plan or progression engine) and the last session's sets.
+Calendar and planning (D29):
+
+- The **calendar** is the home screen: month view, days with a workout are marked as done or planned only. Tapping a day opens its workout. A workout belongs to one local date.
+- **Copy workout** works on any day, today or in the future:
+  - Pick the source day in the calendar; the default is the most recent workout before the target day.
+  - Exercises are copied in order with their sets (reps, weight, warm-up flag) 1:1, as **planned** sets. Done sets of the source are copied; a source with no done sets copies its planned sets.
+  - If the target day already has sets, the copy is appended.
+  - **"Kopiuj jako lżejszy"** (D33), for a deload or a bad day: the same copy, then per exercise the last working set is dropped (at least one stays) and the weight is lowered by the whole weight steps closest to 10% (at least one step, not below 0). Warm-ups, reps and durations stay.
+- **Editing a day:** add, remove or reorder exercises and sets, swap an exercise (its sets stay), change reps, duration and weight with ± controls. Exercise picker with search and recent.
+- **Swap suggestions:** the picker opened from "Zamień" lists similar exercises first: available with the current equipment, not archived, ranked by shared primary muscles and movement patterns, then by recent use.
+- **Progression hint** per exercise (§5.7): a chip such as "↑ 11 powt." or "↑ 25 kg". One tap applies it to that exercise's planned sets; ignoring it changes nothing.
+
+Active workout (hybrid logging):
+
+- Confirming the first set of the day starts the workout. A workout can also start empty, from an accepted AI proposal (§5.9.6), or implicitly when the agent logs the first set.
+- The current exercise card shows its planned sets, the last session's done sets, the progression hint and the exercise's **setup note** ("ławka na 3", "chwyt neutralny"). The note belongs to the exercise, is editable from the card and shows in every workout.
 - Big controls, no keyboard:
-  - **"Jak poprzednio"**: log a set identical to the previous one (or to the target for the first set).
-  - Reps −/+, weight −/+ (steps = per-dumbbell weights achievable with the current plates, §5.6).
-  - RIR chips (optional), warm-up toggle.
-  - Next/previous exercise, pick exercise (search + recent).
+  - **"Zrobione"**: mark the next planned set as done, as planned.
+  - Before confirming: reps −/+ (timed exercises: duration −/+ 5 s), weight −/+ (fixed step, default 1.25 kg, overridable per exercise; D31), RIR chips (optional), warm-up toggle.
+  - **"Jak poprzednio"**: add a done set identical to the previous one (when no planned set is left).
+  - Next/previous exercise, pick exercise.
   - Mic button and chat drawer for the agent.
 - Swipe a set to edit or delete. A manual delete is immediate with an undo snackbar.
+- Planned sets left undone stay visible as not done and never count.
 - Screen stays awake during an active workout (Android).
 - A new record shows a short toast.
 
 ### 5.3 Rest timer
 
-- Starts automatically after a set is logged; default duration per exercise (catalog default, user-editable), global fallback in settings.
+- Starts automatically after a set is marked done; default duration per exercise (catalog default, user-editable), global fallback in settings.
 - In-app countdown with +15 s / −15 s / skip.
 - Android: local notification + vibration at the end, also with the screen locked (scheduled notification). PC: in-app only.
 - Logging the next set cancels the pending notification.
 
 ### 5.4 History, charts and records
 
-- History: list of sessions by date, session detail, per-exercise history.
+- History: the calendar (§5.2), session detail, per-exercise history.
 - Records per exercise (working sets only):
   - **Rep record per weight**: most reps at ≥ a given weight (FitNotes-style).
   - **Estimated 1RM** (Epley: `w × (1 + reps/30)`, per dumbbell), best ever and trend.
-- Charts: per exercise (top-set weight, e1RM, session volume over time), per muscle group (weekly sets).
+  - Timed exercises: **time record per weight** (longest hold at ≥ a given weight); no e1RM.
+- Charts: per exercise (top-set weight, e1RM, session volume over time; timed: top-set duration), per muscle group (weekly sets).
 
 ### 5.5 Exercise catalog
 
-- Fields: `id`, `name_pl`, `aliases[]` (PL and EN variants, common voice mis-transcriptions), `primary_muscles[]`, `secondary_muscles[]`, `patterns[]`, `requires[]` (equipment types), `implements`, `unilateral`, `rep_range` (min/max), `rest_seconds`, `archived`.
+- Fields: `id`, `name_pl`, `aliases[]` (PL and EN variants, common voice mis-transcriptions), `primary_muscles[]`, `secondary_muscles[]`, `patterns[]`, `requires[]` (equipment types), `implements`, `unilateral`, `measure` (reps/time), `rep_range` (min/max; for `reps`), `time_range_s` (min/max; for `time`), `rest_seconds`, `weight_step_kg?` (overrides the default ± step), `note?` (user's setup note, §5.2), `archived`.
 - Seed: `packages/core/data/exercises.json`, ~40–60 dumbbell + bench exercises, validated by a zod schema in tests.
 - Muscle groups (keys → PL labels in i18n): `chest`, `lats`, `upper_back`, `front_delts`, `side_delts`, `rear_delts`, `biceps`, `triceps`, `forearms`, `quads`, `hamstrings`, `glutes`, `calves`, `abs`, `lower_back`.
 - Movement patterns: `horizontal_push`, `vertical_push`, `horizontal_pull`, `vertical_pull`, `squat`, `hinge`, `lunge`, `core`, `isolation`.
 - User can add, edit and archive exercises. The agent can propose new ones (risky tool, confirmation).
 
-### 5.6 Equipment profile and plate calculator
+### 5.6 Equipment profile
 
 - Equipment items (extensible by `type`):
-  - `dumbbell_handle`: handle weight, count, collar weight.
-  - `plate`: weight and count (e.g. 1.25 × 4, 2.5 × 4, 5 × 4).
+  - `dumbbells`: adjustable pair, optional max weight per dumbbell.
   - `bench`: flat / adjustable incline / decline.
   - Later types: `pullup_bar`, `band`, `kettlebell`, `barbell`, … (new type = schema + catalog `requires` value, no UI rewrite: generic item editor).
-- Plate calculator (pure function in core):
-  - Input: target per-dumbbell weight, number of dumbbells loaded at once (1 or 2).
-  - Plates must be symmetric per side, and **the plate inventory is shared between both dumbbells** (two dumbbells = four sides).
-  - Output: plates per side; if not exact, nearest lower and higher achievable weights.
-  - Also returns the sorted list of all achievable per-dumbbell weights (used for weight ± steps and for progression increments).
+- Used for exercise availability (catalog `requires`) and as agent context.
+- Plate inventory and the plate calculator are in the backlog (D31).
 
-### 5.7 Progression engine
+### 5.7 Progression hints
 
-Pure, deterministic function in core. Gives the next target per exercise and runs offline.
+Pure, deterministic function in core. Suggests the next step per exercise and runs offline. It never changes data by itself; the user applies a hint with one tap (D8).
 
-- Input: exercise config (rep range, target RIR, default 1–2), achievable weights (§5.6), recent working sets.
+- Input: exercise config (rep range, weight step, target RIR, default 1–2), recent done working sets.
 - Rules (v1, double progression):
-  1. If every working set of the last session reached `rep_max` and RIR was ≥ 1 or not recorded → **increase weight** to the next achievable per-dumbbell weight; target reps = `rep_min`.
-  2. Otherwise → **same weight**; target reps = last reps + 1 per set, capped at `rep_max`.
+  1. If every working set of the last session reached `rep_max` and RIR was ≥ 1 or not recorded → suggest **weight + one step**; reps = `rep_min`.
+  2. Otherwise → suggest **same weight**; reps = last reps + 1 per set, capped at `rep_max`.
   3. Reps at the same weight dropped in 2 consecutive sessions → flag `stall` (agent may suggest a deload of about 10% or an exercise swap).
-  4. Last session older than 14 days → hold weight (`reentry`).
+  4. Last session older than 14 days → suggest holding the weight (`reentry`).
+  5. Timed exercises: the same rules with seconds instead of reps (+5 s per set, `time_range_s`); at weight 0 the hint stops at the max time.
 - Output: `{ weight, sets, reps[], targetRir, reason }`, where `reason` is a code the UI/agent can explain.
+- Adding sets is left to the user; the engine doesn't suggest it.
 - The agent uses this as a baseline and may deviate based on check-in, stating why.
 
 ### 5.8 Balance guard
@@ -176,8 +204,9 @@ Pure, deterministic function in core. Gives the next target per exercise and run
 
 - Log sets from text or voice ("wyciskanie 24 kg 4x10, ostatnia na zero").
 - Edit data ("zmień ostatnią serię na 22 kg").
+- Copy and plan workouts ("skopiuj czwartek na sobotę, zamiast wiosłowania daj wiosłowanie jednorącz").
 - Answer history questions from tools ("kiedy ostatnio robiłem wiosłowanie i z jakim ciężarem?").
-- Propose today's workout (§5.9.6).
+- Propose a workout for an unusual day (§5.9.6).
 - Manage the athlete profile and catalog (with confirmation).
 
 #### 5.9.2 Behavior rules (system prompt contract)
@@ -186,7 +215,6 @@ Pure, deterministic function in core. Gives the next target per exercise and run
 - Applies the conventions from §5.1.
 - **Asks instead of guessing** before any write when:
   - the exercise match is ambiguous (more than one plausible candidate) or unknown;
-  - the weight is not achievable with the current plates (offers nearest achievable);
   - sets or reps are missing;
   - the target set or session is unclear ("ostatnia seria" while two exercises are in progress).
 - All data access goes through tools; never invents history.
@@ -196,9 +224,11 @@ Pure, deterministic function in core. Gives the next target per exercise and run
 
 | Risk | Examples | Behavior |
 |---|---|---|
-| `read` | history, records, balance, targets, plate calc | Runs immediately |
-| `write` | log sets, edit a single set, start/finish workout, save accepted plan, undo | Runs immediately; change card with undo |
-| `risky` | delete anything, change more than one record, create/edit exercise, update profile, update settings | Returns a **proposal** (diff card); executes only after the user taps **Zatwierdź** |
+| `read` | history, calendar, records, balance, progression hints | Runs immediately |
+| `write` | log sets, edit a single done set, copy a workout, edit planned sets (add, change, swap, remove), start/finish workout, undo | Runs immediately; change card with undo |
+| `risky` | delete done sets, change more than one done set, create/edit exercise, update profile, update settings | Returns a **proposal** (diff card); executes only after the user taps **Zatwierdź** |
+
+Planned sets are cheap to change and every change is undoable, so editing them is never `risky`.
 
 #### 5.9.4 Change log and undo
 
@@ -212,14 +242,16 @@ Pure, deterministic function in core. Gives the next target per exercise and run
 - Only the current thread's messages go into the model context. Older threads are browsable but not sent.
 - **Athlete profile**: editable document (goals, limitations/injuries, preferences, typical session length) sent with every request. The agent proposes edits via a risky tool.
 
-#### 5.9.6 Workout proposal flow
+#### 5.9.6 Workout proposal flow (optional)
 
-1. User taps **"Trening na dziś"** (or asks the agent).
+For unusual days; a normal day starts from a copied workout (§5.2, D7).
+
+1. User taps **"Zaproponuj trening"** on a day (or asks the agent).
 2. Check-in sheet: time available (chips 20/30/45/60+ min), wellbeing 1–5, pain/limitations (body-part chips + optional voice).
-3. The server builds context: engine targets, balance snapshot, last 2–3 weeks of sessions, profile, equipment.
+3. The server builds context: progression hints, balance snapshot, last 2–3 weeks of sessions, the day's planned sets (if any), profile, equipment.
 4. The `planner` model returns a structured plan: exercises, sets × target reps × per-dumbbell weight, target RIR, short rationale.
 5. Plan card: accept / change by chat / regenerate.
-6. Accepting saves the plan and prefills the active workout. Items are marked done/skipped; deviations are fine.
+6. Accepting replaces the day's planned sets with the plan (done sets stay) and stores the rationale on the workout. Deviations are fine.
 
 #### 5.9.7 Voice input
 
@@ -241,8 +273,26 @@ Pure, deterministic function in core. Gives the next target per exercise and run
 - **Equipment:** generic item editor (§5.6).
 - **Catalog:** edit, archive, add exercises.
 - **Balance:** target ranges per muscle group.
-- **Training:** default rest, default target RIR.
+- **Training:** default rest, default target RIR, default weight step (1.25 kg).
 - **Profile:** athlete profile editor.
+- **Data:** export JSON / CSV (§5.12).
+
+### 5.11 Weekly summary
+
+A card on the calendar for the shown week (Monday–Sunday), computed in core from done working sets (D34). Runs offline.
+
+- Workouts done, total working sets.
+- Sets per muscle group vs the balance targets (§5.8).
+- New records of the week.
+- Exercises flagged `stall` (§5.7) and neglected groups/patterns.
+- The agent reads it through a tool and comments only when asked ("podsumuj tydzień").
+
+### 5.12 Data export and backup
+
+- Settings → Data: export all synced tables as **JSON** (full) and done sets as **CSV** (date, exercise, set, weight, reps, duration, RIR, warm-up) (D35).
+- Generated on the device from the local mirror after a pull; works offline from the last synced state. No API endpoint.
+- Server side: D1 Time Travel (point-in-time restore) is the backup.
+- Exports contain personal training data: never commit them (§2, public repo).
 
 ## 6. Architecture
 
@@ -277,8 +327,9 @@ liftwise/
 │  ├─ web/            Vue 3 + Vite + Ionic Vue + Pinia + vue-i18n + Dexie + PWA; Capacitor android/ project
 │  └─ api/            Hono on Cloudflare Workers, Drizzle + D1, agent runtime, tool registry, auth, sync
 ├─ packages/
-│  └─ core/           zod schemas & types, conventions, plate calc, e1RM/records, progression engine,
-│                     balance, sync protocol types; data/exercises.json (seed catalog)
+│  └─ core/           zod schemas & types, conventions, copy workout (incl. light), swap suggestions,
+│                     e1RM/records, progression hints, balance, weekly summary, export format,
+│                     sync protocol types; data/exercises.json (seed catalog)
 ├─ evals/             agent evaluation cases (Polish utterances → expected tool calls)
 └─ docs/SPEC.md
 ```
@@ -293,9 +344,8 @@ All synced tables have: `id` (UUIDv7, text), `created_at`, `updated_at`, `delete
 |---|---|
 | `exercises` | catalog fields from §5.5 |
 | `equipment_items` | `type`, `props` (JSON validated per type) |
-| `workouts` | `started_at`, `ended_at`, `plan_id?`, `checkin` (JSON: time, wellbeing, pain), `note` |
-| `sets` | `workout_id`, `exercise_id`, `position`, `weight_kg`, `reps`, `rir?`, `warmup`, `note`, `performed_at`, `source` (manual/agent/plan) |
-| `plans` | `date`, `items` (JSON: exercise, sets, target reps, weight, RIR, status), `rationale`, `status` |
+| `workouts` | `date` (local), `started_at?`, `ended_at?`, `checkin?` (JSON: time, wellbeing, pain), `rationale?` (accepted AI proposal), `note` |
+| `sets` | `workout_id`, `exercise_id`, `position`, `status` (planned/done), `weight_kg`, `reps?` / `duration_s?` (by exercise `measure`), `rir?`, `warmup`, `note`, `performed_at?` (set when done), `source` (manual/copy/agent/proposal) |
 | `athlete_profile` | single row, markdown/JSON document |
 | `settings` | key/value (JSON) |
 | `threads` / `messages` | per-day threads, linked `workout_id?`, message parts (incl. tool calls/results) |
@@ -337,10 +387,10 @@ Client-only (Dexie): `outbox` (pending mutations), `prompt_queue`, `sync_state` 
 - **Tool registry** (`apps/api/src/tools`): each tool is `{ name, description, input: zod schema, risk: read|write|risky, handler }`. The same registry backs the in-app agent and the MCP server (phase 2).
 - Risky tools don't execute. They store a `pending_proposal` and return a diff for the confirmation card. Confirmation executes the stored proposal as one change group.
 - v1 tools:
-  - **read:** `find_exercise`, `get_exercise_history`, `get_workouts`, `get_active_workout`, `get_records`, `get_balance`, `get_progression_targets`, `get_profile`, `get_equipment`, `calc_plates`
-  - **write:** `log_sets`, `update_set` (single set), `start_workout`, `finish_workout`, `save_plan`, `undo_change`
-  - **risky:** `delete_sets`, `update_sets` (more than one), `create_exercise`, `update_exercise`, `update_profile`, `update_settings`
-  - Internal to the proposal flow: structured `propose_plan` output from the `planner` role.
+  - **read:** `find_exercise`, `get_exercise_history`, `get_workouts` (date range, planned and done), `get_active_workout`, `get_records`, `get_balance`, `get_progression_hints`, `get_swap_options`, `get_weekly_summary`, `get_profile`, `get_equipment`
+  - **write:** `log_sets` (done sets; completes matching planned sets first), `update_set` (single done set), `copy_workout` (optional `light`), `edit_planned_sets`, `start_workout`, `finish_workout`, `undo_change`
+  - **risky:** `delete_sets`, `update_sets` (more than one done set), `create_exercise`, `update_exercise`, `update_profile`, `update_settings`
+  - Internal to the proposal flow: structured `propose_plan` output from the `planner` role; accepting it writes planned sets.
 
 ### 6.7 Model provider layer
 
@@ -373,13 +423,15 @@ Client-only (Dexie): `outbox` (pending mutations), `prompt_queue`, `sync_state` 
 
 | Feature | Offline | Notes |
 |---|---|---|
+| Calendar, copy workout, editing planned sets | ✅ | Outbox syncs later |
 | Active workout logging, rest timer | ✅ | Outbox syncs later |
 | History, charts, records | ✅ | From local mirror |
-| Plate calculator, progression targets, balance guard | ✅ | Pure core functions |
+| Progression hints, balance guard, weekly summary, swap suggestions | ✅ | Pure core functions |
+| Data export | ✅ | From the last synced local mirror |
 | Catalog / equipment / settings edits | ✅ | Synced later |
 | Voice → text | ✅ Android with offline language pack; PC needs network | |
 | Agent (logging, Q&A, edits) | ⏳ | Queued (§5.9.8) |
-| Workout proposal (planner) | ❌ | Engine targets still shown on the workout screen |
+| Workout proposal (planner) | ❌ | Copying and progression hints still work |
 | Device pairing, undo of agent changes | ❌ | Server-side operations |
 
 ### 6.10 Platforms and distribution
@@ -419,9 +471,9 @@ Client-only (Dexie): `outbox` (pending mutations), `prompt_queue`, `sync_state` 
 
 ## 7. Quality
 
-- **Unit tests (Vitest):** core (plate calc incl. shared inventory, progression rules, balance math, e1RM/records, catalog schema), sync apply/idempotency, undo.
+- **Unit tests (Vitest):** core (copy workout incl. light copy, swap suggestions, progression hint rules incl. timed, balance math, e1RM/records, weekly summary, export format, catalog schema), sync apply/idempotency, undo.
 - **API integration tests:** Workers Vitest pool with local D1.
-- **Agent evals** (`evals/`): Polish utterances → expected tool calls/args. Covers logging variants, ambiguity → question, unachievable weight → question, risky → proposal. Run manually per provider (`pnpm eval --provider anthropic`). Costs tokens, so not in CI.
+- **Agent evals** (`evals/`): Polish utterances → expected tool calls/args. Covers logging variants (incl. timed: "plank 3x45 s"), copying and planning ("skopiuj czwartek na sobotę", "skopiuj lżej"), ambiguity → question, risky → proposal. Run manually per provider (`pnpm eval --provider anthropic`). Costs tokens, so not in CI.
 - **CI (GitHub Actions)** is thin; each job runs one pnpm script:
   - `pnpm ci:check` (lint, typecheck, test)
   - `pnpm ci:build`
@@ -435,18 +487,18 @@ Each line is meant to be one `/ticket` task.
 
 | Ticket | Scope |
 |---|---|
-| LW-01 | Monorepo scaffold: pnpm workspaces, strict TS, ESLint + Prettier, Vitest, thin GitHub Actions CI, gitleaks |
-| LW-02 | Core schemas (zod) + conventions + seed catalog JSON (40–60 exercises, PL names, aliases, tags) with validation tests |
-| LW-03 | Core calculators: plate calc, e1RM/records, balance, progression engine, with tests |
+| LW-01 | Monorepo scaffold: pnpm workspaces, strict TS, Vite+ toolchain (Oxlint, Oxfmt, Vitest), thin GitHub Actions CI, gitleaks |
+| LW-02 | Core schemas (zod) + conventions (incl. reps/timed sets, exercise note) + seed catalog JSON (40–60 exercises, PL names, aliases, tags) with validation tests |
+| LW-03 | Core logic: copy workout (incl. light copy), swap suggestions, progression hints, e1RM/records, balance, weekly summary, export format, with tests |
 | LW-04 | API skeleton: Hono on Workers, D1 + Drizzle schema & migrations, device auth (CLI bootstrap, QR pairing), CORS |
 | LW-05 | Sync: push/pull, `seq`, idempotency, `change_log`, undo, with tests |
 | LW-06 | Web shell: Vue + Ionic + Pinia + vue-i18n (pl) + Dexie mirror/outbox + PWA; pairing screen; settings (equipment, devices) |
-| LW-07 | Active workout screen, history, in-app rest timer |
+| LW-07 | Calendar (planned/done), copy workout (incl. light), editing a day with progression hints and swap suggestions, active workout screen (reps/timed, setup note), history, in-app rest timer |
 | LW-08 | Capacitor Android: build, native plugins, `pnpm android:install` (ADB), signing doc |
 | LW-09 | Agent core: provider registry (Anthropic/OpenAI/Gemini), roles, tool registry with risk levels, streaming chat, threads, profile; chat UI with change/confirmation cards |
 | LW-10 | Voice input (Android STT, Web Speech on PC) + offline prompt queue |
-| LW-11 | Workout proposal flow: check-in → plan → prefilled workout |
-| LW-12 | Charts & records UI, balance guard dashboard |
+| LW-11 | Optional workout proposal flow: check-in → plan → planned sets on a day |
+| LW-12 | Charts & records UI, balance guard dashboard, weekly summary card, data export |
 | LW-13 | Agent eval suite |
 | LW-20 | Phase 2: MCP endpoint with token auth |
 | LW-21 | Phase 2: OAuth for claude.ai connectors |
@@ -461,6 +513,7 @@ Each line is meant to be one `/ticket` task.
 | Speech-recognition plugin | LW-10 | Compatibility with current Capacitor/Android |
 | Default OpenAI/Gemini model ids | LW-09 | From provider docs |
 | Capacitor app id | LW-08 | |
+| D1 Time Travel retention | LW-04 | Server-side backup (§5.12); confirm the restore window on the current plan |
 
 ## 10. References
 
