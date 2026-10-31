@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node"],
+    // Scripts run as .ts in Node (type stripping), so imports carry the extension.
+    "allowImportingTsExtensions": true,
+    "erasableSyntaxOnly": true
+  },
+  "include": ["vite.config.ts", "drizzle.config.ts", "scripts"]
+}

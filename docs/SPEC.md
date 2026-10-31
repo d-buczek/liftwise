@@ -65,6 +65,7 @@ On top of that, an AI agent with tools over the app's data logs and edits from a
 | D36 | Bodyweight progression | At 0 kg the progression hint never adds weight, for reps and timed exercises alike; it stops at the range max (`hold`) | Loading a bodyweight exercise (vest, dumbbell) is the user's call, not a step |
 | D37 | Dumbbell limit | No `weight_up` beyond the heaviest dumbbell of the equipment profile (`max_kg`); the hint holds instead | A hint the user can't load is noise |
 | D38 | Records baseline | The first workout of an exercise is the baseline and sets **no records** | Without a FitNotes import (D2) the first weeks would be all records and toasts |
+| D39 | DB migrations | **Drizzle schema → `drizzle-kit generate` (SQL) → `wrangler d1 migrations apply`**; not `drizzle-kit migrate`/`push` over `d1-http`. Drizzle stays on the stable 0.x line until v1 is released | Works locally without a Cloudflare account; the same SQL files feed the integration tests (`readD1Migrations`); wrangler records applied migrations in D1 |
 
 ## 4. Scope
 
@@ -301,7 +302,7 @@ A card on the calendar for the shown week (Monday–Sunday), computed in core fr
   - JSON: `{ app: "liftwise", version: 1, exported_at, tables: { exercises, equipment_items, workouts, sets, athlete_profile, settings } }`, rows as stored (sync fields included), indented by 2; `threads` / `messages` join with the agent (LW-09).
   - CSV: RFC 4180 (comma, CRLF, quotes when needed, decimal dot), header `date,exercise,set,weight_kg,reps,duration_s,rir,warmup`; done sets including warm-ups, ordered by date, workout and position; `exercise` is `name_pl`, `set` numbers the exercise's sets within the workout from 1, empty for null, `warmup` is `true`/`false`. The UI adds a UTF-8 BOM for spreadsheets.
 - Generated on the device from the local mirror after a pull; works offline from the last synced state. No API endpoint.
-- Server side: D1 Time Travel (point-in-time restore) is the backup.
+- Server side: D1 Time Travel (point-in-time restore) is the backup. Always on; restore window 7 days on Workers Free, 30 days on Workers Paid; restore with `wrangler d1 time-travel restore liftwise --timestamp=<unix>` (overwrites the database in place).
 - Exports contain personal training data: never commit them (§2, public repo).
 
 ## 6. Architecture
@@ -360,7 +361,7 @@ All synced tables have: `id` (UUIDv7, text), `created_at`, `updated_at`, `delete
 | `settings` | key/value (JSON) |
 | `threads` / `messages` | per-day threads, linked `workout_id?`, message parts (incl. tool calls/results) |
 
-Server-only tables: `change_log` (`change_group_id`, `actor` user/agent/system, `thread_id?`, `entity`, `entity_id`, `op`, `before`, `after`, `undo_of?`), `applied_mutations` (idempotency), `devices` (`name`, `token_hash`, `last_seen_at`, `revoked_at`), `pairing_codes` (`code_hash`, `expires_at`, `used_at`), `sync_counter`, `pending_proposals` (risky tool proposals awaiting confirmation).
+Server-only tables: `change_log` (`change_group_id`, `actor` user/agent/system, `thread_id?`, `entity`, `entity_id`, `op`, `before`, `after`, `undo_of?`), `applied_mutations` (idempotency), `devices` (`name`, `token_hash`, `last_seen_at`, `revoked_at`), `pairing_codes` (`code_hash`, `created_by`, `expires_at`, `used_at`), `pairing_failures` (`at`, failed redeem attempts for the rate limit), `sync_counter`, `pending_proposals` (risky tool proposals awaiting confirmation).
 
 Client-only (Dexie): `outbox` (pending mutations), `prompt_queue`, `sync_state` (last pulled `seq`).
 
@@ -418,6 +419,9 @@ Client-only (Dexie): `outbox` (pending mutations), `prompt_queue`, `sync_state` 
 - **Device tokens:** 32 random bytes (base64url), shown once. Only the SHA-256 hash is stored. Sent as `Authorization: Bearer`.
   - First token: `pnpm --filter api device:create <name>` (writes the hash via wrangler, prints the token once).
   - Next devices: QR pairing; codes are single-use, TTL 5 min, rate-limited.
+    - Code: 8 characters from `23456789ABCDEFGHJKLMNPQRSTUVWXYZ` (no 0/O, 1/I), shown as QR and text; redeem accepts any case, spaces and dashes. Only the SHA-256 hash is stored; a new code replaces any unused one.
+    - Limit: global, 5 failed redeems in 10 minutes → `429` for every redeem (single user, deterministic). Wrong, expired and used codes return the same `invalid_code`. Each attempt is recorded and counted in one D1 batch, so parallel requests can't exceed the limit; a blocked attempt doesn't extend the block.
+    - Revoking a device also deletes the unused codes it created. The redeem response is `Cache-Control: no-store`.
   - Revocation in settings.
 - **Token storage:**
   - Android: Keystore-backed secure storage plugin.
@@ -482,7 +486,7 @@ Client-only (Dexie): `outbox` (pending mutations), `prompt_queue`, `sync_state` 
 ## 7. Quality
 
 - **Unit tests (Vitest):** core (copy workout incl. light copy, swap suggestions, progression hint rules incl. timed, balance math, e1RM/records, weekly summary, export format, catalog schema), sync apply/idempotency, undo.
-- **API integration tests:** Workers Vitest pool with local D1.
+- **API integration tests:** Workers Vitest integration (`@cloudflare/vitest-plugin`, formerly `vitest-pool-workers`) under `vp test`: tests run in workerd against a local D1, reset and migrated before each test.
 - **Agent evals** (`evals/`): Polish utterances → expected tool calls/args. Covers logging variants (incl. timed: "plank 3x45 s"), copying and planning ("skopiuj czwartek na sobotę", "skopiuj lżej"), ambiguity → question, risky → proposal. Run manually per provider (`pnpm eval --provider anthropic`). Costs tokens, so not in CI.
 - **CI (GitHub Actions)** is thin; each job runs one pnpm script:
   - `pnpm ci:check` (lint, typecheck, test)
@@ -501,7 +505,7 @@ Each line is meant to be one `/ticket` task.
 | LW-02 | Core schemas (zod) + conventions (incl. reps/timed sets, exercise note) + seed catalog JSON (40–60 exercises, PL names, aliases, tags) with validation tests |
 | LW-03 | Core logic: copy workout (incl. light copy), swap suggestions, progression hints, e1RM/records, balance, weekly summary, export format, with tests |
 | LW-04 | API skeleton: Hono on Workers, D1 + Drizzle schema & migrations, device auth (CLI bootstrap, QR pairing), CORS |
-| LW-05 | Sync: push/pull, `seq`, idempotency, `change_log`, undo, with tests |
+| LW-05 | Sync: push/pull, `seq`, idempotency, `change_log`, undo, seed catalog into D1, with tests |
 | LW-06 | Web shell: Vue + Ionic + Pinia + vue-i18n (pl) + Dexie mirror/outbox + PWA; pairing screen; settings (equipment, devices) |
 | LW-07 | Calendar (planned/done), copy workout (incl. light), editing a day with progression hints and swap suggestions, active workout screen (reps/timed, setup note), history, in-app rest timer |
 | LW-08 | Capacitor Android: build, native plugins, `pnpm android:install` (ADB), signing doc |
@@ -523,7 +527,7 @@ Each line is meant to be one `/ticket` task.
 | Speech-recognition plugin | LW-10 | Compatibility with current Capacitor/Android |
 | Default OpenAI/Gemini model ids | LW-09 | From provider docs |
 | Capacitor app id | LW-08 | |
-| D1 Time Travel retention | LW-04 | Server-side backup (§5.12); confirm the restore window on the current plan |
+| ~~D1 Time Travel retention~~ | Resolved in LW-04 | Always on; 7 days on Workers Free, 30 days on Workers Paid (§5.12) |
 
 ## 10. References
 

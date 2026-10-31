@@ -5,13 +5,24 @@
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",
-    "build": "wrangler deploy --dry-run --outdir dist"
+    "build": "wrangler deploy --dry-run --outdir dist",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate:local": "wrangler d1 migrations apply DB --local",
+    "db:migrate:remote": "wrangler d1 migrations apply DB --remote",
+    "device:create": "node scripts/device-create.ts"
   },
   "dependencies": {
-    "@liftwise/core": "workspace:*"
+    "@liftwise/core": "workspace:*",
+    "drizzle-orm": "^0.45.4",
+    "hono": "^4.13.14",
+    "zod": "catalog:"
   },
   "devDependencies": {
+    "@cloudflare/vitest-plugin": "^1.4.11",
     "@cloudflare/workers-types": "^5.20261030.1",
+    "@types/node": "^24.19.2",
+    "drizzle-kit": "^0.31.11",
+    "uuid": "catalog:",
     "vite-plus": "catalog:",
     "wrangler": "^4.156.0"
   }
