@@ -195,11 +195,13 @@ Pure, deterministic function in core. Suggests the next step per exercise and ru
 
 ### 5.8 Balance guard
 
+Computed in core (`balanceSnapshot`) from done working sets dated up to today.
+
 - Per muscle group:
-  - Days since last direct work (primary muscle).
-  - Rolling 7-day **hard sets** (working sets; primary = 1.0, secondary = 0.5) vs a target range (default 10–20, editable per group).
-  - Status: under / in range / over.
-- Per movement pattern: days since last.
+  - Days since last direct work (primary muscle); `null` if never.
+  - Rolling 7-day **hard sets** (today and the 6 days before; working sets; primary = 1.0, secondary = 0.5) vs a target range (default 10–20, editable per group).
+  - Status: under (below the min) / in range (min–max inclusive) / over (above the max).
+- Per movement pattern: days since last; `null` if never. `isolation` is not a pattern to balance and is left out.
 - Shown as a compact dashboard; the snapshot is also an agent tool (§6.6).
 - With dumbbells and a bench, `vertical_pull` has few options, so the guard shows that gap rather than hiding it.
 
@@ -286,15 +288,18 @@ For unusual days; a normal day starts from a copied workout (§5.2, D7).
 
 A card on the calendar for the shown week (Monday–Sunday), computed in core from done working sets (D34). Runs offline.
 
-- Workouts done, total working sets.
-- Sets per muscle group vs the balance targets (§5.8).
-- New records of the week.
-- Exercises flagged `stall` (§5.7) and neglected groups/patterns.
+- Workouts done (with at least one working set), total working sets.
+- Hard sets per muscle group in the week vs the balance targets (§5.8).
+- New records of the week (§5.4, replayed over the whole history).
+- Exercises of the week flagged `stall` (§5.7) by the hint for the day after the week.
+- Neglected: muscle groups without a set as a primary muscle and movement patterns (without `isolation`) without a set in the week.
 - The agent reads it through a tool and comments only when asked ("podsumuj tydzień").
 
 ### 5.12 Data export and backup
 
 - Settings → Data: export all synced tables as **JSON** (full) and done sets as **CSV** (date, exercise, set, weight, reps, duration, RIR, warm-up) (D35).
+  - JSON: `{ app: "liftwise", version: 1, exported_at, tables: { exercises, equipment_items, workouts, sets, athlete_profile, settings } }`, rows as stored (sync fields included), indented by 2; `threads` / `messages` join with the agent (LW-09).
+  - CSV: RFC 4180 (comma, CRLF, quotes when needed, decimal dot), header `date,exercise,set,weight_kg,reps,duration_s,rir,warmup`; done sets including warm-ups, ordered by date, workout and position; `exercise` is `name_pl`, `set` numbers the exercise's sets within the workout from 1, empty for null, `warmup` is `true`/`false`. The UI adds a UTF-8 BOM for spreadsheets.
 - Generated on the device from the local mirror after a pull; works offline from the last synced state. No API endpoint.
 - Server side: D1 Time Travel (point-in-time restore) is the backup.
 - Exports contain personal training data: never commit them (§2, public repo).
