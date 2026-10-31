@@ -117,12 +117,12 @@ Calendar and planning (D29):
 
 - The **calendar** is the home screen: month view, days with a workout are marked as done or planned only. Tapping a day opens its workout. A workout belongs to one local date.
 - **Copy workout** works on any day, today or in the future:
-  - Pick the source day in the calendar; the default is the most recent workout before the target day.
-  - Exercises are copied in order with their sets (reps, weight, warm-up flag) 1:1, as **planned** sets. Done sets of the source are copied; a source with no done sets copies its planned sets.
-  - If the target day already has sets, the copy is appended.
-  - **"Kopiuj jako lżejszy"** (D33), for a deload or a bad day: the same copy, then per exercise the last working set is dropped (at least one stays) and the weight is lowered by the whole weight steps closest to 10% (at least one step, not below 0). Warm-ups, reps and durations stay.
+  - Pick the source day in the calendar; the default is the most recent workout with sets before the target day.
+  - Exercises are copied in order with their sets (reps or duration, weight, warm-up flag) 1:1, as **planned** sets; RIR and notes are not copied. Done sets of the source are copied; a source with no done sets copies its planned sets.
+  - If the target day already has sets, the copy is appended after them.
+  - **"Kopiuj jako lżejszy"** (D33), for a deload or a bad day: the same copy, then per exercise the last working set is dropped (at least one stays) and the working weight is lowered by the whole weight steps closest to 10% (at least one step, a tie takes the extra step, not below 0). Warm-ups (including their weight), reps and durations stay.
 - **Editing a day:** add, remove or reorder exercises and sets, swap an exercise (its sets stay), change reps, duration and weight with ± controls. Exercise picker with search and recent.
-- **Swap suggestions:** the picker opened from "Zamień" lists similar exercises first: available with the current equipment, not archived, ranked by shared primary muscles and movement patterns, then by recent use.
+- **Swap suggestions:** the picker opened from "Zamień" lists similar exercises first: available with the current equipment, not archived, the same `measure` (the sets stay) and at least one shared primary muscle; ranked by shared primary muscles, then shared movement patterns, then by recent use.
 - **Progression hint** per exercise (§5.7): a chip such as "↑ 11 powt." or "↑ 25 kg". One tap applies it to that exercise's planned sets; ignoring it changes nothing.
 
 Active workout (hybrid logging):
