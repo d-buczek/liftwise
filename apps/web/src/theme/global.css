@@ -1,0 +1,102 @@
+/* Type scale (SPEC §5.13): 13 / 14 / 16 / 20 / 26 / 40 / 64 px. Sentence case, no all caps. */
+body {
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+/* Numbers and headings are narrow and heavy, like numerals cast into a plate. */
+.lw-num {
+  font-stretch: var(--lw-narrow);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+ion-title {
+  font-size: 22px;
+  font-stretch: var(--lw-narrow);
+  font-weight: 700;
+}
+
+.lw-heading {
+  margin: 28px 0 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--lw-muted);
+}
+
+.lw-muted {
+  color: var(--lw-muted);
+}
+
+:focus-visible {
+  outline: 2px solid var(--ion-color-primary);
+  outline-offset: 2px;
+}
+
+/* A flat header with a hairline instead of the Material shadow. */
+ion-header.header-md {
+  box-shadow: none;
+}
+
+ion-toolbar {
+  --border-width: 0 0 1px;
+  /* Keeps the title over the content column on wide screens. */
+  --padding-start: max(4px, calc((100% - var(--lw-content-max)) / 2));
+  --padding-end: max(4px, calc((100% - var(--lw-content-max)) / 2));
+}
+
+/* One column of content with a limited width; full width on phones. */
+.lw-column {
+  max-width: var(--lw-content-max);
+  margin-inline: auto;
+  padding: 8px 16px 32px;
+}
+
+/* Lists inside the column read as one bordered block. */
+.lw-column ion-list {
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--lw-border);
+  border-radius: 12px;
+}
+
+.lw-column ion-list ion-item:last-of-type {
+  --border-width: 0;
+  --inner-border-width: 0;
+}
+
+/* Sentence case instead of Material's all-caps buttons. */
+ion-button,
+ion-back-button,
+ion-segment-button {
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+ion-toast {
+  /* The toast is inverted (light on dark, dark on light), so is its button. */
+  --button-color: var(--lw-primary-inverse);
+}
+
+/* Alert styles are scoped classes; the button group lifts these above them. */
+ion-toast::part(button),
+ion-alert .alert-button-group .alert-button {
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+ion-alert .alert-button-group .alert-button-role-destructive {
+  color: var(--ion-color-danger);
+}
+
+ion-tab-button {
+  --color-selected: var(--ion-color-primary);
+  font-weight: 600;
+}
+
+/* From the split-pane breakpoint up the side menu replaces the tab bar. */
+@media (min-width: 992px) {
+  ion-tab-bar {
+    display: none;
+  }
+}

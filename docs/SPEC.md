@@ -68,6 +68,8 @@ On top of that, an AI agent with tools over the app's data logs and edits from a
 | D39 | DB migrations | **Drizzle schema → `drizzle-kit generate` (SQL) → `wrangler d1 migrations apply`**; not `drizzle-kit migrate`/`push` over `d1-http`. Drizzle stays on the stable 0.x line until v1 is released | Works locally without a Cloudflare account; the same SQL files feed the integration tests (`readD1Migrations`); wrangler records applied migrations in D1 |
 | D40 | Seed catalog in D1 | A **generated custom migration** (`pnpm --filter @liftwise/api db:seed` → `drizzle-kit generate --custom` filled from `exercises.json`): `INSERT … ON CONFLICT DO NOTHING`, each new row with the next `seq` (existing ones take none), no `change_log`. A migrated seed exercise keeps its first version; changing it takes a mutation | Ships with the migrations to local, remote and test D1 without an extra step; keeps the user's edits of seed exercises; a test fails when exercises were added without a new seed migration or a migrated one was edited in the JSON |
 | D41 | Change groups & singletons | The **client assigns `groupId`**, one per user action, on every pushed mutation; the athlete profile and each settings key have **fixed ids in core** | One undo reverts a whole action (e.g. a copied workout) even across pushes; two offline devices creating the profile or a setting write the same row instead of duplicates |
+| D42 | Visual direction | **"Żeliwo i kreda"** (cast iron and chalk): graphite and chalk palettes with a hammertone accent, Archivo with narrow bold numerals, Ionic `md` mode everywhere; phones get bottom tabs, from 992 px a side menu (split pane) and a 720 px content column; light/dark follows the system with a per-device override (§5.13) | Grounded in the home-gym materials instead of a template look; numbers are what the user reads mid-workout; one look on Android and PC |
+| D43 | Client data path | Every write is **one Dexie transaction** (mirror row + outbox mutation, one `groupId` per action), validated with the core schemas before it is queued; sync pushes, then pulls, and a pull **never replaces a record with queued mutations**; the Worker serves the PWA (static assets, SPA fallback) | Works offline and survives reloads; an invalid mutation would block every later push; the server stays authoritative without per-field merge |
 
 ## 4. Scope
 
@@ -307,6 +309,20 @@ A card on the calendar for the shown week (Monday–Sunday), computed in core fr
 - Server side: D1 Time Travel (point-in-time restore) is the backup. Always on; restore window 7 days on Workers Free, 30 days on Workers Paid; restore with `wrangler d1 time-travel restore liftwise --timestamp=<unix>` (overwrites the database in place).
 - Exports contain personal training data: never commit them (§2, public repo).
 
+### 5.13 UI shell and visual design
+
+- **Layout:** phones get one column and bottom tabs (Kalendarz, Historia, Agent, Ustawienia). From 992 px (Ionic `lg`) an `ion-split-pane` side menu (240 px: wordmark, sections, sync status) replaces the tabs, and content sits in a column of at most 720 px. Ionic runs in `md` mode on every platform.
+- **Visual direction "Żeliwo i kreda"** (D42), taken from the materials of a home dumbbell setup:
+  - Colors: iron `#2A2F35` (dark background, light-mode text), graphite `#3A4048`, chalk `#F1F2EE` (light background, dark-mode text), concrete `#D9DBD6` (lines), hammertone `#2A7064` light / `#6FBFB1` dark (accent, actions, active section), signal amber `#E0A526` (records and warnings only), rust `#A33A2B` / `#E07A63` (danger). Text contrast at least 4.5:1.
+  - Type: Archivo variable with its width axis, bundled for offline use. Numbers and headings are narrow (`font-stretch: 75%`), bold, with tabular figures; body text is 400 at normal width. Scale 13 / 14 / 16 / 20 / 26 / 40 / 64 px, sentence case, no all-caps labels.
+  - One loud element: large narrow numerals, like numerals cast into a plate (the pairing code now; weights and reps in LW-07). The rest stays quiet: flat headers with a hairline, a list is one bordered block, no decorative motion; Ionic animations are off under `prefers-reduced-motion`.
+- **Theme:** both palettes are Ionic variables (`ion-palette-dark` class on `<html>`). Settings → Wygląd: Systemowy / Jasny / Ciemny, stored on the device, not synced.
+- **Texts:** every UI string is in `apps/web/src/locales/pl.json` (vue-i18n with Polish plural forms). Errors say what happened and what to do; an empty screen offers the next action.
+- **Screens (LW-06):** pairing (`/pair`, without navigation), Settings (equipment, devices, sync status, appearance) and placeholders for Calendar, History and Agent until their tickets.
+  - Equipment: a generic item editor; its fields come from the type's props in the core schema (boolean → toggle, number → decimal field, empty = null), labels from the locale file.
+  - Devices: list, revoke (revoking this device signs it out), pair a new device: the code in large numerals, a QR code of `<origin>/pair?code=…` and a 5-minute countdown.
+- **PWA:** manifest (pl, standalone), icons generated from `apps/web/public/icon.svg` (`pnpm --filter @liftwise/web icons`). The service worker precaches the app shell; `/api/*` and `/health` never come from the cache. A new version waits for the "Odśwież" toast, so the app never reloads mid-workout.
+
 ## 6. Architecture
 
 ### 6.1 Overview
@@ -365,7 +381,7 @@ All synced tables have: `id` (UUIDv7, text), `created_at`, `updated_at`, `delete
 
 Server-only tables: `change_log` (`change_group_id`, `actor` user/agent/system, `thread_id?`, `entity`, `entity_id`, `op`, `before`, `after` (row snapshots without `seq`), `seq` (the `seq` the change gave the row), `undo_of?`; unique per `undo_of` + record), `applied_mutations` (idempotency), `devices` (`name`, `token_hash`, `last_seen_at`, `revoked_at`), `pairing_codes` (`code_hash`, `created_by`, `expires_at`, `used_at`), `pairing_failures` (`at`, failed redeem attempts for the rate limit), `sync_counter`, `pending_proposals` (risky tool proposals awaiting confirmation).
 
-Client-only (Dexie): `outbox` (pending mutations), `prompt_queue`, `sync_state` (last pulled `seq`).
+Client-only (Dexie): `outbox` (pending mutations), `prompt_queue`, `sync_state` (last pulled `seq`, time of the last sync), `device` (this device's id and token, §6.8). Mirror rows keep the sync fields; tombstones stay in the mirror and readers filter `deleted_at`.
 
 ### 6.4 Sync
 
@@ -383,6 +399,11 @@ Client-only (Dexie): `outbox` (pending mutations), `prompt_queue`, `sync_state` 
 - **Undo** `POST /api/changes/:groupId/undo` (`{ confirm? }`): each record of the group goes back to its first `before` (a record the group created becomes a tombstone), written as a new group with `undo_of` through the same path. A record whose current `seq` differs from the group's last change to it is a conflict: `409 { error: 'conflict', conflicts }` unless `confirm: true`. The response is `{ groupId }` of the undo group, or `{ groupId: null }` when nothing changed (nothing is written). A group is undone once, concurrent requests included: `409 { error: 'already_undone', groupId }` names the undo group, so a client that lost the response can still redo; undoing the undo group redoes it.
 - The seed catalog reaches D1 as a generated migration (D40) and syncs to devices like any row.
 - Agent writes happen server-side and reach clients via pull. The client pulls after push, after each agent turn, on app resume, and periodically while in the foreground.
+- **Client** (D43, `apps/web/src/db`, `src/sync`):
+  - A user action is one Dexie transaction: the mirror rows and one outbox mutation per change, all with the action's `groupId`. Mutations are validated with the core schemas before they are queued.
+  - A sync run pushes the outbox in order (batches of 100), then pulls until `hasMore` is false. A pulled row doesn't replace a record that still has queued mutations; their push moves the server to the local state and a later pull returns it.
+  - Runs: on start, when the network comes back, on return to the app, every 60 s in the foreground and 1 s after a write.
+  - A rejected push (`400`) stays queued and is shown in the sync status; the pull still runs. A `401` (revoked token) forgets the token and opens the pairing screen; the mirror and outbox stay and are pushed after pairing again.
 
 ### 6.5 API surface (v1)
 
@@ -433,6 +454,7 @@ Client-only (Dexie): `outbox` (pending mutations), `prompt_queue`, `sync_state` 
     - Code: 8 characters from `23456789ABCDEFGHJKLMNPQRSTUVWXYZ` (no 0/O, 1/I), shown as QR and text; redeem accepts any case, spaces and dashes. Only the SHA-256 hash is stored; a new code replaces any unused one.
     - Limit: global, 5 failed redeems in 10 minutes → `429` for every redeem (single user, deterministic). Wrong, expired and used codes return the same `invalid_code`. Each attempt is recorded and counted in one D1 batch, so parallel requests can't exceed the limit; a blocked attempt doesn't extend the block.
     - Revoking a device also deletes the unused codes it created. The redeem response is `Cache-Control: no-store`.
+    - The app shows the code with a QR code of `<origin>/pair?code=<code>`, which opens the pairing screen with the code filled in. The pairing screen also takes the first device's token from `device:create`.
   - Revocation in settings.
 - **Token storage:**
   - Android: Keystore-backed secure storage plugin.
@@ -479,8 +501,8 @@ Client-only (Dexie): `outbox` (pending mutations), `prompt_queue`, `sync_state` 
   - CI signing via GitHub secrets later.
 - **PC:** PWA served by the same Worker (static assets), installed from Edge/Chrome.
 - **Dev:**
-  - `wrangler dev` with local D1.
-  - Vite dev server with `/api` proxy.
+  - `wrangler dev` with local D1; `pnpm --filter @liftwise/api dev` builds the PWA first and serves it on the same origin.
+  - Vite dev server with `/api` proxy to `wrangler dev`.
   - Capacitor live reload on the phone.
 - **Toolchain to install:**
   - Android Studio (bundles JDK, Android SDK, platform-tools/adb).

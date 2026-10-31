@@ -1,0 +1,173 @@
+/*
+ * "Żeliwo i kreda" (SPEC §5.13): cast-iron graphite and chalk, a hammertone-paint accent,
+ * amber only for records and warnings. Light is chalk on iron text, dark is iron with chalk text.
+ * Each Ionic color: shade = 12% black, tint = 10% white (Ionic's own rule).
+ */
+:root {
+  --lw-font: 'Archivo Variable', system-ui, sans-serif;
+  /* font-stretch of numbers and headings: narrow, like numerals cast into a plate */
+  --lw-narrow: 75%;
+  --lw-content-max: 720px;
+  --lw-surface: #fafaf8;
+  --lw-border: #d9dbd6;
+  --lw-muted: #5b626b;
+  --lw-menu-background: #e6e8e3;
+  --lw-primary-inverse: #6fbfb1;
+
+  --ion-font-family: var(--lw-font);
+  --ion-background-color: #f1f2ee;
+  --ion-background-color-rgb: 241, 242, 238;
+  --ion-text-color: #2a2f35;
+  --ion-text-color-rgb: 42, 47, 53;
+
+  --ion-color-primary: #2a7064;
+  --ion-color-primary-rgb: 42, 112, 100;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #256358;
+  --ion-color-primary-tint: #3f7e74;
+  --ion-color-success: #2a7064;
+  --ion-color-success-rgb: 42, 112, 100;
+  --ion-color-success-contrast: #ffffff;
+  --ion-color-success-contrast-rgb: 255, 255, 255;
+  --ion-color-success-shade: #256358;
+  --ion-color-success-tint: #3f7e74;
+  --ion-color-warning: #e0a526;
+  --ion-color-warning-rgb: 224, 165, 38;
+  --ion-color-warning-contrast: #2a2f35;
+  --ion-color-warning-contrast-rgb: 42, 47, 53;
+  --ion-color-warning-shade: #c59121;
+  --ion-color-warning-tint: #e3ae3c;
+  --ion-color-danger: #a33a2b;
+  --ion-color-danger-rgb: 163, 58, 43;
+  --ion-color-danger-contrast: #ffffff;
+  --ion-color-danger-contrast-rgb: 255, 255, 255;
+  --ion-color-danger-shade: #8f3326;
+  --ion-color-danger-tint: #ac4e40;
+  --ion-color-medium: #5b626b;
+  --ion-color-medium-rgb: 91, 98, 107;
+  --ion-color-medium-contrast: #ffffff;
+  --ion-color-medium-contrast-rgb: 255, 255, 255;
+  --ion-color-medium-shade: #50565e;
+  --ion-color-medium-tint: #6b727a;
+  --ion-color-light: #fafaf8;
+  --ion-color-light-rgb: 250, 250, 248;
+  --ion-color-light-contrast: #2a2f35;
+  --ion-color-light-contrast-rgb: 42, 47, 53;
+  --ion-color-light-shade: #dcdcda;
+  --ion-color-light-tint: #fbfbf9;
+  --ion-color-dark: #2a2f35;
+  --ion-color-dark-rgb: 42, 47, 53;
+  --ion-color-dark-contrast: #f1f2ee;
+  --ion-color-dark-contrast-rgb: 241, 242, 238;
+  --ion-color-dark-shade: #25292f;
+  --ion-color-dark-tint: #3f4449;
+}
+
+:root.ion-palette-dark {
+  --lw-surface: #343a41;
+  --lw-border: #4a515a;
+  --lw-muted: #a8aeb5;
+  --lw-menu-background: #23272c;
+  --lw-primary-inverse: #2a7064;
+
+  --ion-background-color: #2a2f35;
+  --ion-background-color-rgb: 42, 47, 53;
+  --ion-text-color: #f1f2ee;
+  --ion-text-color-rgb: 241, 242, 238;
+
+  --ion-color-primary: #6fbfb1;
+  --ion-color-primary-rgb: 111, 191, 177;
+  --ion-color-primary-contrast: #2a2f35;
+  --ion-color-primary-contrast-rgb: 42, 47, 53;
+  --ion-color-primary-shade: #62a89c;
+  --ion-color-primary-tint: #7dc5b9;
+  --ion-color-success: #6fbfb1;
+  --ion-color-success-rgb: 111, 191, 177;
+  --ion-color-success-contrast: #2a2f35;
+  --ion-color-success-contrast-rgb: 42, 47, 53;
+  --ion-color-success-shade: #62a89c;
+  --ion-color-success-tint: #7dc5b9;
+  --ion-color-danger: #e07a63;
+  --ion-color-danger-rgb: 224, 122, 99;
+  --ion-color-danger-contrast: #2a2f35;
+  --ion-color-danger-contrast-rgb: 42, 47, 53;
+  --ion-color-danger-shade: #c56b57;
+  --ion-color-danger-tint: #e38773;
+  --ion-color-medium: #a8aeb5;
+  --ion-color-medium-rgb: 168, 174, 181;
+  --ion-color-medium-contrast: #2a2f35;
+  --ion-color-medium-contrast-rgb: 42, 47, 53;
+  --ion-color-medium-shade: #94999f;
+  --ion-color-medium-tint: #b1b6bc;
+  --ion-color-light: #343a41;
+  --ion-color-light-rgb: 52, 58, 65;
+  --ion-color-light-contrast: #f1f2ee;
+  --ion-color-light-contrast-rgb: 241, 242, 238;
+  --ion-color-light-shade: #2e3339;
+  --ion-color-light-tint: #484e54;
+  --ion-color-dark: #f1f2ee;
+  --ion-color-dark-rgb: 241, 242, 238;
+  --ion-color-dark-contrast: #2a2f35;
+  --ion-color-dark-contrast-rgb: 42, 47, 53;
+  --ion-color-dark-shade: #d4d5d1;
+  --ion-color-dark-tint: #f2f3f0;
+}
+
+/*
+ * Shared by both palettes; declared on the same element as the colors, so the mixes follow the
+ * palette in use. Ionic's background steps run from the background toward the text, its text
+ * steps from the text toward the background.
+ */
+:root {
+  --ion-item-background: var(--lw-surface);
+  --ion-card-background: var(--lw-surface);
+  --ion-toolbar-background: var(--ion-background-color);
+  --ion-tab-bar-background: var(--lw-surface);
+  --ion-border-color: var(--lw-border);
+  --ion-item-border-color: var(--lw-border);
+  --ion-toolbar-border-color: var(--lw-border);
+  --ion-tab-bar-border-color: var(--lw-border);
+  /* Short names keep each mix on one line. */
+  --lw-bg: var(--ion-background-color);
+  --lw-fg: var(--ion-text-color);
+
+  --ion-background-color-step-50: color-mix(in srgb, var(--lw-fg) 5%, var(--lw-bg));
+  --ion-background-color-step-100: color-mix(in srgb, var(--lw-fg) 10%, var(--lw-bg));
+  --ion-background-color-step-150: color-mix(in srgb, var(--lw-fg) 15%, var(--lw-bg));
+  --ion-background-color-step-200: color-mix(in srgb, var(--lw-fg) 20%, var(--lw-bg));
+  --ion-background-color-step-250: color-mix(in srgb, var(--lw-fg) 25%, var(--lw-bg));
+  --ion-background-color-step-300: color-mix(in srgb, var(--lw-fg) 30%, var(--lw-bg));
+  --ion-background-color-step-350: color-mix(in srgb, var(--lw-fg) 35%, var(--lw-bg));
+  --ion-background-color-step-400: color-mix(in srgb, var(--lw-fg) 40%, var(--lw-bg));
+  --ion-background-color-step-450: color-mix(in srgb, var(--lw-fg) 45%, var(--lw-bg));
+  --ion-background-color-step-500: color-mix(in srgb, var(--lw-fg) 50%, var(--lw-bg));
+  --ion-background-color-step-550: color-mix(in srgb, var(--lw-fg) 55%, var(--lw-bg));
+  --ion-background-color-step-600: color-mix(in srgb, var(--lw-fg) 60%, var(--lw-bg));
+  --ion-background-color-step-650: color-mix(in srgb, var(--lw-fg) 65%, var(--lw-bg));
+  --ion-background-color-step-700: color-mix(in srgb, var(--lw-fg) 70%, var(--lw-bg));
+  --ion-background-color-step-750: color-mix(in srgb, var(--lw-fg) 75%, var(--lw-bg));
+  --ion-background-color-step-800: color-mix(in srgb, var(--lw-fg) 80%, var(--lw-bg));
+  --ion-background-color-step-850: color-mix(in srgb, var(--lw-fg) 85%, var(--lw-bg));
+  --ion-background-color-step-900: color-mix(in srgb, var(--lw-fg) 90%, var(--lw-bg));
+  --ion-background-color-step-950: color-mix(in srgb, var(--lw-fg) 95%, var(--lw-bg));
+  --ion-text-color-step-50: color-mix(in srgb, var(--lw-bg) 5%, var(--lw-fg));
+  --ion-text-color-step-100: color-mix(in srgb, var(--lw-bg) 10%, var(--lw-fg));
+  --ion-text-color-step-150: color-mix(in srgb, var(--lw-bg) 15%, var(--lw-fg));
+  --ion-text-color-step-200: color-mix(in srgb, var(--lw-bg) 20%, var(--lw-fg));
+  --ion-text-color-step-250: color-mix(in srgb, var(--lw-bg) 25%, var(--lw-fg));
+  --ion-text-color-step-300: color-mix(in srgb, var(--lw-bg) 30%, var(--lw-fg));
+  --ion-text-color-step-350: color-mix(in srgb, var(--lw-bg) 35%, var(--lw-fg));
+  --ion-text-color-step-400: color-mix(in srgb, var(--lw-bg) 40%, var(--lw-fg));
+  --ion-text-color-step-450: color-mix(in srgb, var(--lw-bg) 45%, var(--lw-fg));
+  --ion-text-color-step-500: color-mix(in srgb, var(--lw-bg) 50%, var(--lw-fg));
+  --ion-text-color-step-550: color-mix(in srgb, var(--lw-bg) 55%, var(--lw-fg));
+  --ion-text-color-step-600: color-mix(in srgb, var(--lw-bg) 60%, var(--lw-fg));
+  --ion-text-color-step-650: color-mix(in srgb, var(--lw-bg) 65%, var(--lw-fg));
+  --ion-text-color-step-700: color-mix(in srgb, var(--lw-bg) 70%, var(--lw-fg));
+  --ion-text-color-step-750: color-mix(in srgb, var(--lw-bg) 75%, var(--lw-fg));
+  --ion-text-color-step-800: color-mix(in srgb, var(--lw-bg) 80%, var(--lw-fg));
+  --ion-text-color-step-850: color-mix(in srgb, var(--lw-bg) 85%, var(--lw-fg));
+  --ion-text-color-step-900: color-mix(in srgb, var(--lw-bg) 90%, var(--lw-fg));
+  --ion-text-color-step-950: color-mix(in srgb, var(--lw-bg) 95%, var(--lw-fg));
+}

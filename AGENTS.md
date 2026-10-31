@@ -26,7 +26,8 @@ Node 24 (`.node-version`), pnpm 10 (`packageManager`). Toolchain is Vite+ (`vite
 - `pnpm ci:build` — build all apps (`apps/web` → `vp build`, `apps/api` → `wrangler deploy --dry-run`).
 - `pnpm format` — `vp check --fix` (format + lint autofix; `docs/` is excluded on purpose).
 - `pnpm exec vp check` / `pnpm exec vp test` — the parts of `ci:check` separately; `pnpm exec vp test --project @liftwise/core` for one workspace.
-- `pnpm --filter @liftwise/web dev` / `pnpm --filter @liftwise/api dev` — local dev servers (API on a local D1, no Cloudflare account needed).
+- `pnpm --filter @liftwise/web dev` / `pnpm --filter @liftwise/api dev` — local dev servers (API on a local D1, no Cloudflare account needed). The API one builds the web app first and serves the PWA on http://localhost:8787; the Vite dev server proxies `/api` there.
+- `pnpm --filter @liftwise/web icons` — PWA icons from `apps/web/public/icon.svg`; commit the generated files.
 - `pnpm --filter @liftwise/api db:generate` — SQL migration from `apps/api/src/db/schema.ts` (drizzle-kit); never edit generated migrations by hand.
 - `pnpm --filter @liftwise/api db:seed` — after adding exercises to `packages/core/data/exercises.json`: writes a new seed-catalog migration. Migrated exercises keep their first version, so don't edit them in the JSON (a test fails); change them with a mutation.
 - `pnpm --filter @liftwise/api db:migrate:local` / `db:migrate:remote` — apply migrations with wrangler.

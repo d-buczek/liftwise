@@ -1,0 +1,124 @@
+{
+  "nav": {
+    "calendar": "Kalendarz",
+    "history": "Historia",
+    "agent": "Agent",
+    "settings": "Ustawienia",
+    "label": "Nawigacja"
+  },
+  "common": {
+    "back": "Wstecz",
+    "cancel": "Anuluj",
+    "save": "Zapisz",
+    "delete": "Usuń",
+    "retry": "Spróbuj ponownie"
+  },
+  "empty": {
+    "calendar": "Tu będzie kalendarz z zaplanowanymi i zrobionymi treningami.",
+    "history": "Tu będzie historia treningów, wykresy i rekordy.",
+    "agent": "Tu będzie rozmowa z agentem: zapis serii jednym zdaniem albo głosem.",
+    "hint": "Na razie możesz ustawić swój sprzęt.",
+    "action": "Ustaw sprzęt"
+  },
+  "settings": {
+    "equipment": "Sprzęt",
+    "devices": "Urządzenia",
+    "appearance": "Wygląd",
+    "theme": {
+      "label": "Motyw",
+      "system": "Systemowy",
+      "light": "Jasny",
+      "dark": "Ciemny"
+    },
+    "equipmentCount": "Brak | {n} element | {n} elementy | {n} elementów"
+  },
+  "update": {
+    "available": "Jest nowa wersja aplikacji.",
+    "reload": "Odśwież"
+  },
+  "pair": {
+    "title": "Połącz urządzenie",
+    "intro": "Na sparowanym urządzeniu otwórz Ustawienia, potem Urządzenia, i wybierz „Sparuj nowe urządzenie”. Wpisz kod, który się pokaże.",
+    "code": "Kod parowania",
+    "name": "Nazwa tego urządzenia",
+    "defaultName": {
+      "desktop": "Komputer",
+      "mobile": "Telefon"
+    },
+    "submit": "Połącz",
+    "firstDevice": "To pierwsze urządzenie",
+    "tokenIntro": "Wklej token wypisany przez {command} przy konfiguracji serwera.",
+    "token": "Token urządzenia",
+    "submitToken": "Połącz tokenem"
+  },
+  "errors": {
+    "invalid_code": "Kod jest błędny, wygasł albo został już użyty. Wygeneruj nowy na sparowanym urządzeniu.",
+    "too_many_attempts": "Za dużo nieudanych prób. Spróbuj ponownie za 10 minut.",
+    "unauthorized": "Token jest nieprawidłowy albo to urządzenie zostało odwołane.",
+    "unreachable": "Brak połączenia z serwerem. Sprawdź internet i spróbuj ponownie.",
+    "invalid_request": "Wpisz kod i nazwę urządzenia.",
+    "invalid_mutation": "Serwer odrzucił zmianę zapisaną na tym urządzeniu. Pozostałe zmiany czekają za nią.",
+    "unknown": "Nieoczekiwany błąd serwera. Spróbuj ponownie."
+  },
+  "sync": {
+    "title": "Synchronizacja",
+    "offline": "Offline",
+    "syncing": "Synchronizacja…",
+    "error": "Synchronizacja nie powiodła się",
+    "synced": "Zsynchronizowano {time}",
+    "never": "Jeszcze nie zsynchronizowano",
+    "pending": "Wszystko wysłane | {n} zmiana czeka na wysłanie | {n} zmiany czekają na wysłanie | {n} zmian czeka na wysłanie",
+    "now": "Synchronizuj teraz"
+  },
+  "equipment": {
+    "add": "Dodaj sprzęt",
+    "edit": "Edytuj sprzęt",
+    "empty": "Nie masz jeszcze sprzętu. Dodaj hantle i ławkę, żeby podpowiedzi i agent wiedzieli, czym ćwiczysz.",
+    "type": "Rodzaj sprzętu",
+    "invalidNumber": "Wpisz liczbę większą od zera, z krokiem 0,25.",
+    "noOptions": "bez dodatkowych opcji",
+    "deleteTitle": "Usunąć sprzęt?",
+    "deleteMessage": "Element „{name}” zniknie z profilu sprzętu na wszystkich urządzeniach.",
+    "types": {
+      "dumbbells": "Hantle",
+      "bench": "Ławka"
+    },
+    "props": {
+      "dumbbells": {
+        "max_kg": {
+          "label": "Najcięższa hantla (kg)",
+          "hint": "Zostaw puste, jeśli nie ma limitu.",
+          "summary": "do {value} kg na hantlę",
+          "empty": "bez limitu ciężaru"
+        }
+      },
+      "bench": {
+        "incline": {
+          "label": "Skos (oparcie pod kątem)",
+          "summary": "skos"
+        },
+        "decline": {
+          "label": "Spadek (głową w dół)",
+          "summary": "spadek"
+        }
+      }
+    }
+  },
+  "devices": {
+    "current": "To urządzenie",
+    "added": "Dodane {date}",
+    "lastSeen": "Ostatnio {date}",
+    "neverSeen": "Jeszcze się nie łączyło",
+    "pair": "Sparuj nowe urządzenie",
+    "pairIntro": "Na nowym urządzeniu otwórz LiftWise i wpisz ten kod albo zeskanuj kod QR.",
+    "qr": "Kod QR do parowania",
+    "expiresIn": "Kod ważny jeszcze {time}",
+    "expired": "Kod wygasł.",
+    "newCode": "Nowy kod",
+    "done": "Gotowe",
+    "revoke": "Odwołaj",
+    "revokeTitle": "Odwołać „{name}”?",
+    "revokeMessage": "Urządzenie straci dostęp do danych. Żeby znów go używać, trzeba je sparować.",
+    "revokeCurrent": "To urządzenie straci dostęp od razu i wróci do ekranu parowania. Zmiany, które czekają na wysłanie, wyślą się po ponownym sparowaniu."
+  }
+}
