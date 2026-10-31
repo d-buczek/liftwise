@@ -4,6 +4,9 @@ coverage/
 .wrangler/
 *.log
 
+# personal Claude Code settings (permissions); .claude/settings.json is shared
+.claude/settings.local.json
+
 # secrets
 .env
 .env.*
