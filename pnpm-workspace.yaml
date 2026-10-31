@@ -5,6 +5,8 @@ packages:
 catalog:
   vite: npm:@voidzero-dev/vite-plus-core@1.4.0
   vite-plus: 1.4.0
+  uuid: ^14.0.3
+  zod: ^4.6.7
 
 # Keep plugins and Vitest on the copies bundled with vite-plus
 overrides:

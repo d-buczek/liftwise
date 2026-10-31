@@ -6,6 +6,10 @@
   "exports": {
     ".": "./src/index.ts"
   },
+  "dependencies": {
+    "uuid": "catalog:",
+    "zod": "catalog:"
+  },
   "devDependencies": {
     "vite-plus": "catalog:"
   }

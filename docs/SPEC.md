@@ -103,7 +103,7 @@ On top of that, an AI agent with tools over the app's data logs and edits from a
 ### 5.1 Domain conventions
 
 - Weights are in **kg, per dumbbell**. "Wyciskanie 24 kg 4x10" = each dumbbell 24 kg, 4 sets × 10 reps.
-- Each exercise declares `implements` (1 or 2 dumbbells) and `unilateral` (reps counted per side). Volume = weight × reps × implements.
+- Each exercise declares `implements` (1 or 2 dumbbells; bodyweight exercises use 1) and `unilateral` (reps counted per side). Volume = weight × reps × implements.
 - Weight precision 0.25 kg. Weight 0 = bodyweight. Reps are integers. RIR is optional: 0, 1, 2, 3, 4 (= "4+").
 - Exercises are measured in **reps** or **time** (`measure`, D32). Timed sets store `duration_s` (integer seconds) instead of reps, "plank 3x45 s"; they have no volume and no e1RM.
 - Sets are **planned** or **done** (§5.2). Only done sets count for progression, records, charts and balance.
@@ -159,7 +159,7 @@ Active workout (hybrid logging):
 ### 5.5 Exercise catalog
 
 - Fields: `id`, `name_pl`, `aliases[]` (PL and EN variants, common voice mis-transcriptions), `primary_muscles[]`, `secondary_muscles[]`, `patterns[]`, `requires[]` (equipment types), `implements`, `unilateral`, `measure` (reps/time), `rep_range` (min/max; for `reps`), `time_range_s` (min/max; for `time`), `rest_seconds`, `weight_step_kg?` (overrides the default ± step), `note?` (user's setup note, §5.2), `archived`.
-- Seed: `packages/core/data/exercises.json`, ~40–60 dumbbell + bench exercises, validated by a zod schema in tests.
+- Seed: `packages/core/data/exercises.json`, ~40–60 exercises, mostly dumbbell + bench plus a few bodyweight basics, validated by a zod schema in tests. Seed ids are fixed UUIDv7s (one shared timestamp, the index in the random part), so the server and every device share them.
 - Muscle groups (keys → PL labels in i18n): `chest`, `lats`, `upper_back`, `front_delts`, `side_delts`, `rear_delts`, `biceps`, `triceps`, `forearms`, `quads`, `hamstrings`, `glutes`, `calves`, `abs`, `lower_back`.
 - Movement patterns: `horizontal_push`, `vertical_push`, `horizontal_pull`, `vertical_pull`, `squat`, `hinge`, `lunge`, `core`, `isolation`.
 - User can add, edit and archive exercises. The agent can propose new ones (risky tool, confirmation).
@@ -170,7 +170,7 @@ Active workout (hybrid logging):
   - `dumbbells`: adjustable pair, optional max weight per dumbbell.
   - `bench`: flat / adjustable incline / decline.
   - Later types: `pullup_bar`, `band`, `kettlebell`, `barbell`, … (new type = schema + catalog `requires` value, no UI rewrite: generic item editor).
-- Used for exercise availability (catalog `requires`) and as agent context.
+- Used for exercise availability (catalog `requires`) and as agent context. `requires` lists equipment types only; bench props (incline/decline) are not checked for availability in v1.
 - Plate inventory and the plate calculator are in the backlog (D31).
 
 ### 5.7 Progression hints
@@ -346,7 +346,7 @@ All synced tables have: `id` (UUIDv7, text), `created_at`, `updated_at`, `delete
 | `equipment_items` | `type`, `props` (JSON validated per type) |
 | `workouts` | `date` (local), `started_at?`, `ended_at?`, `checkin?` (JSON: time, wellbeing, pain), `rationale?` (accepted AI proposal), `note` |
 | `sets` | `workout_id`, `exercise_id`, `position`, `status` (planned/done), `weight_kg`, `reps?` / `duration_s?` (by exercise `measure`), `rir?`, `warmup`, `note`, `performed_at?` (set when done), `source` (manual/copy/agent/proposal) |
-| `athlete_profile` | single row, markdown/JSON document |
+| `athlete_profile` | single row, markdown document (`content`) |
 | `settings` | key/value (JSON) |
 | `threads` / `messages` | per-day threads, linked `workout_id?`, message parts (incl. tool calls/results) |
 

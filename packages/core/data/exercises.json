@@ -1,0 +1,1142 @@
+[
+  {
+    "id": "01a18f41-8c00-7000-8000-000000000001",
+    "name_pl": "Wyciskanie hantli na ławce płaskiej",
+    "aliases": [
+      "wyciskanie hantli leżąc",
+      "wyciskanie na płaskiej",
+      "wyciskanie hantli płasko",
+      "wyciskanie hantel na ławce",
+      "dumbbell bench press",
+      "db bench press"
+    ],
+    "primary_muscles": ["chest"],
+    "secondary_muscles": ["front_delts", "triceps"],
+    "patterns": ["horizontal_push"],
+    "requires": ["dumbbells", "bench"],
+    "implements": 2,
+    "unilateral": false,
+    "measure": "reps",
+    "rep_range": {
+      "min": 6,
+      "max": 12
+    },
+    "rest_seconds": 120
+  },
+  {
+    "id": "01a18f41-8c00-7000-8000-000000000002",
+    "name_pl": "Wyciskanie hantli na ławce skośnej",
+    "aliases": [
+      "wyciskanie na skosie",
+      "wyciskanie na skośnej",
+      "skos hantle",
+      "incline dumbbell press",
+      "incline press"
+    ],
+    "primary_muscles": ["chest"],
+    "secondary_muscles": ["front_delts", "triceps"],
+    "patterns": ["horizontal_push"],
+    "requires": ["dumbbells", "bench"],
+    "implements": 2,
+    "unilateral": false,
+    "measure": "reps",
+    "rep_range": {
+      "min": 6,
+      "max": 12
+    },
+    "rest_seconds": 120
+  },
+  {
+    "id": "01a18f41-8c00-7000-8000-000000000003",
+    "name_pl": "Wyciskanie hantli na ławce ujemnej",
+    "aliases": [
+      "wyciskanie na ujemnej",
+      "wyciskanie głową w dół",
+      "decline dumbbell press",
+      "decline press"
+    ],
+    "primary_muscles": ["chest"],
+    "secondary_muscles": ["triceps", "front_delts"],
+    "patterns": ["horizontal_push"],
+    "requires": ["dumbbells", "bench"],
+    "implements": 2,
+    "unilateral": false,
+    "measure": "reps",
+    "rep_range": {
+      "min": 8,
+      "max": 12
+    },
+    "rest_seconds": 120
+  },
+  {
+    "id": "01a18f41-8c00-7000-8000-000000000004",
+    "name_pl": "Wyciskanie hantli chwytem neutralnym",
+    "aliases": [
+      "wyciskanie neutralnym chwytem",
+      "wyciskanie ściśniętych hantli",
+      "squeeze press",
+      "neutral grip dumbbell press"
+    ],
+    "primary_muscles": ["chest", "triceps"],
+    "secondary_muscles": ["front_delts"],
+    "patterns": ["horizontal_push"],
+    "requires": ["dumbbells", "bench"],
+    "implements": 2,
+    "unilateral": false,
+    "measure": "reps",
+    "rep_range": {
+      "min": 8,
+      "max": 12
+    },
+    "rest_seconds": 90
+  },
+  {
+    "id": "01a18f41-8c00-7000-8000-000000000005",
+    "name_pl": "Wyciskanie hantli leżąc na podłodze",
+    "aliases": ["wyciskanie z podłogi", "floor press", "flor pres", "dumbbell floor press"],
+    "primary_muscles": ["chest", "triceps"],
+    "secondary_muscles": ["front_delts"],
+    "patterns": ["horizontal_push"],
+    "requires": ["dumbbells"],
+    "implements": 2,
+    "unilateral": false,
+    "measure": "reps",
+    "rep_range": {
+      "min": 6,
+      "max": 12
+    },
+    "rest_seconds": 120
+  },
+  {
+    "id": "01a18f41-8c00-7000-8000-000000000006",
+    "name_pl": "Rozpiętki z hantlami na ławce płaskiej",
+    "aliases": [
+      "rozpiętki",
+      "rozpietki",
+      "rozpiętki na płaskiej",
+      "dumbbell fly",
+      "dumbbell flyes"
+    ],
+    "primary_muscles": ["chest"],
+    "secondary_muscles": ["front_delts"],
+    "patterns": ["isolation"],
+    "requires": ["dumbbells", "bench"],
+    "implements": 2,
+    "unilateral": false,
+    "measure": "reps",
+    "rep_range": {
+      "min": 10,
+      "max": 15
+    },
+    "rest_seconds": 90
+  },
+  {
+    "id": "01a18f41-8c00-7000-8000-000000000007",
+    "name_pl": "Rozpiętki z hantlami na ławce skośnej",
+    "aliases": ["rozpiętki na skosie", "rozpiętki skos", "incline dumbbell fly", "incline fly"],
+    "primary_muscles": ["chest"],
+    "secondary_muscles": ["front_delts"],
+    "patterns": ["isolation"],
+    "requires": ["dumbbells", "bench"],
+    "implements": 2,
+    "unilateral": false,
+    "measure": "reps",
+    "rep_range": {
+      "min": 10,
+      "max": 15
+    },
+    "rest_seconds": 90
+  },
+  {
+    "id": "01a18f41-8c00-7000-8000-000000000008",
+    "name_pl": "Przenoszenie hantla za głowę",
+    "aliases": [
+      "przenoszenie za głowę",
+      "przenoszenie hantli za głowę",
+      "pullover",
+      "pull over",
+      "pulower",
+      "dumbbell pullover"
+    ],
+    "primary_muscles": ["lats", "chest"],
+    "secondary_muscles": ["triceps"],
+    "patterns": ["isolation"],
+    "requires": ["dumbbells", "bench"],
+    "implements": 1,
+    "unilateral": false,
+    "measure": "reps",
+    "rep_range": {
+      "min": 10,
+      "max": 15
+    },
+    "rest_seconds": 90
+  },
+  {
+    "id": "01a18f41-8c00-7000-8000-000000000009",
+    "name_pl": "Pompki",
+    "aliases": ["pompka", "pompki klasyczne", "push-up", "push up", "pushups"],
+    "primary_muscles": ["chest"],
+    "secondary_muscles": ["triceps", "front_delts", "abs"],
+    "patterns": ["horizontal_push"],
+    "requires": [],
+    "implements": 1,
+    "unilateral": false,
+    "measure": "reps",
+    "rep_range": {
+      "min": 8,
+      "max": 20
+    },
+    "rest_seconds": 90
+  },
+  {
+    "id": "01a18f41-8c00-7000-8000-00000000000a",
+    "name_pl": "Pompki wąskie",
+    "aliases": [
+      "pompki diamentowe",
+      "pompki na triceps",
+      "pompki wąsko",
+      "diamond push-up",
+      "close grip push-up"
+    ],
+    "primary_muscles": ["triceps", "chest"],
+    "secondary_muscles": ["front_delts"],
+    "patterns": ["horizontal_push"],
+    "requires": [],
+    "implements": 1,
+    "unilateral": false,
+    "measure": "reps",
+    "rep_range": {
+      "min": 8,
+      "max": 20
+    },
+    "rest_seconds": 90
+  },
+  {
+    "id": "01a18f41-8c00-7000-8000-00000000000b",
+    "name_pl": "Wiosłowanie hantlą jednorącz",
+    "aliases": [
+      "wiosłowanie jednorącz",
+      "wiosłowanie jedną ręką",
+      "wiosłowanie hantlom",
+      "one arm dumbbell row",
+      "dumbbell row"
+    ],
+    "primary_muscles": ["lats", "upper_back"],
+    "secondary_muscles": ["biceps", "rear_delts"],
+    "patterns": ["horizontal_pull"],
+    "requires": ["dumbbells", "bench"],
+    "implements": 1,
+    "unilateral": true,
+    "measure": "reps",
+    "rep_range": {
+      "min": 8,
+      "max": 12
+    },
+    "rest_seconds": 90
+  },
+  {
+    "id": "01a18f41-8c00-7000-8000-00000000000c",
+    "name_pl": "Wiosłowanie hantlami w opadzie tułowia",
+    "aliases": [
+      "wiosłowanie w opadzie",
+      "wiosłowanie oburącz",
+      "bent over dumbbell row",
+      "bent over row"
+    ],
+    "primary_muscles": ["upper_back", "lats"],
+    "secondary_muscles": ["biceps", "rear_delts", "lower_back"],
+    "patterns": ["horizontal_pull"],
+    "requires": ["dumbbells"],
+    "implements": 2,
+    "unilateral": false,
+    "measure": "reps",
+    "rep_range": {
+      "min": 8,
+      "max": 12
+    },
+    "rest_seconds": 90
+  },
+  {
+    "id": "01a18f41-8c00-7000-8000-00000000000d",
+    "name_pl": "Wiosłowanie hantlami leżąc na ławce skośnej",
+    "aliases": [
+      "wiosłowanie na skosie",
+      "wiosłowanie przodem do ławki",
+      "chest supported row",
+      "chest supported dumbbell row"
+    ],
+    "primary_muscles": ["upper_back", "lats"],
+    "secondary_muscles": ["rear_delts", "biceps"],
+    "patterns": ["horizontal_pull"],
+    "requires": ["dumbbells", "bench"],
+    "implements": 2,
+    "unilateral": false,
+    "measure": "reps",
+    "rep_range": {
+      "min": 8,
+      "max": 12
+    },
+    "rest_seconds": 90
+  },
+  {
+    "id": "01a18f41-8c00-7000-8000-00000000000e",
+    "name_pl": "Wiosłowanie w podporze przodem",
+    "aliases": [
+      "wiosłowanie w pozycji pompki",
+      "wiosłowanie w desce",
+      "renegade row",
+      "renegat row"
+    ],
+    "primary_muscles": ["upper_back", "lats"],
+    "secondary_muscles": ["abs", "biceps"],
+    "patterns": ["horizontal_pull", "core"],
+    "requires": ["dumbbells"],
+    "implements": 2,
+    "unilateral": true,
+    "measure": "reps",
+    "rep_range": {
+      "min": 6,
+      "max": 12
+    },
+    "rest_seconds": 90
+  },
+  {
+    "id": "01a18f41-8c00-7000-8000-00000000000f",
+    "name_pl": "Odwrotne rozpiętki w opadzie tułowia",
+    "aliases": [
+      "odwrotne rozpiętki",
+      "odwrócone rozpiętki",
+      "rozpiętki w opadzie",
+      "reverse fly",
+      "rear delt fly"
+    ],
+    "primary_muscles": ["rear_delts"],
+    "secondary_muscles": ["upper_back"],
+    "patterns": ["isolation"],
+    "requires": ["dumbbells"],
+    "implements": 2,
+    "unilateral": false,
+    "measure": "reps",
+    "rep_range": {
+      "min": 12,
+      "max": 20
+    },
+    "rest_seconds": 60
+  },
+  {
+    "id": "01a18f41-8c00-7000-8000-000000000010",
+    "name_pl": "Odwrotne rozpiętki leżąc na ławce skośnej",
+    "aliases": [
+      "odwrotne rozpiętki na skosie",
+      "tył barków na ławce",
+      "chest supported reverse fly",
+      "incline reverse fly"
+    ],
+    "primary_muscles": ["rear_delts", "upper_back"],
+    "secondary_muscles": [],
+    "patterns": ["isolation"],
+    "requires": ["dumbbells", "bench"],
+    "implements": 2,
+    "unilateral": false,
+    "measure": "reps",
+    "rep_range": {
+      "min": 12,
+      "max": 20
+    },
+    "rest_seconds": 60
+  },
+  {
+    "id": "01a18f41-8c00-7000-8000-000000000011",
+    "name_pl": "Szrugsy z hantlami",
+    "aliases": ["szrugsy", "szrugi", "srugsy", "wzruszanie ramion", "shrugs", "dumbbell shrugs"],
+    "primary_muscles": ["upper_back"],
+    "secondary_muscles": ["forearms"],
+    "patterns": ["isolation"],
+    "requires": ["dumbbells"],
+    "implements": 2,
+    "unilateral": false,
+    "measure": "reps",
+    "rep_range": {
+      "min": 10,
+      "max": 15
+    },
+    "rest_seconds": 60
+  },
+  {
+    "id": "01a18f41-8c00-7000-8000-000000000012",
+    "name_pl": "Superman",
+    "aliases": ["supermen", "wznosy tułowia leżąc", "unoszenie rąk i nóg leżąc"],
+    "primary_muscles": ["lower_back"],
+    "secondary_muscles": ["glutes", "upper_back"],
+    "patterns": ["core"],
+    "requires": [],
+    "implements": 1,
+    "unilateral": false,
+    "measure": "reps",
+    "rep_range": {
+      "min": 10,
+      "max": 20
+    },
+    "rest_seconds": 60
+  },
+  {
+    "id": "01a18f41-8c00-7000-8000-000000000013",
+    "name_pl": "Bird dog",
+    "aliases": ["ptak pies", "ptak-pies", "bird-dog", "berd dog", "wyprost ręki i nogi w klęku"],
+    "primary_muscles": ["abs", "lower_back"],
+    "secondary_muscles": ["glutes"],
+    "patterns": ["core"],
+    "requires": [],
+    "implements": 1,
+    "unilateral": true,
+    "measure": "reps",
+    "rep_range": {
+      "min": 8,
+      "max": 12
+    },
+    "rest_seconds": 45
+  },
+  {
+    "id": "01a18f41-8c00-7000-8000-000000000014",
+    "name_pl": "Wyciskanie hantli nad głowę siedząc",
+    "aliases": [
+      "wyciskanie siedząc",
+      "wyciskanie nad głowę",
+      "wyciskanie na barki",
+      "seated dumbbell shoulder press",
+      "shoulder press"
+    ],
+    "primary_muscles": ["front_delts"],
+    "secondary_muscles": ["side_delts", "triceps"],
+    "patterns": ["vertical_push"],
+    "requires": ["dumbbells", "bench"],
+    "implements": 2,
+    "unilateral": false,
+    "measure": "reps",
+    "rep_range": {
+      "min": 6,
+      "max": 12
+    },
+    "rest_seconds": 120
+  },
+  {
+    "id": "01a18f41-8c00-7000-8000-000000000015",
+    "name_pl": "Wyciskanie hantli nad głowę stojąc",
+    "aliases": [
+      "wyciskanie stojąc",
+      "wyciskanie żołnierskie hantlami",
+      "żołnierskie stojąc",
+      "standing dumbbell press",
+      "overhead press"
+    ],
+    "primary_muscles": ["front_delts"],
+    "secondary_muscles": ["side_delts", "triceps", "abs"],
+    "patterns": ["vertical_push"],
+    "requires": ["dumbbells"],
+    "implements": 2,
+    "unilateral": false,
+    "measure": "reps",
+    "rep_range": {
+      "min": 6,
+      "max": 12
+    },
+    "rest_seconds": 120
+  },
+  {
+    "id": "01a18f41-8c00-7000-8000-000000000016",
+    "name_pl": "Arnoldki",
+    "aliases": ["arnold press", "arnold", "arnoldy", "arnold ki", "wyciskanie arnolda"],
+    "primary_muscles": ["front_delts", "side_delts"],
+    "secondary_muscles": ["triceps"],
+    "patterns": ["vertical_push"],
+    "requires": ["dumbbells", "bench"],
+    "implements": 2,
+    "unilateral": false,
+    "measure": "reps",
+    "rep_range": {
+      "min": 8,
+      "max": 12
+    },
+    "rest_seconds": 90
+  },
+  {
+    "id": "01a18f41-8c00-7000-8000-000000000017",
+    "name_pl": "Unoszenie hantli bokiem",
+    "aliases": [
+      "unoszenie bokiem",
+      "wznosy bokiem",
+      "wznosy hantli bokiem",
+      "odwodzenie ramion",
+      "lateral raise",
+      "side raise"
+    ],
+    "primary_muscles": ["side_delts"],
+    "secondary_muscles": [],
+    "patterns": ["isolation"],
+    "requires": ["dumbbells"],
+    "implements": 2,
+    "unilateral": false,
+    "measure": "reps",
+    "rep_range": {
+      "min": 12,
+      "max": 20
+    },
+    "rest_seconds": 60
+  },
+  {
+    "id": "01a18f41-8c00-7000-8000-000000000018",
+    "name_pl": "Unoszenie hantli przodem",
+    "aliases": ["unoszenie przodem", "wznosy przodem", "front raise"],
+    "primary_muscles": ["front_delts"],
+    "secondary_muscles": [],
+    "patterns": ["isolation"],
+    "requires": ["dumbbells"],
+    "implements": 2,
+    "unilateral": false,
+    "measure": "reps",
+    "rep_range": {
+      "min": 10,
+      "max": 15
+    },
+    "rest_seconds": 60
+  },
+  {
+    "id": "01a18f41-8c00-7000-8000-000000000019",
+    "name_pl": "Rotacja zewnętrzna z hantlą leżąc na boku",
+    "aliases": [
+      "rotacja zewnętrzna",
+      "rotacja barku",
+      "external rotation",
+      "side lying external rotation"
+    ],
+    "primary_muscles": ["rear_delts"],
+    "secondary_muscles": [],
+    "patterns": ["isolation"],
+    "requires": ["dumbbells"],
+    "implements": 1,
+    "unilateral": true,
+    "measure": "reps",
+    "rep_range": {
+      "min": 12,
+      "max": 20
+    },
+    "rest_seconds": 60
+  },
+  {
+    "id": "01a18f41-8c00-7000-8000-00000000001a",
+    "name_pl": "Uginanie ramion z hantlami",
+    "aliases": [
+      "uginanie ramion",
+      "uginanie hantli",
+      "biceps hantle",
+      "dumbbell curl",
+      "biceps curl",
+      "bicep curl"
+    ],
+    "primary_muscles": ["biceps"],
+    "secondary_muscles": ["forearms"],
+    "patterns": ["isolation"],
+    "requires": ["dumbbells"],
+    "implements": 2,
+    "unilateral": false,
+    "measure": "reps",
+    "rep_range": {
+      "min": 8,
+      "max": 15
+    },
+    "rest_seconds": 60
+  },
+  {
+    "id": "01a18f41-8c00-7000-8000-00000000001b",
+    "name_pl": "Uginanie młotkowe",
+    "aliases": ["młotki", "młotkowe", "uginanie chwytem młotkowym", "hammer curl", "hammer"],
+    "primary_muscles": ["biceps", "forearms"],
+    "secondary_muscles": [],
+    "patterns": ["isolation"],
+    "requires": ["dumbbells"],
+    "implements": 2,
+    "unilateral": false,
+    "measure": "reps",
+    "rep_range": {
+      "min": 8,
+      "max": 15
+    },
+    "rest_seconds": 60
+  },
+  {
+    "id": "01a18f41-8c00-7000-8000-00000000001c",
+    "name_pl": "Uginanie ramion na ławce skośnej",
+    "aliases": ["uginanie na skosie", "biceps na skosie", "incline curl", "incline dumbbell curl"],
+    "primary_muscles": ["biceps"],
+    "secondary_muscles": [],
+    "patterns": ["isolation"],
+    "requires": ["dumbbells", "bench"],
+    "implements": 2,
+    "unilateral": false,
+    "measure": "reps",
+    "rep_range": {
+      "min": 8,
+      "max": 15
+    },
+    "rest_seconds": 60
+  },
+  {
+    "id": "01a18f41-8c00-7000-8000-00000000001d",
+    "name_pl": "Uginanie ramienia w podporze o udo",
+    "aliases": ["uginanie skoncentrowane", "uginanie w siadzie o kolano", "concentration curl"],
+    "primary_muscles": ["biceps"],
+    "secondary_muscles": [],
+    "patterns": ["isolation"],
+    "requires": ["dumbbells", "bench"],
+    "implements": 1,
+    "unilateral": true,
+    "measure": "reps",
+    "rep_range": {
+      "min": 10,
+      "max": 15
+    },
+    "rest_seconds": 60
+  },
+  {
+    "id": "01a18f41-8c00-7000-8000-00000000001e",
+    "name_pl": "Uginanie Zottmana",
+    "aliases": ["zottman", "zotman", "zottman curl"],
+    "primary_muscles": ["biceps", "forearms"],
+    "secondary_muscles": [],
+    "patterns": ["isolation"],
+    "requires": ["dumbbells"],
+    "implements": 2,
+    "unilateral": false,
+    "measure": "reps",
+    "rep_range": {
+      "min": 8,
+      "max": 12
+    },
+    "rest_seconds": 60
+  },
+  {
+    "id": "01a18f41-8c00-7000-8000-00000000001f",
+    "name_pl": "Wyciskanie francuskie hantlą nad głową",
+    "aliases": [
+      "francuskie nad głową",
+      "francuz nad głową",
+      "wyprost ramion nad głową",
+      "triceps nad głową",
+      "overhead triceps extension"
+    ],
+    "primary_muscles": ["triceps"],
+    "secondary_muscles": [],
+    "patterns": ["isolation"],
+    "requires": ["dumbbells"],
+    "implements": 1,
+    "unilateral": false,
+    "measure": "reps",
+    "rep_range": {
+      "min": 10,
+      "max": 15
+    },
+    "rest_seconds": 60
+  },
+  {
+    "id": "01a18f41-8c00-7000-8000-000000000020",
+    "name_pl": "Wyciskanie francuskie hantlami leżąc",
+    "aliases": [
+      "francuskie leżąc",
+      "francuz leżąc",
+      "łamacze czaszki",
+      "skull crusher",
+      "skullcrusher"
+    ],
+    "primary_muscles": ["triceps"],
+    "secondary_muscles": [],
+    "patterns": ["isolation"],
+    "requires": ["dumbbells", "bench"],
+    "implements": 2,
+    "unilateral": false,
+    "measure": "reps",
+    "rep_range": {
+      "min": 10,
+      "max": 15
+    },
+    "rest_seconds": 60
+  },
+  {
+    "id": "01a18f41-8c00-7000-8000-000000000021",
+    "name_pl": "Prostowanie ramienia w opadzie tułowia",
+    "aliases": [
+      "wyprost ramienia w opadzie",
+      "kickback",
+      "kick back",
+      "kikbak",
+      "triceps kickback"
+    ],
+    "primary_muscles": ["triceps"],
+    "secondary_muscles": [],
+    "patterns": ["isolation"],
+    "requires": ["dumbbells", "bench"],
+    "implements": 1,
+    "unilateral": true,
+    "measure": "reps",
+    "rep_range": {
+      "min": 12,
+      "max": 15
+    },
+    "rest_seconds": 60
+  },
+  {
+    "id": "01a18f41-8c00-7000-8000-000000000022",
+    "name_pl": "Pompki w podporze tyłem na ławce",
+    "aliases": ["pompki tyłem", "pompki odwrotne", "dipy na ławce", "dipsy na ławce", "bench dips"],
+    "primary_muscles": ["triceps"],
+    "secondary_muscles": ["chest", "front_delts"],
+    "patterns": ["isolation"],
+    "requires": ["bench"],
+    "implements": 1,
+    "unilateral": false,
+    "measure": "reps",
+    "rep_range": {
+      "min": 10,
+      "max": 20
+    },
+    "rest_seconds": 60
+  },
+  {
+    "id": "01a18f41-8c00-7000-8000-000000000023",
+    "name_pl": "Uginanie nadgarstków z hantlami",
+    "aliases": ["uginanie nadgarstków", "zginanie nadgarstków", "nadgarstki", "wrist curl"],
+    "primary_muscles": ["forearms"],
+    "secondary_muscles": [],
+    "patterns": ["isolation"],
+    "requires": ["dumbbells", "bench"],
+    "implements": 2,
+    "unilateral": false,
+    "measure": "reps",
+    "rep_range": {
+      "min": 12,
+      "max": 20
+    },
+    "rest_seconds": 45
+  },
+  {
+    "id": "01a18f41-8c00-7000-8000-000000000024",
+    "name_pl": "Przysiad goblet",
+    "aliases": [
+      "goblet squat",
+      "goblet",
+      "goblin squat",
+      "przysiad z hantlą",
+      "przysiad kielichowy"
+    ],
+    "primary_muscles": ["quads", "glutes"],
+    "secondary_muscles": ["abs"],
+    "patterns": ["squat"],
+    "requires": ["dumbbells"],
+    "implements": 1,
+    "unilateral": false,
+    "measure": "reps",
+    "rep_range": {
+      "min": 8,
+      "max": 15
+    },
+    "rest_seconds": 120,
+    "weight_step_kg": 2.5
+  },
+  {
+    "id": "01a18f41-8c00-7000-8000-000000000025",
+    "name_pl": "Przysiad z hantlami",
+    "aliases": ["przysiady z hantlami", "przysiad hantle", "dumbbell squat"],
+    "primary_muscles": ["quads", "glutes"],
+    "secondary_muscles": [],
+    "patterns": ["squat"],
+    "requires": ["dumbbells"],
+    "implements": 2,
+    "unilateral": false,
+    "measure": "reps",
+    "rep_range": {
+      "min": 8,
+      "max": 15
+    },
+    "rest_seconds": 120
+  },
+  {
+    "id": "01a18f41-8c00-7000-8000-000000000026",
+    "name_pl": "Przysiad bułgarski",
+    "aliases": [
+      "bułgarskie",
+      "bułgar",
+      "bułgarski przysiad",
+      "split squat z nogą na ławce",
+      "bulgarian split squat"
+    ],
+    "primary_muscles": ["quads", "glutes"],
+    "secondary_muscles": ["hamstrings"],
+    "patterns": ["lunge"],
+    "requires": ["dumbbells", "bench"],
+    "implements": 2,
+    "unilateral": true,
+    "measure": "reps",
+    "rep_range": {
+      "min": 8,
+      "max": 12
+    },
+    "rest_seconds": 90
+  },
+  {
+    "id": "01a18f41-8c00-7000-8000-000000000027",
+    "name_pl": "Wykroki z hantlami",
+    "aliases": ["wykroki", "wypady", "wypady z hantlami", "dumbbell lunges", "lunges"],
+    "primary_muscles": ["quads", "glutes"],
+    "secondary_muscles": ["hamstrings"],
+    "patterns": ["lunge"],
+    "requires": ["dumbbells"],
+    "implements": 2,
+    "unilateral": true,
+    "measure": "reps",
+    "rep_range": {
+      "min": 8,
+      "max": 12
+    },
+    "rest_seconds": 90
+  },
+  {
+    "id": "01a18f41-8c00-7000-8000-000000000028",
+    "name_pl": "Wykroki w tył z hantlami",
+    "aliases": ["wykroki w tył", "zakroki", "wypady w tył", "reverse lunge"],
+    "primary_muscles": ["glutes", "quads"],
+    "secondary_muscles": ["hamstrings"],
+    "patterns": ["lunge"],
+    "requires": ["dumbbells"],
+    "implements": 2,
+    "unilateral": true,
+    "measure": "reps",
+    "rep_range": {
+      "min": 8,
+      "max": 12
+    },
+    "rest_seconds": 90
+  },
+  {
+    "id": "01a18f41-8c00-7000-8000-000000000029",
+    "name_pl": "Wejścia na ławkę z hantlami",
+    "aliases": ["wejścia na ławkę", "wchodzenie na ławkę", "step up", "step-up", "stepupy"],
+    "primary_muscles": ["quads", "glutes"],
+    "secondary_muscles": ["hamstrings"],
+    "patterns": ["lunge"],
+    "requires": ["dumbbells", "bench"],
+    "implements": 2,
+    "unilateral": true,
+    "measure": "reps",
+    "rep_range": {
+      "min": 8,
+      "max": 12
+    },
+    "rest_seconds": 90
+  },
+  {
+    "id": "01a18f41-8c00-7000-8000-00000000002a",
+    "name_pl": "Rumuński martwy ciąg z hantlami",
+    "aliases": [
+      "rumuński martwy ciąg",
+      "martwy ciąg rumuński",
+      "rumun",
+      "martwy ciąg na prostych nogach",
+      "RDL",
+      "er de el",
+      "romanian deadlift"
+    ],
+    "primary_muscles": ["hamstrings", "glutes"],
+    "secondary_muscles": ["lower_back", "forearms"],
+    "patterns": ["hinge"],
+    "requires": ["dumbbells"],
+    "implements": 2,
+    "unilateral": false,
+    "measure": "reps",
+    "rep_range": {
+      "min": 8,
+      "max": 12
+    },
+    "rest_seconds": 120,
+    "weight_step_kg": 2.5
+  },
+  {
+    "id": "01a18f41-8c00-7000-8000-00000000002b",
+    "name_pl": "Martwy ciąg z hantlami",
+    "aliases": ["martwy ciąg", "martwy", "martwiak", "dumbbell deadlift", "deadlift"],
+    "primary_muscles": ["glutes", "hamstrings", "quads"],
+    "secondary_muscles": ["lower_back", "forearms"],
+    "patterns": ["hinge"],
+    "requires": ["dumbbells"],
+    "implements": 2,
+    "unilateral": false,
+    "measure": "reps",
+    "rep_range": {
+      "min": 6,
+      "max": 10
+    },
+    "rest_seconds": 120,
+    "weight_step_kg": 2.5
+  },
+  {
+    "id": "01a18f41-8c00-7000-8000-00000000002c",
+    "name_pl": "Martwy ciąg na jednej nodze",
+    "aliases": [
+      "martwy ciąg jednonóż",
+      "rumuński na jednej nodze",
+      "single leg RDL",
+      "single leg deadlift"
+    ],
+    "primary_muscles": ["hamstrings", "glutes"],
+    "secondary_muscles": ["lower_back"],
+    "patterns": ["hinge"],
+    "requires": ["dumbbells"],
+    "implements": 1,
+    "unilateral": true,
+    "measure": "reps",
+    "rep_range": {
+      "min": 8,
+      "max": 12
+    },
+    "rest_seconds": 90
+  },
+  {
+    "id": "01a18f41-8c00-7000-8000-00000000002d",
+    "name_pl": "Hip thrust z hantlą",
+    "aliases": [
+      "hip thrust",
+      "hip trust",
+      "hiptrust",
+      "hip trasty",
+      "wypychanie bioder",
+      "unoszenie bioder z oparciem o ławkę"
+    ],
+    "primary_muscles": ["glutes"],
+    "secondary_muscles": ["hamstrings"],
+    "patterns": ["hinge"],
+    "requires": ["dumbbells", "bench"],
+    "implements": 1,
+    "unilateral": false,
+    "measure": "reps",
+    "rep_range": {
+      "min": 8,
+      "max": 15
+    },
+    "rest_seconds": 90,
+    "weight_step_kg": 2.5
+  },
+  {
+    "id": "01a18f41-8c00-7000-8000-00000000002e",
+    "name_pl": "Mostek biodrowy jednonóż",
+    "aliases": ["mostek na jednej nodze", "unoszenie bioder jednonóż", "single leg glute bridge"],
+    "primary_muscles": ["glutes"],
+    "secondary_muscles": ["hamstrings"],
+    "patterns": ["hinge"],
+    "requires": [],
+    "implements": 1,
+    "unilateral": true,
+    "measure": "reps",
+    "rep_range": {
+      "min": 10,
+      "max": 15
+    },
+    "rest_seconds": 60
+  },
+  {
+    "id": "01a18f41-8c00-7000-8000-00000000002f",
+    "name_pl": "Uginanie nóg z hantlą leżąc",
+    "aliases": ["uginanie nóg leżąc", "leg curl z hantlą", "dumbbell leg curl"],
+    "primary_muscles": ["hamstrings"],
+    "secondary_muscles": [],
+    "patterns": ["isolation"],
+    "requires": ["dumbbells", "bench"],
+    "implements": 1,
+    "unilateral": false,
+    "measure": "reps",
+    "rep_range": {
+      "min": 10,
+      "max": 15
+    },
+    "rest_seconds": 60
+  },
+  {
+    "id": "01a18f41-8c00-7000-8000-000000000030",
+    "name_pl": "Wspięcia na palce z hantlami",
+    "aliases": [
+      "wspięcia na palce",
+      "wspinanie na palce",
+      "łydki stojąc",
+      "calf raise",
+      "standing calf raise"
+    ],
+    "primary_muscles": ["calves"],
+    "secondary_muscles": [],
+    "patterns": ["isolation"],
+    "requires": ["dumbbells"],
+    "implements": 2,
+    "unilateral": false,
+    "measure": "reps",
+    "rep_range": {
+      "min": 12,
+      "max": 20
+    },
+    "rest_seconds": 60
+  },
+  {
+    "id": "01a18f41-8c00-7000-8000-000000000031",
+    "name_pl": "Krzesełko przy ścianie",
+    "aliases": ["krzesełko", "krzesło przy ścianie", "siad przy ścianie", "wall sit"],
+    "primary_muscles": ["quads"],
+    "secondary_muscles": ["glutes"],
+    "patterns": ["squat"],
+    "requires": [],
+    "implements": 1,
+    "unilateral": false,
+    "measure": "time",
+    "time_range_s": {
+      "min": 30,
+      "max": 90
+    },
+    "rest_seconds": 60
+  },
+  {
+    "id": "01a18f41-8c00-7000-8000-000000000032",
+    "name_pl": "Deska",
+    "aliases": ["plank", "planka", "plang", "blank", "deska na przedramionach", "podpór przodem"],
+    "primary_muscles": ["abs"],
+    "secondary_muscles": ["lower_back"],
+    "patterns": ["core"],
+    "requires": [],
+    "implements": 1,
+    "unilateral": false,
+    "measure": "time",
+    "time_range_s": {
+      "min": 30,
+      "max": 90
+    },
+    "rest_seconds": 60
+  },
+  {
+    "id": "01a18f41-8c00-7000-8000-000000000033",
+    "name_pl": "Deska bokiem",
+    "aliases": ["boczna deska", "side plank", "plank bokiem", "podpór bokiem"],
+    "primary_muscles": ["abs"],
+    "secondary_muscles": [],
+    "patterns": ["core"],
+    "requires": [],
+    "implements": 1,
+    "unilateral": true,
+    "measure": "time",
+    "time_range_s": {
+      "min": 20,
+      "max": 60
+    },
+    "rest_seconds": 45
+  },
+  {
+    "id": "01a18f41-8c00-7000-8000-000000000034",
+    "name_pl": "Łódka",
+    "aliases": ["trzymanie łódki", "hollow hold", "hollow body hold", "hollow body", "hollow"],
+    "primary_muscles": ["abs"],
+    "secondary_muscles": [],
+    "patterns": ["core"],
+    "requires": [],
+    "implements": 1,
+    "unilateral": false,
+    "measure": "time",
+    "time_range_s": {
+      "min": 20,
+      "max": 60
+    },
+    "rest_seconds": 45
+  },
+  {
+    "id": "01a18f41-8c00-7000-8000-000000000035",
+    "name_pl": "Spięcia brzucha",
+    "aliases": ["spięcia", "brzuszki", "skłony tułowia leżąc", "crunches", "crunch"],
+    "primary_muscles": ["abs"],
+    "secondary_muscles": [],
+    "patterns": ["core"],
+    "requires": [],
+    "implements": 1,
+    "unilateral": false,
+    "measure": "reps",
+    "rep_range": {
+      "min": 12,
+      "max": 20
+    },
+    "rest_seconds": 45
+  },
+  {
+    "id": "01a18f41-8c00-7000-8000-000000000036",
+    "name_pl": "Unoszenie nóg leżąc na ławce",
+    "aliases": [
+      "unoszenie nóg",
+      "unoszenie nóg na ławce",
+      "wznosy nóg leżąc",
+      "leg raise",
+      "lying leg raise"
+    ],
+    "primary_muscles": ["abs"],
+    "secondary_muscles": [],
+    "patterns": ["core"],
+    "requires": ["bench"],
+    "implements": 1,
+    "unilateral": false,
+    "measure": "reps",
+    "rep_range": {
+      "min": 10,
+      "max": 20
+    },
+    "rest_seconds": 45
+  },
+  {
+    "id": "01a18f41-8c00-7000-8000-000000000037",
+    "name_pl": "Rosyjski skręt z hantlą",
+    "aliases": ["rosyjskie skręty", "skręty tułowia z hantlą", "russian twist", "russian twists"],
+    "primary_muscles": ["abs"],
+    "secondary_muscles": [],
+    "patterns": ["core"],
+    "requires": ["dumbbells"],
+    "implements": 1,
+    "unilateral": false,
+    "measure": "reps",
+    "rep_range": {
+      "min": 10,
+      "max": 20
+    },
+    "rest_seconds": 45
+  },
+  {
+    "id": "01a18f41-8c00-7000-8000-000000000038",
+    "name_pl": "Martwy robak",
+    "aliases": ["martwy żuk", "dead bug", "ded bug", "dedbag"],
+    "primary_muscles": ["abs"],
+    "secondary_muscles": [],
+    "patterns": ["core"],
+    "requires": [],
+    "implements": 1,
+    "unilateral": true,
+    "measure": "reps",
+    "rep_range": {
+      "min": 8,
+      "max": 12
+    },
+    "rest_seconds": 45
+  },
+  {
+    "id": "01a18f41-8c00-7000-8000-000000000039",
+    "name_pl": "Skłony boczne z hantlą",
+    "aliases": ["skłony boczne", "skłony w bok", "side bend", "dumbbell side bend"],
+    "primary_muscles": ["abs"],
+    "secondary_muscles": ["lower_back"],
+    "patterns": ["core"],
+    "requires": ["dumbbells"],
+    "implements": 1,
+    "unilateral": true,
+    "measure": "reps",
+    "rep_range": {
+      "min": 12,
+      "max": 20
+    },
+    "rest_seconds": 45
+  }
+]
