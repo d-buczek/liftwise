@@ -1,8 +1,9 @@
 import { newId } from '@liftwise/core';
 import { asc, eq } from 'drizzle-orm';
-import { Hono } from 'hono';
+import { Hono, type Context } from 'hono';
 import { z } from 'zod';
 import type { AppEnv } from './app-env';
+import type { Db } from './db';
 import { changeLog } from './db/schema';
 import { apiError, readJson } from './http';
 import {
@@ -19,6 +20,18 @@ import {
 // `confirm` overwrites records that changed after the group (§5.9.4).
 const undoSchema = z.object({ confirm: z.boolean().default(false) }).default({ confirm: false });
 
+// The group that undid `groupId`, if any.
+const undoOf = (db: Db, groupId: string) =>
+  db
+    .select({ groupId: changeLog.change_group_id })
+    .from(changeLog)
+    .where(eq(changeLog.undo_of, groupId))
+    .limit(1);
+
+// Carries the undo group, so a client whose undo response got lost can still redo.
+const alreadyUndone = (c: Context, groupId: string) =>
+  c.json({ error: 'already_undone', groupId }, 409);
+
 export const changeRoutes = new Hono<AppEnv>()
   // Applies the inverse of a group as a new group, so undo syncs and can itself be undone.
   .post('/:groupId/undo', async (c) => {
@@ -27,20 +40,16 @@ export const changeRoutes = new Hono<AppEnv>()
     const body = await readJson(c, undoSchema);
     if (!body) return apiError(c, 400, 'invalid_request');
 
-    const [entries, undos] = await db.batch([
+    const [entries, [undone]] = await db.batch([
       db
         .select()
         .from(changeLog)
         .where(eq(changeLog.change_group_id, groupId))
         .orderBy(asc(changeLog.seq)),
-      db
-        .select({ id: changeLog.id })
-        .from(changeLog)
-        .where(eq(changeLog.undo_of, groupId))
-        .limit(1),
+      undoOf(db, groupId),
     ]);
     if (entries.length === 0) return apiError(c, 404, 'not_found');
-    if (undos.length > 0) return apiError(c, 409, 'already_undone');
+    if (undone) return alreadyUndone(c, undone.groupId);
 
     // Per record: its state before the group and the `seq` of the group's last change to it.
     type UndoRecord = { entity: Change['entity']; id: string; before: Row | null; seq: number };
@@ -81,6 +90,15 @@ export const changeRoutes = new Hono<AppEnv>()
         ? []
         : [{ groupId: undoGroupId, entity, before: row, after }];
     });
-    await runBatch(db, changeStatements(db, { actor: 'user', undoOf: groupId }, changes, now));
+    // Nothing to revert (e.g. the group created and deleted a row), so no group to redo.
+    if (changes.length === 0) return c.json({ groupId: null });
+    try {
+      await runBatch(db, changeStatements(db, { actor: 'user', undoOf: groupId }, changes, now));
+    } catch (error) {
+      // A concurrent undo of the group was first (unique index on `undo_of`).
+      const [winner] = await undoOf(db, groupId);
+      if (!winner) throw error;
+      return alreadyUndone(c, winner.groupId);
+    }
     return c.json({ groupId: undoGroupId });
   });

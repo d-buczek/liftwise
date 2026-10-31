@@ -102,12 +102,42 @@ describe('undo', () => {
     expect((await setById(set.id))?.reps).toBe(10);
   });
 
-  it('undoes a group once', async () => {
+  it('undoes a group once and names its undo on a retry', async () => {
     const { groupId } = await createWorkout();
-    await undo(groupId);
+    const { groupId: undoId } = await (await undo(groupId)).json<{ groupId: string }>();
     const again = await undo(groupId);
     expect(again.status).toBe(409);
-    expect(await again.json()).toEqual({ error: 'already_undone' });
+    expect(await again.json()).toEqual({ error: 'already_undone', groupId: undoId });
+  });
+
+  it('applies one of two concurrent undos', async () => {
+    const { groupId } = await createWorkout();
+    const responses = await Promise.all([undo(groupId), undo(groupId)]);
+    const bodies = await Promise.all(
+      responses.map((response) => response.json<{ groupId: string }>()),
+    );
+    expect(responses.map((response) => response.status).toSorted((a, b) => a - b)).toEqual([
+      200, 409,
+    ]);
+    expect(bodies[0]?.groupId).toBe(bodies[1]?.groupId);
+
+    const entries = await db().select().from(changeLog).where(eq(changeLog.undo_of, groupId));
+    expect(entries).toHaveLength(2);
+  });
+
+  it('returns no group when there is nothing to revert', async () => {
+    const workout = workoutRow();
+    const groupId = newId();
+    await push(token, [
+      upsert('workouts', workout, groupId),
+      remove('workouts', workout.id, groupId),
+    ]);
+
+    for (let i = 0; i < 2; i++) {
+      const response = await undo(groupId);
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual({ groupId: null });
+    }
   });
 
   it('returns 404 for unknown groups', async () => {

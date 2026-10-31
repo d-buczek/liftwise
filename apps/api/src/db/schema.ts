@@ -8,7 +8,7 @@ import type {
   Setting,
   SyncEntity,
 } from '@liftwise/core';
-import { index, integer, real, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import { index, integer, real, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
 
 // Column names are the core field names (snake_case), so a row maps 1:1 onto a core type.
 // Timestamps are ISO 8601 strings. Synced tables have no foreign keys: rows reference
@@ -164,7 +164,8 @@ export const changeLog = sqliteTable(
   (t) => [
     index('change_log_group_idx').on(t.change_group_id),
     index('change_log_entity_idx').on(t.entity, t.entity_id),
-    index('change_log_undo_of_idx').on(t.undo_of),
+    // A group is undone once: a concurrent second undo writes the same records and fails.
+    uniqueIndex('change_log_undo_of_idx').on(t.undo_of, t.entity, t.entity_id),
   ],
 );
 
