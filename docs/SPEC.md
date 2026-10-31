@@ -62,6 +62,9 @@ On top of that, an AI agent with tools over the app's data logs and edits from a
 | D33 | Light copy | Copy option **"Kopiuj jako lżejszy"**: one working set fewer per exercise, weight lowered by the whole steps closest to 10% | A deload or a bad day in one tap, on top of the copy flow; deterministic, offline |
 | D34 | Weekly summary | Computed in core from done sets, **no AI**; the agent comments on it only when asked | Free, offline, consistent with hints and balance |
 | D35 | Export & backup | **JSON + CSV export** generated on the device from the local mirror; server-side restore via D1 Time Travel | The user owns the data; no extra infrastructure (R2, cron) |
+| D36 | Bodyweight progression | At 0 kg the progression hint never adds weight, for reps and timed exercises alike; it stops at the range max (`hold`) | Loading a bodyweight exercise (vest, dumbbell) is the user's call, not a step |
+| D37 | Dumbbell limit | No `weight_up` beyond the heaviest dumbbell of the equipment profile (`max_kg`); the hint holds instead | A hint the user can't load is noise |
+| D38 | Records baseline | The first workout of an exercise is the baseline and sets **no records** | Without a FitNotes import (D2) the first weeks would be all records and toasts |
 
 ## 4. Scope
 
@@ -150,10 +153,11 @@ Active workout (hybrid logging):
 ### 5.4 History, charts and records
 
 - History: the calendar (§5.2), session detail, per-exercise history.
-- Records per exercise (working sets only):
-  - **Rep record per weight**: most reps at ≥ a given weight (FitNotes-style).
-  - **Estimated 1RM** (Epley: `w × (1 + reps/30)`, per dumbbell), best ever and trend.
-  - Timed exercises: **time record per weight** (longest hold at ≥ a given weight); no e1RM.
+- Records per exercise (done working sets only):
+  - **Rep record per weight**: most reps at ≥ a given weight (FitNotes-style). A set is a new record when no earlier set has at least its weight and at least its reps; the record table lists the sets no other set beats on both.
+  - **Estimated 1RM** (Epley: `w × (1 + reps/30)`, per dumbbell, unrounded), best ever and trend. A new record is above every earlier e1RM; sets at 0 kg have none.
+  - Timed exercises: **time record per weight** (longest hold at ≥ a given weight), the same rule with seconds; no e1RM.
+  - The first workout of an exercise is the baseline and sets no records (D38).
 - Charts: per exercise (top-set weight, e1RM, session volume over time; timed: top-set duration), per muscle group (weekly sets).
 
 ### 5.5 Exercise catalog
@@ -177,14 +181,15 @@ Active workout (hybrid logging):
 
 Pure, deterministic function in core. Suggests the next step per exercise and runs offline. It never changes data by itself; the user applies a hint with one tap (D8).
 
-- Input: exercise config (rep range, weight step, target RIR, default 1–2), recent done working sets.
-- Rules (v1, double progression):
-  1. If every working set of the last session reached `rep_max` and RIR was ≥ 1 or not recorded → suggest **weight + one step**; reps = `rep_min`.
-  2. Otherwise → suggest **same weight**; reps = last reps + 1 per set, capped at `rep_max`.
-  3. Reps at the same weight dropped in 2 consecutive sessions → flag `stall` (agent may suggest a deload of about 10% or an exercise swap).
-  4. Last session older than 14 days → suggest holding the weight (`reentry`).
-  5. Timed exercises: the same rules with seconds instead of reps (+5 s per set, `time_range_s`); at weight 0 the hint stops at the max time.
-- Output: `{ weight, sets, reps[], targetRir, reason }`, where `reason` is a code the UI/agent can explain.
+- Input: exercise config (rep range, weight step), target RIR (settings, default 1–2), the done working sets before the hint's day, optionally the heaviest dumbbell of the equipment profile.
+- The **last session** is the exercise's sets in the last workout before the day: its top weight `W`, its number of sets and their reps in the order performed. No history → no hint.
+- Rules (v1, double progression), the first match wins:
+  1. Last session older than 14 days → the same weight, sets and reps (`reentry`).
+  2. Every set reached `rep_max` and each RIR was ≥ 1 or not recorded → **`W` + one step**, reps = `rep_min` (`weight_up`). Never at 0 kg (D36) or beyond the heaviest dumbbell (D37); those fall through to rule 3.
+  3. Otherwise → **same weight `W`**; reps = last reps + 1 per set, capped at `rep_max` (reps already above it stay) (`reps_up`, or `hold` when nothing changes).
+- **`stall`** is a flag next to the reason: the last 3 sessions have the same top weight and the summed reps of their common sets dropped twice in a row. The agent may suggest a deload of about 10% or an exercise swap.
+- Timed exercises: the same rules with seconds instead of reps (+5 s per set, `time_range_s`, `time_up`); at weight 0 the hint stops at the max time.
+- Output: `{ weight, sets, reps, duration_s, targetRir, reason, stall }`: per-set `reps` or `duration_s` by the exercise's measure (the other one is null, as in a set); `reason` is one of `reentry`, `weight_up`, `reps_up`, `time_up`, `hold`, a code the UI/agent can explain.
 - Adding sets is left to the user; the engine doesn't suggest it.
 - The agent uses this as a baseline and may deviate based on check-in, stating why.
 

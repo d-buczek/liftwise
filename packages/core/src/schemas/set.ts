@@ -36,6 +36,11 @@ export const workoutSetSchema = z
   });
 export type WorkoutSet = z.infer<typeof workoutSetSchema>;
 
+// The measured value: reps, or seconds for a timed set.
+export function setValue(set: Pick<WorkoutSet, 'reps' | 'duration_s'>): number {
+  return set.reps ?? set.duration_s ?? 0;
+}
+
 export function setMatchesMeasure(
   set: Pick<WorkoutSet, 'reps' | 'duration_s'>,
   exercise: Pick<Exercise, 'measure'>,

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vite-plus/test';
 import { newId } from '../ids';
-import { setMatchesMeasure, workoutSetSchema } from './set';
+import { setMatchesMeasure, setValue, workoutSetSchema } from './set';
 
 const planned = {
   id: newId(),
@@ -59,5 +59,12 @@ describe('setMatchesMeasure', () => {
     expect(setMatchesMeasure(timedSet, { measure: 'reps' })).toBe(false);
     expect(setMatchesMeasure(timedSet, { measure: 'time' })).toBe(true);
     expect(setMatchesMeasure(repsSet, { measure: 'time' })).toBe(false);
+  });
+});
+
+describe('setValue', () => {
+  it('reads reps or seconds', () => {
+    expect(setValue({ reps: 10, duration_s: null })).toBe(10);
+    expect(setValue({ reps: null, duration_s: 45 })).toBe(45);
   });
 });
