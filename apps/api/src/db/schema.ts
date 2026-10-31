@@ -6,13 +6,14 @@ import type {
   MuscleGroup,
   Range,
   Setting,
+  SyncEntity,
 } from '@liftwise/core';
 import { index, integer, real, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
 // Column names are the core field names (snake_case), so a row maps 1:1 onto a core type.
 // Timestamps are ISO 8601 strings. Synced tables have no foreign keys: rows reference
-// client-generated ids and the sync apply path (LW-05) checks them, so a push never fails
-// on row order.
+// client-generated ids and the sync push checks them (src/sync/routes.ts), so a tombstoned
+// parent never blocks a write from the other device.
 
 const json = <T>() => text({ mode: 'json' }).$type<T>();
 const bool = () => integer({ mode: 'boolean' });
@@ -149,17 +150,21 @@ export const changeLog = sqliteTable(
     change_group_id: text().notNull(),
     actor: text({ enum: ['user', 'agent', 'system'] }).notNull(),
     thread_id: text(),
-    entity: text().notNull(),
+    entity: text().$type<SyncEntity>().notNull(),
     entity_id: text().notNull(),
     op: text({ enum: ['upsert', 'delete'] }).notNull(),
     before: json<Record<string, unknown>>(),
     after: json<Record<string, unknown>>(),
+    // The `seq` this change gave the row; a newer `seq` on the row means a later change (undo).
+    // Every write sets it; the default only lets SQLite add the column.
+    seq: integer().notNull().default(0),
     undo_of: text(),
     created_at: text().notNull(),
   },
   (t) => [
     index('change_log_group_idx').on(t.change_group_id),
     index('change_log_entity_idx').on(t.entity, t.entity_id),
+    index('change_log_undo_of_idx').on(t.undo_of),
   ],
 );
 

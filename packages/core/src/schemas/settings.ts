@@ -35,6 +35,14 @@ export const settingSchema = z.discriminatedUnion('key', [
   z.object({ id: idSchema, key: z.literal('models'), value: modelSettingsSchema }),
 ]);
 export type Setting = z.infer<typeof settingSchema>;
+export type SettingKey = Setting['key'];
+
+// One row per key with a fixed id, so devices creating it offline write the same row (D41).
+export const SETTING_IDS: Record<SettingKey, string> = {
+  training: '01a18f41-8c00-7000-8001-000000000002',
+  balance: '01a18f41-8c00-7000-8001-000000000003',
+  models: '01a18f41-8c00-7000-8001-000000000004',
+};
 
 export const DEFAULT_TRAINING_SETTINGS: TrainingSettings = {
   rest_seconds: 120,

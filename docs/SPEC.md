@@ -66,6 +66,8 @@ On top of that, an AI agent with tools over the app's data logs and edits from a
 | D37 | Dumbbell limit | No `weight_up` beyond the heaviest dumbbell of the equipment profile (`max_kg`); the hint holds instead | A hint the user can't load is noise |
 | D38 | Records baseline | The first workout of an exercise is the baseline and sets **no records** | Without a FitNotes import (D2) the first weeks would be all records and toasts |
 | D39 | DB migrations | **Drizzle schema → `drizzle-kit generate` (SQL) → `wrangler d1 migrations apply`**; not `drizzle-kit migrate`/`push` over `d1-http`. Drizzle stays on the stable 0.x line until v1 is released | Works locally without a Cloudflare account; the same SQL files feed the integration tests (`readD1Migrations`); wrangler records applied migrations in D1 |
+| D40 | Seed catalog in D1 | A **generated custom migration** (`pnpm --filter @liftwise/api db:seed` → `drizzle-kit generate --custom` filled from `exercises.json`): `INSERT … ON CONFLICT DO NOTHING`, each row with the next `seq`, no `change_log` | Ships with the migrations to local, remote and test D1 without an extra step; keeps the user's edits of seed exercises; a test fails when the JSON changed without a new seed migration |
+| D41 | Change groups & singletons | The **client assigns `groupId`**, one per user action, on every pushed mutation; the athlete profile and each settings key have **fixed ids in core** | One undo reverts a whole action (e.g. a copied workout) even across pushes; two offline devices creating the profile or a setting write the same row instead of duplicates |
 
 ## 4. Scope
 
@@ -361,16 +363,25 @@ All synced tables have: `id` (UUIDv7, text), `created_at`, `updated_at`, `delete
 | `settings` | key/value (JSON) |
 | `threads` / `messages` | per-day threads, linked `workout_id?`, message parts (incl. tool calls/results) |
 
-Server-only tables: `change_log` (`change_group_id`, `actor` user/agent/system, `thread_id?`, `entity`, `entity_id`, `op`, `before`, `after`, `undo_of?`), `applied_mutations` (idempotency), `devices` (`name`, `token_hash`, `last_seen_at`, `revoked_at`), `pairing_codes` (`code_hash`, `created_by`, `expires_at`, `used_at`), `pairing_failures` (`at`, failed redeem attempts for the rate limit), `sync_counter`, `pending_proposals` (risky tool proposals awaiting confirmation).
+Server-only tables: `change_log` (`change_group_id`, `actor` user/agent/system, `thread_id?`, `entity`, `entity_id`, `op`, `before`, `after` (row snapshots without `seq`), `seq` (the `seq` the change gave the row), `undo_of?`), `applied_mutations` (idempotency), `devices` (`name`, `token_hash`, `last_seen_at`, `revoked_at`), `pairing_codes` (`code_hash`, `created_by`, `expires_at`, `used_at`), `pairing_failures` (`at`, failed redeem attempts for the rate limit), `sync_counter`, `pending_proposals` (risky tool proposals awaiting confirmation).
 
 Client-only (Dexie): `outbox` (pending mutations), `prompt_queue`, `sync_state` (last pulled `seq`).
 
 ### 6.4 Sync
 
 - The server is authoritative. Clients apply changes optimistically to Dexie and enqueue mutations in `outbox`.
-- **Push** `POST /api/sync/push` takes `{ mutations: [{ mutationId, entity, op: upsert|delete, row }] }`. The server validates with core zod schemas, applies in order, writes `change_log`, assigns `seq` from `sync_counter` in the same D1 batch, and records `mutationId` for idempotency.
-- **Pull** `GET /api/sync/pull?since=<seq>` returns rows (incl. tombstones) with `seq > since`, paged.
-- Conflicts are resolved **last-write-wins** in server-apply order (single user, two devices; per-field merge not needed).
+- **Push** `POST /api/sync/push` takes `{ mutations: [{ mutationId, groupId, entity, op: upsert|delete, row }] }` (at most 100; protocol schemas in `packages/core/src/sync.ts`).
+  - Entities: `exercises`, `equipment_items`, `workouts`, `sets`, `athlete_profile`, `settings`; `threads` / `messages` join with LW-09.
+  - `groupId` is the client's change group, one per user action (D41). An upsert carries the full domain row; the server sets `created_at`, `updated_at`, `deleted_at`, `seq`. A delete (`row: { id }`) leaves a tombstone.
+  - The server validates with the core zod schemas, then references: a set needs its workout and exercise (in D1, tombstones included, or upserted earlier in the push) and the value its exercise measures. The profile and settings must use their fixed ids (D41).
+  - Mutations whose `mutationId` was applied before are skipped (`duplicate`). The rest are applied in order in **one D1 batch** (a transaction): per change, `sync_counter` is bumped and the row is written with the new `seq` and logged in `change_log`; every `mutationId` goes to `applied_mutations`.
+  - An invalid mutation rejects the whole push: `400 { error: 'invalid_mutation', index }`, nothing written. A write that changes nothing gets no `seq` and no `change_log` row.
+  - The response is `{ results: [{ mutationId, status: applied|duplicate }] }`. Two pushes racing on the same `mutationId` can't both apply: the second batch fails on `applied_mutations` and the client retries.
+  - Accepted risk: `before` snapshots are read just before the batch, so a write to the same row from the other device in that window (milliseconds) leaves a stale `before`.
+- **Pull** `GET /api/sync/pull?since=<seq>&limit=<n>` (limit ≤ 500, default 500) returns `{ changes: [{ entity, row }], seq, hasMore }`: rows with `seq > since` across all tables in `seq` order, tombstones included, each in its core shape plus the sync fields. `seq` is the cursor for the next pull.
+- Conflicts are resolved **last-write-wins** in server-apply order (single user, two devices; per-field merge not needed). An upsert of a tombstoned row brings it back.
+- **Undo** `POST /api/changes/:groupId/undo` (`{ confirm? }`): each record of the group goes back to its first `before` (a record the group created becomes a tombstone), written as a new group with `undo_of` through the same path. A record whose current `seq` differs from the group's last change to it is a conflict: `409 { error: 'conflict', conflicts }` unless `confirm: true`. A group is undone once (`409 already_undone`); undoing the undo group redoes it.
+- The seed catalog reaches D1 as a generated migration (D40) and syncs to devices like any row.
 - Agent writes happen server-side and reach clients via pull. The client pulls after push, after each agent turn, on app resume, and periodically while in the foreground.
 
 ### 6.5 API surface (v1)
@@ -383,7 +394,7 @@ Client-only (Dexie): `outbox` (pending mutations), `prompt_queue`, `sync_state` 
 | `POST /api/sync/push`, `GET /api/sync/pull` | Sync (§6.4) |
 | `POST /api/agent/chat` | Streaming agent turn `{ threadId, message, role?, localTime }` |
 | `POST /api/agent/proposals/:id/confirm` / `reject` | Risky tool confirmation |
-| `POST /api/changes/:groupId/undo` | Undo a change group |
+| `POST /api/changes/:groupId/undo` | Undo a change group (`{ confirm? }` overrides conflicts) |
 | `GET /api/providers` | Provider status (configured ✓/✗) and model settings |
 
 ### 6.6 Agent runtime and tool registry

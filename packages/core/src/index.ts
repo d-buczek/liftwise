@@ -18,4 +18,5 @@ export * from './schemas/set';
 export * from './schemas/settings';
 export * from './schemas/workout';
 export * from './swap';
+export * from './sync';
 export * from './weekly';

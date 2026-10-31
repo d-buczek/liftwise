@@ -2,7 +2,8 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "types": ["node"],
-    // Scripts run as .ts in Node (type stripping), so imports carry the extension.
+    // Scripts run as .ts in Node (type stripping; tsx for those importing core), so imports
+    // carry the extension.
     "allowImportingTsExtensions": true,
     "erasableSyntaxOnly": true
   },

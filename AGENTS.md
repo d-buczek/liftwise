@@ -28,6 +28,7 @@ Node 24 (`.node-version`), pnpm 10 (`packageManager`). Toolchain is Vite+ (`vite
 - `pnpm exec vp check` / `pnpm exec vp test` — the parts of `ci:check` separately; `pnpm exec vp test --project @liftwise/core` for one workspace.
 - `pnpm --filter @liftwise/web dev` / `pnpm --filter @liftwise/api dev` — local dev servers (API on a local D1, no Cloudflare account needed).
 - `pnpm --filter @liftwise/api db:generate` — SQL migration from `apps/api/src/db/schema.ts` (drizzle-kit); never edit generated migrations by hand.
+- `pnpm --filter @liftwise/api db:seed` — after changing `packages/core/data/exercises.json`: writes a new seed-catalog migration (existing rows are kept).
 - `pnpm --filter @liftwise/api db:migrate:local` / `db:migrate:remote` — apply migrations with wrangler.
 - `pnpm --filter @liftwise/api device:create <name> [--remote]` — create a device and print its token once.
 
