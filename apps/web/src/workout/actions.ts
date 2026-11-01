@@ -1,4 +1,5 @@
 import {
+  copiedLabelId,
   copyWorkout,
   newId,
   SETTING_IDS,
@@ -6,12 +7,13 @@ import {
   type Exercise,
   type TrainingSettings,
   type Workout,
+  type WorkoutLabel,
   type WorkoutSet,
 } from '@liftwise/core';
 import { applyLocal, type LocalChange } from '../db/mutate';
 import { dayWorkout, nextPosition, plannedSetsFor } from './day';
 import type { Draft } from './logging';
-import { catalog, dayData, historySets, trainingSettings } from './queries';
+import { catalog, dayData, historySets, trainingSettings, workoutLabels } from './queries';
 
 // User actions on a day; each is one `applyLocal` call, so one change group (D41).
 
@@ -24,7 +26,7 @@ async function targetOf(date: string) {
   return { day, workout, workoutId: workout.id, changes, created: existing ? null : workout };
 }
 
-function upsert<E extends 'workouts' | 'sets' | 'exercises' | 'settings'>(
+function upsert<E extends 'workouts' | 'sets' | 'exercises' | 'settings' | 'workout_labels'>(
   entity: E,
   row: Extract<LocalChange, { op: 'upsert'; entity: E }>['row'],
 ): LocalChange {
@@ -35,11 +37,17 @@ function remove(entity: 'workouts' | 'sets', id: string): LocalChange {
   return { op: 'delete', entity, row: { id } };
 }
 
-// What a copy wrote: its sets and the workout it created for a day without one.
-export type CopyResult = { sets: WorkoutSet[]; created: Workout | null };
+// What a copy wrote: its sets, the workout it created for a day without one, and the existing
+// workout it gave the source's label (as it was before) with that label.
+export type CopyResult = {
+  sets: WorkoutSet[];
+  created: Workout | null;
+  labelled: { before: Workout; labelId: string } | null;
+};
 
 // "Kopiuj trening" / "Kopiuj jako lżejszy" (§5.2, D33): the source day's sets appended to the
-// target day as planned sets. Returns what it wrote (for "Cofnij").
+// target day as planned sets; the target gets the source's label unless it has its own (D48).
+// Returns what it wrote (for "Cofnij").
 export async function copyDay(
   sourceDate: string,
   targetDate: string,
@@ -52,24 +60,63 @@ export async function copyDay(
     target: { workoutId: target.workoutId, sets: target.day.sets },
     light: light ? { exercises: await catalog(), training: await trainingSettings() } : undefined,
   });
-  if (sets.length === 0) return { sets, created: null };
-  await applyLocal([...target.changes, ...sets.map((set) => upsert('sets', set))]);
-  return { sets, created: target.created };
+  if (sets.length === 0) return { sets, created: null, labelled: null };
+  const labelId = copiedLabelId(source.workouts, target.day.workouts, await workoutLabels());
+  const workout = labelId ? { ...target.workout, label_id: labelId } : target.workout;
+  await applyLocal([
+    ...(target.created || labelId ? [upsert('workouts', workout)] : []),
+    ...sets.map((set) => upsert('sets', set)),
+  ]);
+  return {
+    sets,
+    created: target.created && workout,
+    labelled: !target.created && labelId ? { before: target.workout, labelId } : null,
+  };
 }
 
-// "Cofnij" after a copy (D44): the copied sets, and the workout the copy created unless it has
-// got other sets since.
+// "Cofnij" after a copy (D44): the copied sets, the workout the copy created unless it has got
+// other sets since, and the label it gave an existing workout unless that has changed since.
 export async function undoCopy(copy: CopyResult) {
   const copied = new Set(copy.sets.map((set) => set.id));
-  const workout = copy.created;
+  const { created, labelled } = copy;
+  const date = (created ?? labelled?.before)?.date;
+  const day = date ? await dayData(date) : { workouts: [], sets: [] };
   const kept =
-    workout !== null &&
-    (await dayData(workout.date)).sets.some(
-      (set) => set.workout_id === workout.id && !copied.has(set.id),
+    created !== null &&
+    day.sets.some((set) => set.workout_id === created.id && !copied.has(set.id));
+  const relabelled =
+    labelled &&
+    day.workouts.find(
+      (workout) => workout.id === labelled.before.id && workout.label_id === labelled.labelId,
     );
   return applyLocal([
     ...copy.sets.map((set) => remove('sets', set.id)),
-    ...(workout && !kept ? [remove('workouts', workout.id)] : []),
+    ...(created && !kept ? [remove('workouts', created.id)] : []),
+    ...(relabelled
+      ? [upsert('workouts', { ...relabelled, label_id: labelled.before.label_id })]
+      : []),
+  ]);
+}
+
+// The label of every workout of a day (normally one), so the day shows it whichever is oldest.
+async function dayLabelChanges(date: string, labelId: string | null): Promise<LocalChange[]> {
+  const { workouts } = await dayData(date);
+  return workouts
+    .filter((workout) => workout.label_id !== labelId)
+    .map((workout) => upsert('workouts', { ...workout, label_id: labelId }));
+}
+
+// The day's label chip (D48); a day without a workout has none.
+export async function setDayLabel(date: string, labelId: string | null) {
+  const changes = await dayLabelChanges(date, labelId);
+  if (changes.length > 0) await applyLocal(changes);
+}
+
+// A new or edited label; `assignTo` also gives it to that day, in the same change group.
+export async function saveLabel(label: WorkoutLabel, assignTo?: string) {
+  await applyLocal([
+    upsert('workout_labels', label),
+    ...(assignTo ? await dayLabelChanges(assignTo, label.id) : []),
   ]);
 }
 

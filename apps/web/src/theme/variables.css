@@ -13,6 +13,15 @@
   --lw-muted: #586070;
   --lw-menu-background: #e1e4e8;
   --lw-primary-inverse: #6e9bf5;
+  /* Workout labels (D48): fills under contrast text and outlines on the background, all at least
+     4.5:1 in both palettes; the label name always shows too, so color is never the only cue. */
+  --lw-label-contrast: #ffffff;
+  --lw-label-cobalt: #2d5bc0;
+  --lw-label-teal: #0f6e66;
+  --lw-label-violet: #6a42b8;
+  --lw-label-green: #3d6e1f;
+  --lw-label-magenta: #a8326b;
+  --lw-label-graphite: #4b5260;
 
   --ion-font-family: var(--lw-font);
   --ion-background-color: #edf0f4;
@@ -70,6 +79,13 @@
   --lw-muted: #9ea5b0;
   --lw-menu-background: #15171b;
   --lw-primary-inverse: #2d5bc0;
+  --lw-label-contrast: #14171b;
+  --lw-label-cobalt: #6e9bf5;
+  --lw-label-teal: #3cc0b0;
+  --lw-label-violet: #b39af7;
+  --lw-label-green: #8cc56c;
+  --lw-label-magenta: #f084b8;
+  --lw-label-graphite: #a9b1bf;
 
   --ion-background-color: #1b1e23;
   --ion-background-color-rgb: 27, 30, 35;

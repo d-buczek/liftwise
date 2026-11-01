@@ -1,4 +1,11 @@
-import { addDays, weekOf, type WorkoutSet, type Workout } from '@liftwise/core';
+import {
+  addDays,
+  dayLabelId,
+  weekOf,
+  type Workout,
+  type WorkoutLabel,
+  type WorkoutSet,
+} from '@liftwise/core';
 
 // The device's local date (§5.1): the day a workout belongs to.
 export function today(now = new Date()): string {
@@ -51,4 +58,22 @@ export function dayMarks(
     else if (!marks.has(date)) marks.set(date, 'planned');
   }
   return marks;
+}
+
+// The label of each date whose workouts have one (D48); a label missing from `labels` is skipped.
+export function dayLabels<L extends Pick<WorkoutLabel, 'id'>>(
+  workouts: Pick<Workout, 'id' | 'date' | 'label_id'>[],
+  labels: L[],
+): Map<string, L> {
+  const byId = new Map(labels.map((label) => [label.id, label]));
+  const byDate = new Map<string, Pick<Workout, 'id' | 'label_id'>[]>();
+  for (const workout of workouts) {
+    byDate.set(workout.date, [...(byDate.get(workout.date) ?? []), workout]);
+  }
+  const result = new Map<string, L>();
+  for (const [date, dayWorkouts] of byDate) {
+    const label = byId.get(dayLabelId(dayWorkouts) ?? '');
+    if (label) result.set(date, label);
+  }
+  return result;
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vite-plus/test';
-import { addMonths, dateValue, dayMarks, monthGrid, today } from './calendar';
+import { addMonths, dateValue, dayLabels, dayMarks, monthGrid, today } from './calendar';
 
 describe('calendar', () => {
   it('formats the local date and parses it back at local midnight', () => {
@@ -46,6 +46,21 @@ describe('calendar', () => {
     expect([...marks]).toEqual([
       ['2026-11-02', 'done'],
       ['2026-11-04', 'planned'],
+    ]);
+  });
+
+  it("labels each date with its oldest labelled workout's label", () => {
+    const labels = [{ id: 'A' }, { id: 'B' }];
+    const workouts = [
+      { id: '2', date: '2026-11-02', label_id: 'B' },
+      { id: '1', date: '2026-11-02', label_id: 'A' },
+      { id: '3', date: '2026-11-03', label_id: null },
+      { id: '4', date: '2026-11-04', label_id: 'deleted' },
+      { id: '5', date: '2026-11-05', label_id: 'B' },
+    ];
+    expect([...dayLabels(workouts, labels)]).toEqual([
+      ['2026-11-02', { id: 'A' }],
+      ['2026-11-05', { id: 'B' }],
     ]);
   });
 });

@@ -86,16 +86,21 @@ export function lightWeightKg(weightKg: number, stepKg: number): number {
 }
 
 // The default copy source: the most recent workout with sets before the target day (§5.2);
-// on the same date the later id (UUIDv7) wins.
-export function defaultCopySource<W extends Pick<Workout, 'id' | 'date'>>(
+// on the same date the later id (UUIDv7) wins. With `labelId`, the most recent one with that
+// label ("Ostatni A", D48).
+export function defaultCopySource<
+  W extends Pick<Workout, 'id' | 'date'> & Partial<Pick<Workout, 'label_id'>>,
+>(
   workouts: W[],
   sets: Pick<WorkoutSet, 'workout_id'>[],
   targetDate: string,
+  labelId?: string,
 ): W | null {
   const withSets = new Set(sets.map((set) => set.workout_id));
   let best: W | null = null;
   for (const workout of workouts) {
     if (workout.date >= targetDate || !withSets.has(workout.id)) continue;
+    if (labelId !== undefined && workout.label_id !== labelId) continue;
     if (!best || workout.date > best.date || (workout.date === best.date && workout.id > best.id)) {
       best = workout;
     }

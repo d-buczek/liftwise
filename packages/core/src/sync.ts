@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { idSchema } from './ids';
 import { equipmentItemSchema } from './schemas/equipment';
 import { exerciseSchema } from './schemas/exercise';
+import { workoutLabelSchema } from './schemas/label';
 import { ATHLETE_PROFILE_ID, athleteProfileSchema } from './schemas/profile';
 import { workoutSetSchema } from './schemas/set';
 import { SETTING_IDS, settingSchema } from './schemas/settings';
@@ -14,6 +15,7 @@ import { workoutSchema } from './schemas/workout';
 export const syncEntitySchema = z.enum([
   'exercises',
   'equipment_items',
+  'workout_labels',
   'workouts',
   'sets',
   'athlete_profile',
@@ -24,6 +26,7 @@ export type SyncEntity = z.infer<typeof syncEntitySchema>;
 export const syncRowSchemas = {
   exercises: exerciseSchema,
   equipment_items: equipmentItemSchema,
+  workout_labels: workoutLabelSchema,
   workouts: workoutSchema,
   sets: workoutSetSchema,
   athlete_profile: athleteProfileSchema,
@@ -55,6 +58,7 @@ export const syncMutationSchema = z.discriminatedUnion('op', [
   z.discriminatedUnion('entity', [
     upsertOf('exercises', exerciseSchema),
     upsertOf('equipment_items', equipmentItemSchema),
+    upsertOf('workout_labels', workoutLabelSchema),
     upsertOf('workouts', workoutSchema),
     upsertOf('sets', workoutSetSchema),
     upsertOf(

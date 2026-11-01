@@ -11,6 +11,7 @@ import {
   sets,
   settings,
   syncCounter,
+  workoutLabels,
   workouts,
 } from '../db/schema';
 
@@ -20,6 +21,7 @@ import {
 export const syncTables = {
   exercises,
   equipment_items: equipmentItems,
+  workout_labels: workoutLabels,
   workouts,
   sets,
   athlete_profile: athleteProfile,

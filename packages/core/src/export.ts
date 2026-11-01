@@ -2,6 +2,7 @@ import { isDoneSet } from './conventions';
 import { datedSets } from './history';
 import type { EquipmentItem } from './schemas/equipment';
 import type { Exercise } from './schemas/exercise';
+import type { WorkoutLabel } from './schemas/label';
 import type { AthleteProfile } from './schemas/profile';
 import type { WorkoutSet } from './schemas/set';
 import type { Setting } from './schemas/settings';
@@ -14,6 +15,7 @@ export const EXPORT_VERSION = 1;
 export type ExportTables = {
   exercises: Exercise[];
   equipment_items: EquipmentItem[];
+  workout_labels: WorkoutLabel[];
   workouts: Workout[];
   sets: WorkoutSet[];
   athlete_profile: AthleteProfile[];
@@ -41,6 +43,7 @@ export function jsonExport(tables: ExportTables, exportedAt: string): string {
       tables: {
         exercises: tables.exercises,
         equipment_items: tables.equipment_items,
+        workout_labels: tables.workout_labels,
         workouts: tables.workouts,
         sets: tables.sets,
         athlete_profile: tables.athlete_profile,

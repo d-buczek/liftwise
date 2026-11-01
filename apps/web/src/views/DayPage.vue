@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import {
+  dayLabelId,
   DEFAULT_TRAINING_SETTINGS,
   weightStepKg,
   type Exercise,
+  type WorkoutLabel,
   type WorkoutSet,
 } from '@liftwise/core';
 import {
@@ -17,7 +19,7 @@ import {
   IonReorderGroup,
   type ReorderEndCustomEvent,
 } from '@ionic/vue';
-import { ellipsisVertical } from 'ionicons/icons';
+import { add, ellipsisVertical } from 'ionicons/icons';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
@@ -25,6 +27,8 @@ import AppPage from '../components/AppPage.vue';
 import CopyWorkout from '../components/CopyWorkout.vue';
 import ExerciseBlock from '../components/ExerciseBlock.vue';
 import ExercisePicker from '../components/ExercisePicker.vue';
+import LabelChip from '../components/LabelChip.vue';
+import LabelPicker from '../components/LabelPicker.vue';
 import RestTimer from '../components/RestTimer.vue';
 import SetEditor from '../components/SetEditor.vue';
 import { useFormat } from '../composables/format';
@@ -35,7 +39,9 @@ import {
   addExercise,
   deleteSets,
   restoreSets,
+  saveLabel,
   saveSets,
+  setDayLabel,
   swapExercise,
   undoCopy,
   type CopyResult,
@@ -56,6 +62,7 @@ import {
   historySets,
   maxDumbbellKg,
   trainingSettings,
+  workoutLabels,
 } from '../workout/queries';
 
 // A day (§5.2): its exercises with planned and done sets; copy a workout onto it, add, swap,
@@ -89,8 +96,10 @@ const { data: exercises, loaded: catalogLoaded } = useLiveQueryState(
   async () => new Map((await catalog()).map((exercise) => [exercise.id, exercise])),
   new Map<string, Exercise>(),
 );
-// Nothing shows until the first read, so the empty state and placeholder names do not flash.
-const loaded = computed(() => dayLoaded.value && catalogLoaded.value);
+const { data: labels, loaded: labelsLoaded } = useLiveQueryState(workoutLabels, []);
+// Nothing shows until the first read, so the empty state, placeholder names and an empty label
+// chip do not flash.
+const loaded = computed(() => dayLoaded.value && catalogLoaded.value && labelsLoaded.value);
 const training = useLiveQuery(trainingSettings, DEFAULT_TRAINING_SETTINGS);
 const maxKg = useLiveQuery(async () => maxDumbbellKg(await equipment()), null);
 
@@ -120,10 +129,27 @@ const hints = computed(() => {
 const stepKg = (exerciseId: string) =>
   weightStepKg(exercises.value.get(exerciseId), training.value);
 
-// Modals: copy, exercise picker (add or swap), set editor.
+// The day's label (D48); archived labels still show on their days.
+const dayLabel = computed(() => {
+  const id = dayLabelId(view.value.workouts);
+  return labels.value.find((label) => label.id === id) ?? null;
+});
+
+// Modals: copy, exercise picker (add or swap), set editor, label picker.
 const copyMode = ref<'copy' | 'light' | null>(null);
 const picker = ref<{ swap: Block | null } | null>(null);
 const editing = ref<WorkoutSet | null>(null);
+const labelPicker = ref(false);
+
+async function pickLabel(labelId: string | null) {
+  labelPicker.value = false;
+  await setDayLabel(props.date, labelId);
+}
+
+async function createLabel(label: WorkoutLabel) {
+  labelPicker.value = false;
+  await saveLabel(label, props.date);
+}
 
 // The copy ran in the modal; the toast offers to remove what it wrote.
 async function onCopyDone(sourceDate: string, copy: CopyResult) {
@@ -251,6 +277,17 @@ async function reorderEnd(event: ReorderEndCustomEvent) {
       </template>
 
       <template v-else-if="loaded && blocks.length > 0">
+        <button
+          type="button"
+          class="lw-day__label"
+          :aria-label="dayLabel ? t('day.label', { name: dayLabel.name }) : undefined"
+          @click="labelPicker = true"
+        >
+          <label-chip v-if="dayLabel" :label="dayLabel" />
+          <template v-else>
+            <ion-icon :icon="add" aria-hidden="true" />{{ t('day.addLabel') }}
+          </template>
+        </button>
         <ion-button v-if="loggable" expand="block" class="lw-day__start" @click="openWorkout()">
           {{ started ? t('day.resume') : t('day.start') }}
         </ion-button>
@@ -326,6 +363,22 @@ async function reorderEnd(event: ReorderEndCustomEvent) {
         @close="editing = null"
       />
     </ion-modal>
+    <ion-modal
+      :is-open="labelPicker"
+      :initial-breakpoint="1"
+      :breakpoints="[0, 1]"
+      class="lw-sheet"
+      @did-dismiss="labelPicker = false"
+    >
+      <label-picker
+        v-if="labelPicker"
+        :labels="labels"
+        :current="dayLabel?.id ?? null"
+        @pick="pickLabel"
+        @create="createLabel"
+        @close="labelPicker = false"
+      />
+    </ion-modal>
 
     <template #footer>
       <rest-timer />
@@ -334,10 +387,29 @@ async function reorderEnd(event: ReorderEndCustomEvent) {
 </template>
 
 <style scoped>
+.lw-day__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 48px;
+  margin-top: 8px;
+  padding: 0 4px;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--lw-muted);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.lw-day__label ion-icon {
+  font-size: 18px;
+}
+
 .lw-day__start {
   --border-radius: 14px;
   height: 56px;
-  margin: 16px 0 0;
+  margin: 8px 0 0;
   font-size: 20px;
   font-stretch: var(--lw-narrow);
   font-weight: 700;

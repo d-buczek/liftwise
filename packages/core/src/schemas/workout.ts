@@ -20,5 +20,7 @@ export const workoutSchema = z.object({
   // Rationale of an accepted AI proposal.
   rationale: z.string().nullable().default(null),
   note: z.string().default(''),
+  // The training set the workout belongs to (D48).
+  label_id: idSchema.nullable().default(null),
 });
 export type Workout = z.infer<typeof workoutSchema>;

@@ -158,6 +158,42 @@ describe('sync push', () => {
     expect(await db().select().from(sets)).toHaveLength(3);
   });
 
+  it('checks the label a workout refers to', async () => {
+    const label = { id: newId(), name: 'A', color: 'cobalt' };
+    const deleted = { id: newId(), name: 'B', color: 'teal' };
+    await push(token, [upsert('workout_labels', deleted), remove('workout_labels', deleted.id)]);
+
+    // The label earlier in the same push and a tombstoned one both count.
+    const valid = await push(token, [
+      upsert('workout_labels', label),
+      upsert('workouts', workoutRow({ label_id: label.id })),
+      upsert('workouts', workoutRow({ label_id: deleted.id })),
+    ]);
+    expect(valid.status).toBe(200);
+
+    // A missing label, and one upserted only after the workout.
+    const later = { id: newId(), name: 'C', color: 'violet' };
+    for (const mutations of [
+      [upsert('workouts', workoutRow()), upsert('workouts', workoutRow({ label_id: newId() }))],
+      [
+        upsert('workouts', workoutRow()),
+        upsert('workouts', workoutRow({ label_id: later.id })),
+        upsert('workout_labels', later),
+      ],
+    ]) {
+      const invalid = await push(token, mutations);
+      expect(await invalid.json()).toEqual({ error: 'invalid_mutation', index: 1 });
+    }
+  });
+
+  it('pulls a label in its core shape', async () => {
+    const since = await lastSeq();
+    const label = { id: newId(), name: 'Push', color: 'magenta', archived: true };
+    await push(token, [upsert('workout_labels', label)]);
+    const [change] = (await pull(token, since)).changes;
+    expect(change).toMatchObject({ entity: 'workout_labels', row: { ...label, deleted_at: null } });
+  });
+
   it('rejects a malformed body', async () => {
     const response = await call('/api/sync/push', {
       method: 'POST',

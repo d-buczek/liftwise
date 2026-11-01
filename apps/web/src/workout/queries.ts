@@ -1,4 +1,5 @@
 import {
+  compareLabels,
   datedSets,
   DEFAULT_TRAINING_SETTINGS,
   SETTING_IDS,
@@ -52,6 +53,16 @@ export async function historySets(exerciseIds?: string[]): Promise<DatedSet[]> {
   const ids = [...new Set(sets.map((set) => set.workout_id))];
   const workouts = (await db.workouts.bulkGet(ids)).filter(alive);
   return datedSets(workouts, sets);
+}
+
+// Every workout, for the labels of past days (history, the copy picker).
+export async function allWorkouts(): Promise<SyncRow<'workouts'>[]> {
+  return (await db.workouts.toArray()).filter(alive);
+}
+
+// Workout labels, archived ones included: they still show on their workouts (D48).
+export async function workoutLabels(): Promise<SyncRow<'workout_labels'>[]> {
+  return (await db.workout_labels.toArray()).filter(alive).sort(compareLabels);
 }
 
 export async function catalog(): Promise<SyncRow<'exercises'>[]> {

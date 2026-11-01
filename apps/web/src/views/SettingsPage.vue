@@ -10,7 +10,12 @@ import {
   IonSegment,
   IonSegmentButton,
 } from '@ionic/vue';
-import { barbellOutline, phonePortraitOutline, timerOutline } from 'ionicons/icons';
+import {
+  barbellOutline,
+  phonePortraitOutline,
+  pricetagOutline,
+  timerOutline,
+} from 'ionicons/icons';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppPage from '../components/AppPage.vue';
@@ -21,13 +26,17 @@ import { useLiveQuery } from '../composables/liveQuery';
 import { db } from '../db/database';
 import { THEME_PREFERENCES, useThemeStore } from '../stores/theme';
 import { saveTrainingSettings } from '../workout/actions';
-import { trainingSettings } from '../workout/queries';
+import { trainingSettings, workoutLabels } from '../workout/queries';
 
 const { t } = useI18n();
 const format = useFormat();
 const theme = useThemeStore();
 const equipmentCount = useLiveQuery(
   () => db.equipment_items.filter((row) => row.deleted_at === null).count(),
+  0,
+);
+const labelCount = useLiveQuery(
+  async () => (await workoutLabels()).filter((label) => !label.archived).length,
   0,
 );
 const training = useLiveQuery(trainingSettings, DEFAULT_TRAINING_SETTINGS);
@@ -62,6 +71,11 @@ async function saveTraining(value: TrainingSettings) {
           {{ t('training.title') }}
           <p>{{ trainingSummary }}</p>
         </ion-label>
+      </ion-item>
+      <ion-item router-link="/settings/labels">
+        <ion-icon slot="start" :icon="pricetagOutline" aria-hidden="true" />
+        <ion-label>{{ t('labels.title') }}</ion-label>
+        <ion-note slot="end">{{ t('labels.count', labelCount) }}</ion-note>
       </ion-item>
       <ion-item router-link="/settings/devices">
         <ion-icon slot="start" :icon="phonePortraitOutline" aria-hidden="true" />

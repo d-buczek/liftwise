@@ -156,4 +156,15 @@ describe('defaultCopySource', () => {
     expect(defaultCopySource(workouts, sets, '2026-10-27')).toBeNull();
     expect(defaultCopySource([], [], '2026-10-31')).toBeNull();
   });
+
+  it('with a label, picks the most recent workout with sets and that label', () => {
+    const [a, b] = [newId(), newId()];
+    // A on 10-27, the later 10-29 and 10-31; B on the earlier 10-29, 10-30 (no sets) and 11-02.
+    const labelled = workouts.map((w, i) => ({ ...w, label_id: i % 2 === 0 ? a : b }));
+    expect(defaultCopySource(labelled, sets, '2026-10-31', b)).toBe(labelled[1]);
+    expect(defaultCopySource(labelled, sets, '2026-10-31', a)).toBe(labelled[2]);
+    expect(defaultCopySource(labelled, sets, '2026-10-29', a)).toBe(labelled[0]);
+    expect(defaultCopySource(labelled, sets, '2026-10-29', b)).toBeNull();
+    expect(defaultCopySource(workouts, sets, '2026-10-31', a)).toBeNull();
+  });
 });

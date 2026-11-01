@@ -1,16 +1,19 @@
 <script setup lang="ts">
+import { compareLabels } from '@liftwise/core';
 import { IonButton, IonItem, IonLabel, IonList, IonNote, useIonRouter } from '@ionic/vue';
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppPage from '../components/AppPage.vue';
+import LabelChip from '../components/LabelChip.vue';
 import MonthCalendar from '../components/MonthCalendar.vue';
 import { useFormat } from '../composables/format';
 import { useLiveQuery } from '../composables/liveQuery';
 import { useToday } from '../composables/today';
-import { dayMarks, monthGrid, monthOf } from '../workout/calendar';
-import { dayData, rangeData } from '../workout/queries';
+import { dayLabels, dayMarks, monthGrid, monthOf } from '../workout/calendar';
+import { dayData, rangeData, workoutLabels } from '../workout/queries';
 
-// The home screen (§5.2): the month with done and planned days; a tap opens the day.
+// The home screen (§5.2): the month with done and planned days in their labels' colors (D48);
+// a tap opens the day.
 const { t } = useI18n();
 const format = useFormat();
 const router = useIonRouter();
@@ -22,15 +25,21 @@ watch(now, (date, before) => {
   if (month.value === monthOf(before)) month.value = monthOf(date);
 });
 
-const marks = useLiveQuery(
+const view = useLiveQuery(
   async () => {
     const weeks = monthGrid(month.value);
     const { workouts, sets } = await rangeData(weeks[0]?.[0] ?? '', weeks.at(-1)?.[6] ?? '');
-    return dayMarks(workouts, sets);
+    return { marks: dayMarks(workouts, sets), labels: dayLabels(workouts, await workoutLabels()) };
   },
-  new Map(),
+  { marks: new Map(), labels: new Map() },
   month,
 );
+// The legend: labels of the workouts on the grid, the neighbouring months' days included.
+const monthLabels = computed(() => {
+  const { marks, labels } = view.value;
+  const used = [...labels].filter(([date]) => marks.has(date));
+  return [...new Set(used.map(([, label]) => label))].sort(compareLabels);
+});
 
 const todaySets = useLiveQuery(async () => (await dayData(now.value)).sets, [], now);
 const todayNote = computed(() => {
@@ -64,11 +73,20 @@ function open(date: string) {
       </ion-item>
     </ion-list>
 
-    <month-calendar v-model:month="month" :marks="marks" @select="open" />
+    <month-calendar
+      v-model:month="month"
+      :marks="view.marks"
+      :labels="view.labels"
+      @select="open"
+    />
 
     <p class="lw-calendar__legend">
       <span class="lw-calendar__key is-done" aria-hidden="true" />{{ t('calendar.done') }}
       <span class="lw-calendar__key is-planned" aria-hidden="true" />{{ t('calendar.planned') }}
+    </p>
+    <p v-if="monthLabels.length > 0" class="lw-calendar__legend">
+      {{ t('calendar.labels') }}
+      <label-chip v-for="label in monthLabels" :key="label.id" :label="label" />
     </p>
   </app-page>
 </template>
@@ -86,6 +104,7 @@ function open(date: string) {
 
 .lw-calendar__legend {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
   margin: 16px 0 0;

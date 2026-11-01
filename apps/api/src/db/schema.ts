@@ -2,6 +2,7 @@ import type {
   Checkin,
   EquipmentItem,
   EquipmentType,
+  LabelColor,
   MovementPattern,
   MuscleGroup,
   Range,
@@ -61,6 +62,17 @@ export const equipmentItems = sqliteTable(
   (t) => [index('equipment_items_seq_idx').on(t.seq)],
 );
 
+export const workoutLabels = sqliteTable(
+  'workout_labels',
+  {
+    ...synced(),
+    name: text().notNull(),
+    color: text().$type<LabelColor>().notNull(),
+    archived: bool().notNull().default(false),
+  },
+  (t) => [index('workout_labels_seq_idx').on(t.seq)],
+);
+
 export const workouts = sqliteTable(
   'workouts',
   {
@@ -71,6 +83,7 @@ export const workouts = sqliteTable(
     checkin: json<Checkin>(),
     rationale: text(),
     note: text().notNull().default(''),
+    label_id: text(),
   },
   (t) => [index('workouts_seq_idx').on(t.seq), index('workouts_date_idx').on(t.date)],
 );

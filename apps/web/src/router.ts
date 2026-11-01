@@ -9,6 +9,7 @@ import EmptyPage from './views/EmptyPage.vue';
 import EquipmentPage from './views/EquipmentPage.vue';
 import ExerciseHistoryPage from './views/ExerciseHistoryPage.vue';
 import HistoryPage from './views/HistoryPage.vue';
+import LabelsPage from './views/LabelsPage.vue';
 import PairPage from './views/PairPage.vue';
 import SettingsPage from './views/SettingsPage.vue';
 import TabsPage from './views/TabsPage.vue';
@@ -73,6 +74,7 @@ const routes: RouteRecordRaw[] = [
       { path: 'settings', component: SettingsPage },
       { path: 'settings/equipment', component: EquipmentPage },
       { path: 'settings/devices', component: DevicesPage },
+      { path: 'settings/labels', component: LabelsPage },
     ],
   },
   { path: '/:pathMatch(.*)*', redirect: '/calendar' },

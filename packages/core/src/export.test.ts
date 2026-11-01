@@ -11,6 +11,7 @@ describe('jsonExport', () => {
     const tables: ExportTables = {
       exercises: [exercise],
       equipment_items: [],
+      workout_labels: [{ id: newId(), name: 'A', color: 'cobalt', archived: false }],
       workouts: [],
       sets: [],
       athlete_profile: [{ id: newId(), content: '# Cele' }],
@@ -27,6 +28,7 @@ describe('jsonExport', () => {
     expect(Object.keys(JSON.parse(json).tables)).toEqual([
       'exercises',
       'equipment_items',
+      'workout_labels',
       'workouts',
       'sets',
       'athlete_profile',

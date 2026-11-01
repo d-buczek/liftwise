@@ -127,6 +127,8 @@
     "done": "zrobiony",
     "planned": "zaplanowany",
     "legend": "Trening:",
+    "label": "etykieta {name}",
+    "labels": "Etykiety:",
     "restDay": "bez treningu",
     "todayDone": "zrobione {done} z {total} serii"
   },
@@ -156,7 +158,9 @@
     "warmupShort": "rozgrz.",
     "start": "Rozpocznij trening",
     "resume": "Wróć do treningu",
-    "openWorkout": "Trening: {name}"
+    "openWorkout": "Trening: {name}",
+    "label": "Etykieta: {name}. Zmień",
+    "addLabel": "Dodaj etykietę"
   },
   "workout": {
     "position": "Ćwiczenie {n} z {total}",
@@ -267,7 +271,36 @@
     "submit": "Kopiuj na {date}",
     "none": "Nie ma jeszcze treningu, który dałoby się skopiować.",
     "preview": "Skopiuje się",
-    "copied": "Skopiowano trening z {date}."
+    "copied": "Skopiowano trening z {date}.",
+    "last": "Ostatni:",
+    "lastLabel": "Ostatni trening {name}, {date}"
+  },
+  "labels": {
+    "title": "Etykiety treningów",
+    "count": "Brak | {n} etykieta | {n} etykiety | {n} etykiet",
+    "add": "Dodaj etykietę",
+    "new": "Nowa etykieta",
+    "edit": "Edytuj etykietę",
+    "pick": "Etykieta treningu",
+    "none": "Bez etykiety",
+    "name": "Nazwa",
+    "nameHint": "Krótko, np. A, B albo Push. Widać ją w kalendarzu.",
+    "nameEmpty": "Wpisz nazwę etykiety.",
+    "nameTaken": "Jest już etykieta o tej nazwie.",
+    "color": "Kolor",
+    "colors": {
+      "cobalt": "Kobaltowy",
+      "teal": "Morski",
+      "violet": "Fioletowy",
+      "green": "Zielony",
+      "magenta": "Malinowy",
+      "graphite": "Grafitowy"
+    },
+    "archive": "W archiwum",
+    "archiveHint": "Zostaje na dawnych treningach, ale nie ma jej przy wyborze.",
+    "archived": "w archiwum",
+    "empty": "Etykieta oznacza zestaw treningu, np. A i B. Widać ją w kalendarzu, a kopia dziedziczy etykietę źródła.",
+    "emptyHint": "Nie masz jeszcze etykiet."
   },
   "picker": {
     "title": "Wybierz ćwiczenie",

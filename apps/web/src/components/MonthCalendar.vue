@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { WorkoutLabel } from '@liftwise/core';
 import { IonButton, IonIcon } from '@ionic/vue';
 import { chevronBack, chevronForward } from 'ionicons/icons';
 import { computed } from 'vue';
@@ -7,8 +8,10 @@ import { useToday } from '../composables/today';
 import { addMonths, dateValue, monthGrid, monthOf, type DayMark } from '../workout/calendar';
 
 // The month view (§5.2): done days are solid tiles, planned-only days outlined, today underlined.
+// A labelled day takes its label's color and shows its name under the number (D48).
 const props = defineProps<{
   marks: Map<string, DayMark>;
+  labels?: Map<string, Pick<WorkoutLabel, 'name' | 'color'>>;
   // Highlighted day, e.g. the copy source.
   selected?: string | null;
   // Days that can't be picked (the copy picker allows only days with sets).
@@ -24,10 +27,15 @@ const weekdays = computed(() =>
   (weeks.value[0] ?? []).map((date) => d(dateValue(date), 'weekdayShort')),
 );
 
+// Only a day with a workout shows its label.
+const labelOf = (date: string) => (props.marks.has(date) ? props.labels?.get(date) : undefined);
+
 function label(date: string): string {
   const mark = props.marks.get(date);
+  const name = labelOf(date)?.name;
   const day = d(dateValue(date), 'dayLong');
-  return mark ? `${day}, ${t(`calendar.${mark}`)}` : day;
+  if (!mark) return day;
+  return [day, t(`calendar.${mark}`), ...(name ? [t('calendar.label', { name })] : [])].join(', ');
 }
 </script>
 
@@ -74,13 +82,18 @@ function label(date: string): string {
             'is-today': date === now,
             'is-selected': date === selected,
             [`is-${marks.get(date)}`]: marks.has(date),
+            'has-label': labelOf(date),
           }"
+          :style="labelOf(date) && { '--lw-mark': `var(--lw-label-${labelOf(date)?.color})` }"
           :disabled="disabled?.(date)"
           :aria-label="label(date)"
           :aria-selected="date === selected || undefined"
           @click="emit('select', date)"
         >
           {{ Number(date.slice(8)) }}
+          <span v-if="labelOf(date)" class="lw-month__label" aria-hidden="true">
+            {{ labelOf(date)?.name }}
+          </span>
         </button>
       </div>
     </div>
@@ -126,9 +139,13 @@ function label(date: string): string {
 }
 
 .lw-month__day {
+  /* The color of a done tile or a planned outline: the accent, or the day's label. */
+  --lw-mark: var(--ion-color-primary);
   position: relative;
   display: grid;
-  place-items: center;
+  place-content: center;
+  justify-items: center;
+  line-height: 1;
   /* Square where the width allows; on a narrow phone at least 48 px high, never wider than its
      column (the aspect ratio would turn the min-height into a min-width). */
   min-width: 0;
@@ -157,17 +174,33 @@ function label(date: string): string {
 
 /* Planned only: an outline in the accent. */
 .lw-month__day.is-planned {
-  box-shadow: inset 0 0 0 2px var(--ion-color-primary);
+  box-shadow: inset 0 0 0 2px var(--lw-mark);
 }
 
 /* Done: a solid tile, like a plate stamped with the day. */
 .lw-month__day.is-done {
   color: var(--ion-color-primary-contrast);
-  background: var(--ion-color-primary);
+  background: var(--lw-mark);
 }
 
+.lw-month__day.is-done.has-label {
+  color: var(--lw-label-contrast);
+}
+
+/* Ionic's shade: 12% black. */
 .lw-month__day.is-done:hover {
-  background: var(--ion-color-primary-shade);
+  background: color-mix(in srgb, var(--lw-mark) 88%, #000);
+}
+
+/* The label's name: at most 6 characters fit a phone's cell, very wide letters are clipped. */
+.lw-month__label {
+  max-width: calc(100% - 4px);
+  margin-top: 2px;
+  overflow: hidden;
+  font-size: 13px;
+  font-stretch: var(--lw-narrow);
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 .lw-month__day.is-today::after {
@@ -178,6 +211,10 @@ function label(date: string): string {
   content: '';
   background: currentColor;
   border-radius: 2px;
+}
+
+.lw-month__day.is-today.has-label::after {
+  bottom: 3px;
 }
 
 .lw-month__day.is-selected {

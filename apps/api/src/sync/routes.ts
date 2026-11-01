@@ -9,6 +9,7 @@ import {
   type SyncMutation,
   type SyncPullResponse,
   type SyncPushResponse,
+  type Workout,
   type WorkoutSet,
 } from '@liftwise/core';
 import { asc, gt, inArray } from 'drizzle-orm';
@@ -122,11 +123,14 @@ export const syncRoutes = new Hono<AppEnv>()
     });
   });
 
-// The row a mutation writes, plus what a set refers to.
+// The row a mutation writes, plus what a set or a workout refers to.
 function touchedRows(mutation: SyncMutation): [SyncEntity, string][] {
   const touched: [SyncEntity, string][] = [[mutation.entity, mutation.row.id]];
   if (mutation.op === 'upsert' && mutation.entity === 'sets') {
     touched.push(['workouts', mutation.row.workout_id], ['exercises', mutation.row.exercise_id]);
+  }
+  if (mutation.op === 'upsert' && mutation.entity === 'workouts' && mutation.row.label_id) {
+    touched.push(['workout_labels', mutation.row.label_id]);
   }
   return touched;
 }
@@ -147,7 +151,10 @@ function planChanges(
     if (mutation.op === 'delete') {
       after = before && { ...withoutSeq(before), updated_at: now, deleted_at: now };
     } else {
-      if (mutation.entity === 'sets' && !validSetRefs(mutation.row, rows)) {
+      if (
+        (mutation.entity === 'sets' && !validSetRefs(mutation.row, rows)) ||
+        (mutation.entity === 'workouts' && !validWorkoutRefs(mutation.row, rows))
+      ) {
         return { invalid: mutation };
       }
       // An upsert of a tombstone brings the row back: last write wins.
@@ -176,6 +183,11 @@ function validSetRefs(set: WorkoutSet, rows: Map<string, StoredRow>): boolean {
     exercise !== undefined &&
     setMatchesMeasure(set, exercise)
   );
+}
+
+// A workout's label must exist; a tombstone counts, as for a set's references.
+function validWorkoutRefs(workout: Workout, rows: Map<string, StoredRow>): boolean {
+  return workout.label_id === null || rows.has(rowKey('workout_labels', workout.label_id));
 }
 
 // Rows go out in their core shape; an exercise keeps only the range of its measure.

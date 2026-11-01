@@ -17,13 +17,21 @@ import { useI18n } from 'vue-i18n';
 import { useFormat } from '../composables/format';
 import { useLiveQuery } from '../composables/liveQuery';
 import { copyDay, type CopyResult } from '../workout/actions';
-import { dayMarks, monthOf } from '../workout/calendar';
+import { dayLabels, dayMarks, monthOf } from '../workout/calendar';
 import { exerciseBlocks } from '../workout/day';
-import { catalog, historySets, trainingSettings } from '../workout/queries';
+import {
+  allWorkouts,
+  catalog,
+  historySets,
+  trainingSettings,
+  workoutLabels,
+} from '../workout/queries';
+import LabelChip from './LabelChip.vue';
 import MonthCalendar from './MonthCalendar.vue';
 
 // "Kopiuj trening" (§5.2): pick the source day, by default the last workout before the target,
-// see what will be planned and copy; the light switch is "Kopiuj jako lżejszy" (D33).
+// or the last one with a label (D48), see what will be planned and copy; the light switch is
+// "Kopiuj jako lżejszy" (D33).
 const props = defineProps<{ targetDate: string; light: boolean }>();
 const emit = defineEmits<{ done: [sourceDate: string, copy: CopyResult]; close: [] }>();
 
@@ -36,27 +44,40 @@ const busy = ref(false);
 
 const data = useLiveQuery(
   async () => ({
+    workouts: await allWorkouts(),
     sets: await historySets(),
+    labels: await workoutLabels(),
     catalog: await catalog(),
     training: await trainingSettings(),
   }),
   null,
 );
 
-const workouts = computed(() => {
-  const byId = new Map((data.value?.sets ?? []).map((set) => [set.workout_id, set.date]));
-  return [...byId].map(([id, date]) => ({ id, date }));
-});
+const workouts = computed(() => data.value?.workouts ?? []);
 const marks = computed(() => dayMarks(workouts.value, data.value?.sets ?? []));
+const labels = computed(() => dayLabels(workouts.value, data.value?.labels ?? []));
 const exercises = computed(() => new Map(data.value?.catalog.map((ex) => [ex.id, ex])));
+const last = computed(() =>
+  data.value ? defaultCopySource(workouts.value, data.value.sets, props.targetDate) : null,
+);
+// "Ostatni A / B…" (D48): the last day with each active label, one tap picks it.
+const lastLabelled = computed(() =>
+  (data.value?.labels ?? []).flatMap((label) => {
+    const workout =
+      !label.archived &&
+      defaultCopySource(workouts.value, data.value?.sets ?? [], props.targetDate, label.id);
+    return workout ? [{ label, date: workout.date }] : [];
+  }),
+);
+
+function pick(date: string) {
+  source.value = date;
+  month.value = monthOf(date);
+}
 
 // The default source once the history is read.
-watch(data, (value) => {
-  if (!value || source.value) return;
-  const last = defaultCopySource(workouts.value, value.sets, props.targetDate);
-  if (!last) return;
-  source.value = last.date;
-  month.value = monthOf(last.date);
+watch(last, (workout) => {
+  if (workout && !source.value) pick(workout.date);
 });
 
 const preview = computed(() => {
@@ -96,15 +117,32 @@ async function submit() {
   </ion-header>
   <ion-content>
     <div class="lw-column">
-      <p v-if="data && workouts.every((w) => w.date >= targetDate)" class="lw-copy__none">
+      <p v-if="data && !last" class="lw-copy__none">
         {{ t('copy.none') }}
       </p>
       <template v-else>
         <h2 class="lw-heading">{{ t('copy.source') }}</h2>
         <p class="lw-muted lw-copy__hint">{{ t('copy.sourceHint') }}</p>
+        <div v-if="lastLabelled.length > 0" class="lw-copy__last">
+          <span class="lw-muted">{{ t('copy.last') }}</span>
+          <button
+            v-for="item in lastLabelled"
+            :key="item.label.id"
+            type="button"
+            class="lw-copy__last-option"
+            :aria-pressed="source === item.date"
+            :aria-label="
+              t('copy.lastLabel', { name: item.label.name, date: format.dayMonth(item.date) })
+            "
+            @click="pick(item.date)"
+          >
+            <label-chip :label="item.label" />
+          </button>
+        </div>
         <month-calendar
           v-model:month="month"
           :marks="marks"
+          :labels="labels"
           :selected="source"
           :disabled="(date) => !selectable(date)"
           @select="(date) => (source = date)"
@@ -150,6 +188,30 @@ async function submit() {
 .lw-copy__hint {
   margin: 0;
   font-size: 14px;
+}
+
+.lw-copy__last {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 14px;
+}
+
+.lw-copy__last-option {
+  min-width: 56px;
+  height: 48px;
+  padding: 0 10px;
+  background: transparent;
+  border: 1px solid var(--lw-border);
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.lw-copy__last-option[aria-pressed='true'] {
+  border-color: var(--ion-text-color);
+  box-shadow: inset 0 0 0 1px var(--ion-text-color);
 }
 
 .lw-copy__light {

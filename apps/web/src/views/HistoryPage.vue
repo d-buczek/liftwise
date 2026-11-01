@@ -11,8 +11,10 @@ import {
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppPage from '../components/AppPage.vue';
+import LabelChip from '../components/LabelChip.vue';
 import { useFormat } from '../composables/format';
 import { useLiveQueryState } from '../composables/liveQuery';
+import { dayLabels } from '../workout/calendar';
 import {
   byMonth,
   historyDays,
@@ -21,10 +23,11 @@ import {
   type HistoryExercise,
 } from '../workout/history';
 import { loadGroups } from '../workout/logging';
-import { catalog, historySets } from '../workout/queries';
+import { allWorkouts, catalog, historySets, workoutLabels } from '../workout/queries';
 
-// History (§5.4): done workouts by month, newest first, each opening its day; and the exercises
-// with history, the most recently done first, each opening its sessions.
+// History (§5.4): done workouts by month, newest first, each with its label (D48) and opening
+// its day; and the exercises with history, the most recently done first, each opening its
+// sessions.
 const { t } = useI18n();
 const format = useFormat();
 
@@ -32,8 +35,12 @@ const view = ref<'workouts' | 'exercises'>('workouts');
 const query = ref('');
 
 const { data, loaded } = useLiveQueryState(
-  async () => ({ sets: await historySets(), catalog: await catalog() }),
-  { sets: [], catalog: [] },
+  async () => ({
+    sets: await historySets(),
+    catalog: await catalog(),
+    labels: dayLabels(await allWorkouts(), await workoutLabels()),
+  }),
+  { sets: [], catalog: [], labels: new Map() },
 );
 
 const exercises = computed(
@@ -47,12 +54,15 @@ const exerciseList = computed(() =>
 const names = (day: HistoryDay) =>
   day.exerciseIds.map((id) => format.exerciseName(exercises.value.get(id))).join(', ');
 
-const dayLabel = (day: HistoryDay) =>
-  t('history.openDay', {
+const dayLabel = (day: HistoryDay) => {
+  const label = data.value.labels.get(day.date);
+  const open = t('history.openDay', {
     date: format.day(day.date),
     exercises: names(day),
     sets: t('day.sets', day.sets),
   });
+  return label ? `${open}, ${t('calendar.label', { name: label.name })}` : open;
+};
 
 const lastLabel = (item: HistoryExercise) => {
   const date = format.dayMonth(item.date);
@@ -100,6 +110,12 @@ const lastLabel = (item: HistoryExercise) => {
                 <h3 class="lw-history__names">{{ names(day) }}</h3>
                 <p>{{ t('day.sets', day.sets) }}</p>
               </ion-label>
+              <label-chip
+                v-if="data.labels.has(day.date)"
+                slot="end"
+                :label="data.labels.get(day.date)!"
+                aria-hidden="true"
+              />
             </ion-item>
           </ion-list>
         </section>

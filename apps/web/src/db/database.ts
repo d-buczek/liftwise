@@ -22,6 +22,7 @@ export type DeviceAuth = { id: 'device'; deviceId: string; token: string };
 export class LiftWiseDb extends Dexie {
   exercises!: Table<SyncRow<'exercises'>, string>;
   equipment_items!: Table<SyncRow<'equipment_items'>, string>;
+  workout_labels!: Table<SyncRow<'workout_labels'>, string>;
   workouts!: Table<SyncRow<'workouts'>, string>;
   sets!: Table<SyncRow<'sets'>, string>;
   athlete_profile!: Table<SyncRow<'athlete_profile'>, string>;
@@ -48,6 +49,17 @@ export class LiftWiseDb extends Dexie {
       workouts: 'id, date',
       sets: 'id, workout_id, exercise_id',
     });
+    // Workout labels (D48); workouts pulled before them get no label.
+    this.version(3)
+      .stores({ workout_labels: 'id' })
+      .upgrade((tx) =>
+        tx
+          .table('workouts')
+          .toCollection()
+          .modify((workout: Partial<SyncRow<'workouts'>>) => {
+            workout.label_id ??= null;
+          }),
+      );
   }
 
   mirror(entity: SyncEntity): Table<SyncRow, string> {
@@ -58,6 +70,7 @@ export class LiftWiseDb extends Dexie {
     return [
       this.exercises,
       this.equipment_items,
+      this.workout_labels,
       this.workouts,
       this.sets,
       this.athlete_profile,
