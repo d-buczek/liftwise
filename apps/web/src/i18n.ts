@@ -30,6 +30,11 @@ export const i18n = createI18n<[MessageSchema], 'pl', false>({
       time: { hour: '2-digit', minute: '2-digit' },
       day: { day: 'numeric', month: 'short', year: 'numeric' },
       dayTime: { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' },
+      // Training days: niedziela, 1 listopada; the calendar title: listopad 2026.
+      dayLong: { weekday: 'long', day: 'numeric', month: 'long' },
+      dayMonth: { day: 'numeric', month: 'long' },
+      month: { month: 'long', year: 'numeric' },
+      weekdayShort: { weekday: 'short' },
     },
   },
   numberFormats: {

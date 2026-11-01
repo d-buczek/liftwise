@@ -3,7 +3,7 @@ import { daysBetween } from './dates';
 import { exerciseSessions, type DatedSet, type ExerciseSession } from './history';
 import type { Range } from './schemas/common';
 import type { Exercise } from './schemas/exercise';
-import { setValue } from './schemas/set';
+import { setValue, type WorkoutSet } from './schemas/set';
 import type { TrainingSettings } from './schemas/settings';
 
 // A break longer than this holds the last session (`reentry`).
@@ -100,4 +100,30 @@ function isStalled(sessions: ExerciseSession[]): boolean {
     session.sets.slice(0, common).reduce((sum, set) => sum + setValue(set), 0),
   );
   return first > second && second > third;
+}
+
+// One tap on a hint (§5.2): the exercise's planned working sets in position order get the hint's
+// weight and per-set reps (seconds); sets beyond the hint take its last value. The number of
+// sets stays (adding sets is the user's call). Returns the changed sets only, so an empty
+// result means the plan already matches the hint.
+export function applyProgressionHint(sets: WorkoutSet[], hint: ProgressionHint): WorkoutSet[] {
+  const values = hint.reps ?? hint.duration_s ?? [];
+  return sets
+    .filter((set) => set.status === 'planned' && !set.warmup)
+    .sort((a, b) => a.position - b.position)
+    .flatMap((set, i) => {
+      const value = values[Math.min(i, values.length - 1)];
+      if (value === undefined) return [];
+      const next: WorkoutSet = {
+        ...set,
+        weight_kg: hint.weight,
+        reps: hint.reps ? value : null,
+        duration_s: hint.duration_s ? value : null,
+      };
+      return next.weight_kg === set.weight_kg &&
+        next.reps === set.reps &&
+        next.duration_s === set.duration_s
+        ? []
+        : [next];
+    });
 }

@@ -1,10 +1,15 @@
 import { describe, expect, it } from 'vite-plus/test';
 import { newId } from './ids';
-import { progressionHint, type ProgressionHintInput } from './progression';
+import {
+  applyProgressionHint,
+  progressionHint,
+  type ProgressionHint,
+  type ProgressionHintInput,
+} from './progression';
 import type { Exercise } from './schemas/exercise';
 import type { WorkoutSet } from './schemas/set';
 import { DEFAULT_TRAINING_SETTINGS } from './schemas/settings';
-import { makeDatedSet, makeExercise, makeTimedExercise } from './testing';
+import { makeDatedSet, makeExercise, makeSet, makeTimedExercise } from './testing';
 
 const press = makeExercise();
 const pushups = makeExercise({ name_pl: 'Pompki', rep_range: { min: 8, max: 15 } });
@@ -179,5 +184,55 @@ describe('progressionHint', () => {
       // Sums of the first three sets: 28, 29, 28.
       expect(hint(press, sessions([10, 10, 8, 5], [10, 10, 9], [10, 9, 9]))?.stall).toBe(false);
     });
+  });
+});
+
+describe('applyProgressionHint', () => {
+  const up: ProgressionHint = {
+    weight: 21.25,
+    sets: 3,
+    reps: [8, 8, 8],
+    duration_s: null,
+    targetRir: { min: 1, max: 2 },
+    reason: 'weight_up',
+    stall: false,
+  };
+  const planned = (fields: Partial<WorkoutSet>) => makeSet({ status: 'planned', ...fields });
+
+  it('sets the weight and per-set reps of planned working sets in position order', () => {
+    const sets = [
+      planned({ position: 2, reps: 12 }),
+      planned({ position: 1, reps: 12 }),
+      planned({ position: 3, reps: 11 }),
+    ];
+    const changed = applyProgressionHint(sets, { ...up, reps: [8, 9, 10] });
+    expect(changed.map((set) => [set.position, set.weight_kg, set.reps])).toEqual([
+      [1, 21.25, 8],
+      [2, 21.25, 9],
+      [3, 21.25, 10],
+    ]);
+  });
+
+  it('leaves warm-ups and done sets alone and returns only changed sets', () => {
+    const sets = [
+      planned({ position: 0, warmup: true, weight_kg: 10 }),
+      makeSet({ position: 1, reps: 12 }),
+      planned({ position: 2, weight_kg: 21.25, reps: 8 }),
+      planned({ position: 3, reps: 12 }),
+    ];
+    expect(applyProgressionHint(sets, up).map((set) => set.position)).toEqual([3]);
+    expect(applyProgressionHint([sets[0]!, sets[2]!], up)).toEqual([]);
+  });
+
+  it('keeps the number of sets; sets beyond the hint take its last value', () => {
+    const sets = [1, 2, 3, 4].map((position) => planned({ position, reps: 12 }));
+    const changed = applyProgressionHint(sets, { ...up, sets: 2, reps: [8, 9] });
+    expect(changed.map((set) => set.reps)).toEqual([8, 9, 9, 9]);
+  });
+
+  it('sets seconds for timed exercises', () => {
+    const sets = [planned({ reps: null, duration_s: 40 })];
+    const hold = { ...up, weight: 20, reps: null, duration_s: [45], reason: 'time_up' as const };
+    expect(applyProgressionHint(sets, hold)).toMatchObject([{ reps: null, duration_s: 45 }]);
   });
 });

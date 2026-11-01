@@ -1,5 +1,12 @@
 // Fixtures for web tests.
-import { newId, type SyncRow } from '@liftwise/core';
+import {
+  exerciseSchema,
+  newId,
+  workoutSetSchema,
+  type Exercise,
+  type SyncRow,
+  type WorkoutSet,
+} from '@liftwise/core';
 import { vi } from 'vite-plus/test';
 import { db } from './db/database';
 
@@ -48,4 +55,37 @@ export function mockApi(handler: Handler) {
   );
   vi.stubGlobal('fetch', mock);
   return mock;
+}
+
+// A set row; done at 20 kg × 10 unless overridden.
+export function makeSet(fields: Partial<WorkoutSet> = {}): WorkoutSet {
+  const status = fields.status ?? 'done';
+  return workoutSetSchema.parse({
+    id: newId(),
+    workout_id: newId(),
+    exercise_id: newId(),
+    position: 0,
+    status,
+    weight_kg: 20,
+    reps: fields.duration_s ? null : 10,
+    performed_at: status === 'done' ? '2026-10-01T18:00:00+02:00' : null,
+    source: 'manual',
+    ...fields,
+  });
+}
+
+// A reps exercise (chest, horizontal push, 8–12) unless overridden.
+export function makeExercise(fields: Record<string, unknown> = {}): Exercise {
+  return exerciseSchema.parse({
+    id: newId(),
+    name_pl: 'Wyciskanie hantli',
+    primary_muscles: ['chest'],
+    patterns: ['horizontal_push'],
+    implements: 2,
+    unilateral: false,
+    rest_seconds: 90,
+    measure: 'reps',
+    rep_range: { min: 8, max: 12 },
+    ...fields,
+  });
 }

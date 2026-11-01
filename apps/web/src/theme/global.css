@@ -89,6 +89,13 @@ ion-alert .alert-button-group .alert-button-role-destructive {
   color: var(--ion-color-danger);
 }
 
+/* Phones: the back arrow alone, so a long title (a day) fits. */
+@media (max-width: 575px) {
+  ion-back-button::part(text) {
+    display: none;
+  }
+}
+
 ion-tab-button {
   --color-selected: var(--ion-color-primary);
   font-weight: 600;
@@ -98,5 +105,29 @@ ion-tab-button {
 @media (min-width: 992px) {
   ion-tab-bar {
     display: none;
+  }
+}
+
+/* A bottom sheet as tall as its content (Ionic's auto-height sheet); the body scrolls. */
+ion-modal.lw-sheet {
+  --height: auto;
+}
+
+ion-modal.lw-sheet .ion-page {
+  position: relative;
+  display: block;
+  contain: content;
+}
+
+ion-modal.lw-sheet .lw-sheet__body {
+  max-height: 80vh;
+  overflow: auto;
+}
+
+/* Where Ionic shows modals as dialogs: room for a month view and a list. */
+@media (min-width: 768px) and (min-height: 600px) {
+  ion-modal.lw-dialog {
+    --width: 640px;
+    --height: min(860px, 90vh);
   }
 }

@@ -42,6 +42,11 @@ export class LiftWiseDb extends Dexie {
       sync_state: 'id',
       device: 'id',
     });
+    // The calendar reads workouts by date, a day its sets, history the sets of an exercise.
+    this.version(2).stores({
+      workouts: 'id, date',
+      sets: 'id, workout_id, exercise_id',
+    });
   }
 
   mirror(entity: SyncEntity): Table<SyncRow, string> {

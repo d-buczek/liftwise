@@ -1,6 +1,9 @@
+import { localDateSchema } from '@liftwise/core';
 import { createRouter, createWebHistory } from '@ionic/vue-router';
-import type { RouteRecordRaw } from 'vue-router';
+import type { RouteLocationNormalized, RouteRecordRaw } from 'vue-router';
 import { useAuthStore } from './stores/auth';
+import CalendarPage from './views/CalendarPage.vue';
+import DayPage from './views/DayPage.vue';
 import DevicesPage from './views/DevicesPage.vue';
 import EmptyPage from './views/EmptyPage.vue';
 import EquipmentPage from './views/EquipmentPage.vue';
@@ -15,6 +18,16 @@ declare module 'vue-router' {
   }
 }
 
+// A day under a section's path keeps that tab active; an invalid date goes back to the calendar.
+function dayRoute(path: string, backHref: string): RouteRecordRaw {
+  return {
+    path,
+    component: DayPage,
+    props: (route: RouteLocationNormalized) => ({ date: route.params.date, backHref }),
+    beforeEnter: (to) => (localDateSchema.safeParse(to.params.date).success ? true : '/calendar'),
+  };
+}
+
 const routes: RouteRecordRaw[] = [
   { path: '/pair', name: 'pair', component: PairPage, meta: { bare: true } },
   {
@@ -22,7 +35,8 @@ const routes: RouteRecordRaw[] = [
     component: TabsPage,
     children: [
       { path: '', redirect: '/calendar' },
-      { path: 'calendar', component: EmptyPage, props: { section: 'calendar' } },
+      { path: 'calendar', component: CalendarPage },
+      dayRoute('calendar/:date', '/calendar'),
       { path: 'history', component: EmptyPage, props: { section: 'history' } },
       { path: 'agent', component: EmptyPage, props: { section: 'agent' } },
       { path: 'settings', component: SettingsPage },
