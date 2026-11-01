@@ -2,8 +2,8 @@ import vue from '@vitejs/plugin-vue';
 import { VitePWA } from 'vite-plugin-pwa';
 import { defineConfig, lazyPlugins } from 'vite-plus';
 
-// The background of the cast-iron palette (SPEC §5.13): splash screen and window title bar.
-const IRON = '#2A2F35';
+// The background of the graphite palette (SPEC §5.13): splash screen and window title bar.
+const GRAPHITE = '#1B1E23';
 
 export default defineConfig({
   plugins: lazyPlugins(() => [
@@ -19,8 +19,8 @@ export default defineConfig({
         start_url: '/',
         scope: '/',
         display: 'standalone',
-        background_color: IRON,
-        theme_color: IRON,
+        background_color: GRAPHITE,
+        theme_color: GRAPHITE,
         icons: [
           { src: 'pwa-64x64.png', sizes: '64x64', type: 'image/png' },
           { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },

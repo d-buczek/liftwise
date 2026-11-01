@@ -28,12 +28,12 @@ describe('theme store', () => {
     const theme = useThemeStore();
     expect(theme.preference).toBe('system');
     expect(isDark()).toBe(true);
-    expect(document.querySelector('meta')?.getAttribute('content')).toBe('#2A2F35');
+    expect(document.querySelector('meta')?.getAttribute('content')).toBe('#1B1E23');
 
     setSystemDark(false);
     await nextTick();
     expect(isDark()).toBe(false);
-    expect(document.querySelector('meta')?.getAttribute('content')).toBe('#F1F2EE');
+    expect(document.querySelector('meta')?.getAttribute('content')).toBe('#EDF0F4');
   });
 
   it('applies and stores an explicit choice over the system', async () => {

@@ -8,7 +8,7 @@ export const THEME_PREFERENCES: ThemePreference[] = ['system', 'light', 'dark'];
 
 const STORAGE_KEY = 'liftwise.theme';
 // The window title bar and the browser's Android status bar take the page background.
-const THEME_COLORS = { light: '#F1F2EE', dark: '#2A2F35' };
+const THEME_COLORS = { light: '#EDF0F4', dark: '#1B1E23' };
 
 function storedPreference(): ThemePreference {
   const value = localStorage.getItem(STORAGE_KEY);

@@ -13,8 +13,8 @@ const config: CapacitorConfig = {
   appId: 'io.github.d_buczek.liftwise',
   appName: 'LiftWise',
   webDir: 'dist',
-  // The splash screen's iron until the page paints.
-  backgroundColor: '#2A2F35',
+  // The splash screen's graphite until the page paints.
+  backgroundColor: '#1B1E23',
   server: { androidScheme: 'https', cleartext: insecureApi },
   android: { allowMixedContent: insecureApi },
   plugins: {

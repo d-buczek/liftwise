@@ -16,7 +16,7 @@
     </style>
 
 
-    <!-- System splash screen: the launcher icon's dumbbell on iron, like the PWA's. -->
+    <!-- System splash screen: the launcher icon's dumbbell on graphite, like the PWA's. -->
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/ic_launcher_background</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
