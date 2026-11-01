@@ -1,16 +1,11 @@
 import {
-  setMatchesMeasure,
   SYNC_PULL_LIMIT,
   syncEntitySchema,
   syncPushSchema,
-  type Exercise,
   type SyncChange,
   type SyncEntity,
-  type SyncMutation,
   type SyncPullResponse,
   type SyncPushResponse,
-  type Workout,
-  type WorkoutSet,
 } from '@liftwise/core';
 import { asc, gt, inArray } from 'drizzle-orm';
 import { Hono } from 'hono';
@@ -18,19 +13,8 @@ import { z } from 'zod';
 import type { AppEnv } from '../app-env';
 import { appliedMutations } from '../db/schema';
 import { apiError } from '../http';
-import {
-  changeStatements,
-  domainFields,
-  loadRows,
-  rowKey,
-  runBatch,
-  sameState,
-  syncTables,
-  withoutSeq,
-  type Change,
-  type Row,
-  type StoredRow,
-} from './apply';
+import { changeStatements, loadRows, runBatch, syncTables, type StoredRow } from './apply';
+import { planChanges, touchedRows } from './write';
 
 const pullSchema = z.object({
   since: z.coerce.number().int().nonnegative().default(0),
@@ -68,7 +52,9 @@ export const syncRoutes = new Hono<AppEnv>()
     const rows = await loadRows(db, fresh.flatMap(touchedRows));
     const planned = planChanges(fresh, rows, now);
     if ('invalid' in planned) {
-      return c.json({ error: 'invalid_mutation', index: mutations.indexOf(planned.invalid) }, 400);
+      const { mutationId } = fresh[planned.invalid] ?? {};
+      const index = mutations.findIndex((mutation) => mutation.mutationId === mutationId);
+      return c.json({ error: 'invalid_mutation', index }, 400);
     }
 
     await runBatch(db, [
@@ -122,73 +108,6 @@ export const syncRoutes = new Hono<AppEnv>()
       hasMore: changes.length > limit,
     });
   });
-
-// The row a mutation writes, plus what a set or a workout refers to.
-function touchedRows(mutation: SyncMutation): [SyncEntity, string][] {
-  const touched: [SyncEntity, string][] = [[mutation.entity, mutation.row.id]];
-  if (mutation.op === 'upsert' && mutation.entity === 'sets') {
-    touched.push(['workouts', mutation.row.workout_id], ['exercises', mutation.row.exercise_id]);
-  }
-  if (mutation.op === 'upsert' && mutation.entity === 'workouts' && mutation.row.label_id) {
-    touched.push(['workout_labels', mutation.row.label_id]);
-  }
-  return touched;
-}
-
-// The changes the mutations make, in order, or the first invalid mutation. `rows` is updated
-// as it goes, so a mutation sees the ones before it. No-ops are left out.
-function planChanges(
-  mutations: SyncMutation[],
-  rows: Map<string, StoredRow>,
-  now: string,
-): { changes: Change[] } | { invalid: SyncMutation } {
-  const changes: Change[] = [];
-  for (const mutation of mutations) {
-    const { entity, row } = mutation;
-    const key = rowKey(entity, row.id);
-    const before = rows.get(key) ?? null;
-    let after: Row | null;
-    if (mutation.op === 'delete') {
-      after = before && { ...withoutSeq(before), updated_at: now, deleted_at: now };
-    } else {
-      if (
-        (mutation.entity === 'sets' && !validSetRefs(mutation.row, rows)) ||
-        (mutation.entity === 'workouts' && !validWorkoutRefs(mutation.row, rows))
-      ) {
-        return { invalid: mutation };
-      }
-      // An upsert of a tombstone brings the row back: last write wins.
-      after = {
-        ...domainFields(entity, row),
-        id: row.id,
-        created_at: before?.created_at ?? now,
-        updated_at: now,
-        deleted_at: null,
-      };
-    }
-    if (!after || (before && sameState(entity, before, after))) continue;
-    changes.push({ groupId: mutation.groupId, entity, before, after });
-    // The new `seq` is assigned in D1; later mutations only need the fields.
-    rows.set(key, { ...after, seq: before?.seq ?? 0 });
-  }
-  return { changes };
-}
-
-// A set needs its workout and exercise (tombstones count, e.g. a workout deleted on the other
-// device) and the value the exercise measures (D32).
-function validSetRefs(set: WorkoutSet, rows: Map<string, StoredRow>): boolean {
-  const exercise = rows.get(rowKey('exercises', set.exercise_id)) as Exercise | undefined;
-  return (
-    rows.has(rowKey('workouts', set.workout_id)) &&
-    exercise !== undefined &&
-    setMatchesMeasure(set, exercise)
-  );
-}
-
-// A workout's label must exist; a tombstone counts, as for a set's references.
-function validWorkoutRefs(workout: Workout, rows: Map<string, StoredRow>): boolean {
-  return workout.label_id === null || rows.has(rowKey('workout_labels', workout.label_id));
-}
 
 // Rows go out in their core shape; an exercise keeps only the range of its measure.
 function toChange(entity: SyncEntity, row: StoredRow): SyncChange {
