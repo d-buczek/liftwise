@@ -1,6 +1,8 @@
 import {
   RIR_MAX,
   type Exercise,
+  type MovementPattern,
+  type MuscleGroup,
   type ProgressionHint,
   type Range,
   type RecordEvent,
@@ -38,6 +40,8 @@ export function useFormat() {
     // A title: Niedziela, 1 listopada (sentence case).
     day: (date: string) => sentence(d(dateValue(date), 'dayLong')),
     dayMonth: (date: string) => d(dateValue(date), 'dayMonth'),
+    // With the year, for anything that may be older: 3 paź 2025.
+    date: (date: string) => d(dateValue(date), 'day'),
     // `YYYY-MM` as a heading: Listopad 2026.
     month: (month: string) => sentence(d(dateValue(`${month}-01`), 'month')),
     weekday: (date: string) => d(dateValue(date), 'weekdayShort'),
@@ -64,21 +68,32 @@ export function useFormat() {
       groups.map((group) => load(group.weight_kg, group.values, group.timed)).join('; '),
     clock,
     rir,
+    // Hard sets count halves (§5.8): "12 serii", "2 serie", "1,5 serii" (a fraction takes the
+    // genitive, the form of 5).
+    hardSets: (value: number) =>
+      t('balance.hardSets', { value: n(value, 'e1rm') }, Number.isInteger(value) ? value : 5),
+    // Days since the last work (§5.8): "dziś", "wczoraj", "5 dni temu", "nigdy".
+    daysSince: (days: number | null) =>
+      days === null ? t('balance.never') : t('balance.daysAgo', days),
     // "1–2", or "2" when both bounds are equal.
     rirRange: (range: Range) =>
       range.min === range.max ? rir(range.min) : `${rir(range.min)}–${rir(range.max)}`,
     // An exercise's rest: "1:30", or none.
     rest: (seconds: number) => (seconds > 0 ? clock(seconds) : t('rest.none')),
-    // "Rekord: 24 kg × 12, e1RM 33,6 kg"; a timed one at 0 kg "Rekord: 50 s".
+    // "24 kg × 12", "e1RM 33,6 kg", a timed one at 0 kg "50 s".
+    record,
+    // "Rekord: 24 kg × 12, e1RM 33,6 kg".
     records: (events: RecordEvent[]) =>
-      t('record.toast', {
-        records: events
-          .map((event) =>
-            event.kind === 'e1rm'
-              ? t('record.e1rm', { value: n(event.value, 'e1rm') })
-              : load(event.weight_kg, [event.value], event.kind === 'time'),
-          )
-          .join(', '),
-      }),
+      t('record.toast', { records: events.map(record).join(', ') }),
+    // Muscle groups and movement patterns, lower case for lists ("klatka, łydki").
+    muscle: (group: MuscleGroup) => t(`muscles.${group}`),
+    pattern: (pattern: MovementPattern) => t(`patterns.${pattern}`),
+    sentence,
   };
+
+  function record(event: Pick<RecordEvent, 'kind' | 'weight_kg' | 'value'>) {
+    return event.kind === 'e1rm'
+      ? t('record.e1rm', { value: n(event.value, 'e1rm') })
+      : load(event.weight_kg, [event.value], event.kind === 'time');
+  }
 }

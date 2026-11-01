@@ -9,6 +9,7 @@ export * from './export';
 export * from './history';
 export * from './ids';
 export * from './labels';
+export * from './progress';
 export * from './progression';
 export * from './records';
 export * from './schemas/common';

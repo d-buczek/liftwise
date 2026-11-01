@@ -6,6 +6,7 @@ import { useI18n } from 'vue-i18n';
 import AppPage from '../components/AppPage.vue';
 import LabelChip from '../components/LabelChip.vue';
 import MonthCalendar from '../components/MonthCalendar.vue';
+import WeekSummary from '../components/WeekSummary.vue';
 import { useFormat } from '../composables/format';
 import { useLiveQuery } from '../composables/liveQuery';
 import { useToday } from '../composables/today';
@@ -13,7 +14,7 @@ import { dayLabels, dayMarks, monthGrid, monthOf } from '../workout/calendar';
 import { dayData, rangeData, workoutLabels } from '../workout/queries';
 
 // The home screen (§5.2): the month with done and planned days in their labels' colors (D48);
-// a tap opens the day.
+// a tap opens the day; under it the weekly summary (§5.11).
 const { t } = useI18n();
 const format = useFormat();
 const router = useIonRouter();
@@ -88,6 +89,8 @@ function open(date: string) {
       {{ t('calendar.labels') }}
       <label-chip v-for="label in monthLabels" :key="label.id" :label="label" />
     </p>
+
+    <week-summary :month="month" />
   </app-page>
 </template>
 

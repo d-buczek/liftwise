@@ -1,8 +1,10 @@
 import {
   compareLabels,
   datedSets,
+  DEFAULT_BALANCE_SETTINGS,
   DEFAULT_TRAINING_SETTINGS,
   SETTING_IDS,
+  type BalanceSettings,
   type DatedSet,
   type EquipmentItem,
   type SyncRow,
@@ -81,6 +83,11 @@ export async function equipment(): Promise<EquipmentItem[]> {
 export async function trainingSettings(): Promise<TrainingSettings> {
   const row = await db.settings.get(SETTING_IDS.training);
   return alive(row) && row.key === 'training' ? row.value : DEFAULT_TRAINING_SETTINGS;
+}
+
+export async function balanceSettings(): Promise<BalanceSettings> {
+  const row = await db.settings.get(SETTING_IDS.balance);
+  return alive(row) && row.key === 'balance' ? row.value : DEFAULT_BALANCE_SETTINGS;
 }
 
 // The heaviest dumbbell of the profile, for the progression hint (D37); null without a limit.

@@ -42,6 +42,14 @@ export function monthGrid(month: string): string[][] {
   return weeks;
 }
 
+// The Monday of the week the summary card starts at (§5.11): this week in the current month,
+// the last week of any other month.
+export function summaryWeek(month: string, date: string): string {
+  return monthOf(date) === month
+    ? weekOf(date).start
+    : weekOf(addDays(`${addMonths(month, 1)}-01`, -1)).start;
+}
+
 // Done: the day has a done set; planned: it only has planned sets (D30).
 export type DayMark = 'done' | 'planned';
 

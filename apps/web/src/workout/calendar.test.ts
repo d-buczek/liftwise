@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vite-plus/test';
-import { addMonths, dateValue, dayLabels, dayMarks, monthGrid, today } from './calendar';
+import {
+  addMonths,
+  dateValue,
+  dayLabels,
+  dayMarks,
+  monthGrid,
+  summaryWeek,
+  today,
+} from './calendar';
 
 describe('calendar', () => {
   it('formats the local date and parses it back at local midnight', () => {
@@ -62,5 +70,13 @@ describe('calendar', () => {
       ['2026-11-02', { id: 'A' }],
       ['2026-11-05', { id: 'B' }],
     ]);
+  });
+});
+
+describe('summaryWeek', () => {
+  it('starts at this week in the current month, at the last week of another month', () => {
+    expect(summaryWeek('2026-11', '2026-11-04')).toBe('2026-11-02');
+    expect(summaryWeek('2026-10', '2026-11-04')).toBe('2026-10-26');
+    expect(summaryWeek('2026-08', '2026-11-04')).toBe('2026-08-31');
   });
 });

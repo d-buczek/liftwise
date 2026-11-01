@@ -146,3 +146,13 @@ ion-modal.lw-sheet .lw-sheet__body {
     --height: min(860px, 90vh);
   }
 }
+
+/* Read by screen readers only: the table twin of a chart. */
+.lw-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  white-space: nowrap;
+  clip-path: inset(50%);
+}

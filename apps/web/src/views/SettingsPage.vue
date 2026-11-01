@@ -9,9 +9,13 @@ import {
   IonNote,
   IonSegment,
   IonSegmentButton,
+  toastController,
 } from '@ionic/vue';
 import {
   barbellOutline,
+  bodyOutline,
+  downloadOutline,
+  gridOutline,
   phonePortraitOutline,
   pricetagOutline,
   timerOutline,
@@ -23,12 +27,16 @@ import SyncStatus from '../components/SyncStatus.vue';
 import TrainingSettingsEditor from '../components/TrainingSettingsEditor.vue';
 import { useFormat } from '../composables/format';
 import { useLiveQuery } from '../composables/liveQuery';
+import { useToday } from '../composables/today';
 import { db } from '../db/database';
+import { exportCsv, exportJson } from '../db/export';
+import { saveFile } from '../native/files';
+import { useSyncStore } from '../stores/sync';
 import { THEME_PREFERENCES, useThemeStore } from '../stores/theme';
 import { saveTrainingSettings } from '../workout/actions';
 import { trainingSettings, workoutLabels } from '../workout/queries';
 
-const { t } = useI18n();
+const { t, d } = useI18n();
 const format = useFormat();
 const theme = useThemeStore();
 const equipmentCount = useLiveQuery(
@@ -55,6 +63,29 @@ async function saveTraining(value: TrainingSettings) {
   editingTraining.value = false;
   await saveTrainingSettings(value);
 }
+
+// Settings → Dane (§5.12): files from the local mirror, so the export works offline.
+const sync = useSyncStore();
+const today = useToday();
+const exporting = ref(false);
+const exportNote = computed(() =>
+  sync.syncedAt
+    ? t('data.note', { time: d(new Date(sync.syncedAt), 'dayTime') })
+    : t('data.noteNever'),
+);
+
+async function exportData(kind: 'json' | 'csv') {
+  exporting.value = true;
+  try {
+    await saveFile(await (kind === 'json' ? exportJson(today.value) : exportCsv(today.value)));
+  } catch (error) {
+    console.error(error);
+    const toast = await toastController.create({ message: t('data.failed'), duration: 4000 });
+    await toast.present();
+  } finally {
+    exporting.value = false;
+  }
+}
 </script>
 
 <template>
@@ -72,6 +103,13 @@ async function saveTraining(value: TrainingSettings) {
           <p>{{ trainingSummary }}</p>
         </ion-label>
       </ion-item>
+      <ion-item router-link="/settings/balance">
+        <ion-icon slot="start" :icon="bodyOutline" aria-hidden="true" />
+        <ion-label>
+          {{ t('balance.settings') }}
+          <p>{{ t('balance.settingsSummary') }}</p>
+        </ion-label>
+      </ion-item>
       <ion-item router-link="/settings/labels">
         <ion-icon slot="start" :icon="pricetagOutline" aria-hidden="true" />
         <ion-label>{{ t('labels.title') }}</ion-label>
@@ -82,6 +120,25 @@ async function saveTraining(value: TrainingSettings) {
         <ion-label>{{ t('settings.devices') }}</ion-label>
       </ion-item>
     </ion-list>
+
+    <h2 class="lw-heading">{{ t('data.title') }}</h2>
+    <ion-list>
+      <ion-item button :detail="false" :disabled="exporting" @click="exportData('json')">
+        <ion-icon slot="start" :icon="downloadOutline" aria-hidden="true" />
+        <ion-label>
+          {{ t('data.json') }}
+          <p>{{ t('data.jsonHint') }}</p>
+        </ion-label>
+      </ion-item>
+      <ion-item button :detail="false" :disabled="exporting" @click="exportData('csv')">
+        <ion-icon slot="start" :icon="gridOutline" aria-hidden="true" />
+        <ion-label>
+          {{ t('data.csv') }}
+          <p>{{ t('data.csvHint') }}</p>
+        </ion-label>
+      </ion-item>
+    </ion-list>
+    <p class="lw-settings__note">{{ exportNote }}</p>
 
     <h2 class="lw-heading">{{ t('sync.title') }}</h2>
     <ion-list>
@@ -115,5 +172,11 @@ async function saveTraining(value: TrainingSettings) {
 <style scoped>
 .lw-settings__first {
   margin-top: 16px;
+}
+
+.lw-settings__note {
+  margin: 8px 0 0;
+  font-size: 14px;
+  color: var(--lw-muted);
 }
 </style>

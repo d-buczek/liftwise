@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vite-plus/test';
-import { stepRest, stepRirRange, weightStepOptions } from './settings';
+import { stepBalanceRange, stepRest, stepRirRange, weightStepOptions } from './settings';
 
 describe('training controls', () => {
   it('steps the rest by 15 s down to 0', () => {
@@ -19,5 +19,14 @@ describe('training controls', () => {
     expect(weightStepOptions(null)).toEqual([0.5, 1, 1.25, 2, 2.5]);
     expect(weightStepOptions(1.5)).toEqual([0.5, 1, 1.25, 1.5, 2, 2.5]);
     expect(weightStepOptions(2)).toEqual([0.5, 1, 1.25, 2, 2.5]);
+  });
+});
+
+describe('stepBalanceRange', () => {
+  it('keeps the target within 0–40 and the bounds in order', () => {
+    expect(stepBalanceRange({ min: 10, max: 20 }, 'max', 1)).toEqual({ min: 10, max: 21 });
+    expect(stepBalanceRange({ min: 10, max: 10 }, 'max', -1)).toEqual({ min: 9, max: 9 });
+    expect(stepBalanceRange({ min: 0, max: 5 }, 'min', -1)).toEqual({ min: 0, max: 5 });
+    expect(stepBalanceRange({ min: 10, max: 40 }, 'max', 1)).toEqual({ min: 10, max: 40 });
   });
 });

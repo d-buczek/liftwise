@@ -1,7 +1,7 @@
-import { newId, type DatedSet } from '@liftwise/core';
+import { newId, type DatedSet, type RecordEvent } from '@liftwise/core';
 import { describe, expect, it } from 'vite-plus/test';
 import { makeExercise, makeSet } from '../testing';
-import { byMonth, exerciseLog, historyDays, historyExercises } from './history';
+import { byMonth, exerciseLog, historyDays, historyExercises, standingRecords } from './history';
 
 const press = makeExercise({ name_pl: 'Wyciskanie hantli', aliases: ['DB press'] });
 const row = makeExercise({ name_pl: 'Wiosłowanie hantlem' });
@@ -109,5 +109,26 @@ describe('exerciseLog', () => {
       ['2026-10-30', [11]],
       ['2026-10-27', [12, 10]],
     ]);
+  });
+});
+
+describe('standingRecords', () => {
+  const record = (
+    exercise_id: string,
+    kind: RecordEvent['kind'],
+    weight_kg: number,
+    value: number,
+  ): RecordEvent => ({ set_id: newId(), exercise_id, date: '2026-10-27', kind, weight_kg, value });
+
+  it('keeps per exercise the records no later one beats', () => {
+    const events = [
+      record(press.id, 'reps', 22.5, 10),
+      record(press.id, 'e1rm', 22.5, 30),
+      record(row.id, 'reps', 25, 12),
+      record(press.id, 'reps', 20, 13),
+      record(press.id, 'reps', 22.5, 11),
+      record(press.id, 'e1rm', 22.5, 30.75),
+    ];
+    expect(standingRecords(events)).toEqual([[events[3], events[4], events[5]], [events[2]]]);
   });
 });

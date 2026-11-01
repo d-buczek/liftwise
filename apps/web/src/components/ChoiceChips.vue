@@ -1,12 +1,13 @@
 <script setup lang="ts" generic="T">
-// One of a few values as a row of chips, like the RIR chips; no keyboard.
-defineProps<{ label: string; options: { value: T; label: string }[] }>();
+// One of a few values as a row of chips, like the RIR chips; no keyboard. Compact chips (a
+// chart's filters) keep the label for screen readers only.
+defineProps<{ label: string; options: { value: T; label: string }[]; compact?: boolean }>();
 const model = defineModel<T>({ required: true });
 </script>
 
 <template>
-  <div class="lw-choice" role="radiogroup" :aria-label="label">
-    <span class="lw-choice__label">{{ label }}</span>
+  <div class="lw-choice" :class="{ 'is-compact': compact }" role="radiogroup" :aria-label="label">
+    <span v-if="!compact" class="lw-choice__label">{{ label }}</span>
     <div class="lw-choice__chips">
       <button
         v-for="option in options"
@@ -54,5 +55,17 @@ const model = defineModel<T>({ required: true });
   color: var(--ion-color-primary-contrast);
   background: var(--ion-color-primary);
   border-color: var(--ion-color-primary);
+}
+
+.is-compact .lw-choice__chips {
+  gap: 6px;
+}
+
+.is-compact .lw-choice__chip {
+  min-width: 0;
+  height: 36px;
+  padding: 0 12px;
+  font-size: 16px;
+  border-radius: 18px;
 }
 </style>

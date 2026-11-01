@@ -33,6 +33,8 @@ export const i18n = createI18n<[MessageSchema], 'pl', false>({
       // Training days: niedziela, 1 listopada; the calendar title: listopad 2026.
       dayLong: { weekday: 'long', day: 'numeric', month: 'long' },
       dayMonth: { day: 'numeric', month: 'long' },
+      // Chart axes: 3 paź.
+      dayShort: { day: 'numeric', month: 'short' },
       month: { month: 'long', year: 'numeric' },
       weekdayShort: { weekday: 'short' },
     },

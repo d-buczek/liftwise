@@ -1,7 +1,8 @@
-import { localDateSchema } from '@liftwise/core';
+import { localDateSchema, muscleGroupSchema } from '@liftwise/core';
 import { createRouter, createWebHistory } from '@ionic/vue-router';
 import type { RouteLocationNormalized, RouteRecordRaw } from 'vue-router';
 import { useAuthStore } from './stores/auth';
+import BalancePage from './views/BalancePage.vue';
 import CalendarPage from './views/CalendarPage.vue';
 import DayPage from './views/DayPage.vue';
 import DevicesPage from './views/DevicesPage.vue';
@@ -10,6 +11,7 @@ import EquipmentPage from './views/EquipmentPage.vue';
 import ExerciseHistoryPage from './views/ExerciseHistoryPage.vue';
 import HistoryPage from './views/HistoryPage.vue';
 import LabelsPage from './views/LabelsPage.vue';
+import MuscleHistoryPage from './views/MuscleHistoryPage.vue';
 import PairPage from './views/PairPage.vue';
 import SettingsPage from './views/SettingsPage.vue';
 import TabsPage from './views/TabsPage.vue';
@@ -69,12 +71,20 @@ const routes: RouteRecordRaw[] = [
       ...dayRoutes('calendar'),
       { path: 'history', component: HistoryPage },
       { path: 'history/exercise/:id', component: ExerciseHistoryPage, props: true },
+      {
+        path: 'history/muscle/:group',
+        component: MuscleHistoryPage,
+        props: true,
+        beforeEnter: (to) =>
+          muscleGroupSchema.safeParse(to.params.group).success ? true : '/history',
+      },
       ...dayRoutes('history'),
       { path: 'agent', component: EmptyPage, props: { section: 'agent' } },
       { path: 'settings', component: SettingsPage },
       { path: 'settings/equipment', component: EquipmentPage },
       { path: 'settings/devices', component: DevicesPage },
       { path: 'settings/labels', component: LabelsPage },
+      { path: 'settings/balance', component: BalancePage },
     ],
   },
   { path: '/:pathMatch(.*)*', redirect: '/calendar' },

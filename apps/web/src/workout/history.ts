@@ -1,4 +1,10 @@
-import { compareHistory, isWorkingSet, type DatedSet, type Exercise } from '@liftwise/core';
+import {
+  compareHistory,
+  isWorkingSet,
+  type DatedSet,
+  type Exercise,
+  type RecordEvent,
+} from '@liftwise/core';
 import { monthOf } from './calendar';
 import { exerciseBlocks } from './day';
 import { matchesQuery } from './search';
@@ -82,4 +88,27 @@ function doneByDate(sets: DatedSet[]): Map<string, DatedSet[]> {
     else days.set(set.date, [set]);
   }
   return days;
+}
+
+// The records of a period per exercise, in order of the first one (§5.11): only those no later
+// record of the period beats, so "22,5 kg × 10" gives way to "22,5 kg × 11" and every e1RM but
+// the best drops out.
+export function standingRecords(events: RecordEvent[]): RecordEvent[][] {
+  const byExercise = new Map<string, RecordEvent[]>();
+  for (const event of events) {
+    byExercise.set(event.exercise_id, [...(byExercise.get(event.exercise_id) ?? []), event]);
+  }
+  return [...byExercise.values()].map((records) =>
+    records.filter((record, i) =>
+      records
+        .slice(i + 1)
+        .every(
+          (later) =>
+            later.kind !== record.kind ||
+            (record.kind === 'e1rm'
+              ? later.value <= record.value
+              : later.weight_kg < record.weight_kg || later.value < record.value),
+        ),
+    ),
+  );
 }

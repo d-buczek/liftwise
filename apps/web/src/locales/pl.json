@@ -198,7 +198,9 @@
     "sessions": "{n} sesja | {n} sesje | {n} sesji",
     "noSessions": "To ćwiczenie nie ma jeszcze zrobionych serii.",
     "openSession": "Otwórz dzień: {date}",
-    "record": "rekord"
+    "record": "rekord",
+    "balance": "Balans",
+    "sessionsTitle": "Sesje"
   },
   "rest": {
     "label": "Przerwa",
@@ -328,5 +330,108 @@
     "calves": "łydki",
     "abs": "brzuch",
     "lower_back": "dół pleców"
+  },
+  "charts": {
+    "keys": "{label}. Strzałki w lewo i w prawo wybierają punkt.",
+    "metric": "Co pokazuje wykres",
+    "range": "Okres wykresu",
+    "metrics": {
+      "weight": "Ciężar",
+      "e1rm": "e1RM",
+      "volume": "Objętość",
+      "reps": "Powtórzenia",
+      "duration": "Czas"
+    },
+    "titles": {
+      "weight": "Ciężar serii szczytowej",
+      "e1rm": "Szacowany maks. ciężar (e1RM)",
+      "volume": "Objętość treningu",
+      "reps": "Powtórzenia serii szczytowej",
+      "duration": "Czas serii szczytowej"
+    },
+    "ranges": {
+      "3m": "3 mies.",
+      "1y": "Rok",
+      "all": "Wszystko"
+    },
+    "kg": "{value} kg",
+    "reps": "{value} powt.",
+    "seconds": "{value} s",
+    "emptyRange": "W tym okresie nie ma treningów tego ćwiczenia. Wybierz dłuższy okres.",
+    "week": "{start} – {end}",
+    "thisWeek": "ten tydzień"
+  },
+  "records": {
+    "title": "Rekordy",
+    "bestE1rm": "Najlepszy e1RM",
+    "repsHint": "Najwięcej powtórzeń przy danym ciężarze lub większym. Pierwszy trening ćwiczenia jest punktem wyjścia i nie bije rekordów.",
+    "timeHint": "Najdłuższy czas przy danym ciężarze lub większym. Pierwszy trening ćwiczenia jest punktem wyjścia i nie bije rekordów."
+  },
+  "balance": {
+    "hardSets": "{value} serii | {value} seria | {value} serie | {value} serii",
+    "never": "nigdy",
+    "daysAgo": "dziś | wczoraj | {n} dni temu | {n} dni temu",
+    "meter": "{sets}, zakres {min}–{max}: {status}",
+    "status": {
+      "under": "za mało",
+      "in_range": "w normie",
+      "over": "za dużo"
+    },
+    "muscles": "Partie mięśniowe",
+    "musclesHint": "Pasek: twarde serie z ostatnich 7 dni na tle zakresu docelowego (partia główna liczy się jako 1, pomocnicza jako 0,5). Po prawej: kiedy partia była ostatnio główną.",
+    "patterns": "Wzorce ruchu",
+    "muscleTitle": "Partia mięśniowa",
+    "lastWork": "Ostatnio jako partia główna: {since}",
+    "lastWeek": "Ostatnie 7 dni",
+    "weekly": "Serie w tygodniu, ostatnie {weeks} tygodni",
+    "weeklyLabel": "{name}: twarde serie w tygodniu, ostatnie {weeks} tygodni",
+    "targetRange": "Zakres docelowy: {min}–{max} serii",
+    "settings": "Balans",
+    "settingsSummary": "Docelowe serie na partię",
+    "settingsHint": "Ile twardych serii w ciągu 7 dni ma dostać każda partia. Poniżej zakresu balans pokaże „za mało”, powyżej „za dużo”.",
+    "rangeMin": "Od",
+    "rangeMax": "Do",
+    "rangeHint": "Twarde serie w ciągu 7 dni: partia główna liczy się jako 1, pomocnicza jako 0,5.",
+    "rangeDefault": "Domyślnie {min}–{max}"
+  },
+  "week": {
+    "title": "Tydzień {span}",
+    "thisWeek": "Ten tydzień, {span}",
+    "span": "{start} – {end}",
+    "label": "Podsumowanie tygodnia {span}",
+    "previous": "Poprzedni tydzień",
+    "next": "Następny tydzień",
+    "empty": "W tym tygodniu nie ma zrobionych treningów.",
+    "workouts": "Treningi",
+    "sets": "Serie robocze",
+    "records": "Rekordy",
+    "stalled": "Stoi w miejscu",
+    "stalledHint": "Ten sam ciężar od 3 treningów, a powtórzeń coraz mniej. Pomóc może lżejszy tydzień albo zamiana ćwiczenia.",
+    "neglected": "Bez serii w tym tygodniu",
+    "neglectedMuscles": "Partie: {list}",
+    "neglectedPatterns": "Wzorce: {list}",
+    "muscles": "Serie na partie",
+    "musclesHint": "{span}. Partia główna liczy się jako 1 seria, pomocnicza jako 0,5."
+  },
+  "data": {
+    "title": "Dane",
+    "json": "Eksportuj kopię (JSON)",
+    "jsonHint": "Wszystkie dane w jednym pliku, na kopię zapasową",
+    "csv": "Eksportuj serie (CSV)",
+    "csvHint": "Zrobione serie do arkusza kalkulacyjnego",
+    "note": "Plik powstaje z danych na tym urządzeniu, w stanie z synchronizacji {time}.",
+    "noteNever": "To urządzenie jeszcze się nie synchronizowało, więc plik obejmie tylko zmiany z niego.",
+    "failed": "Nie udało się zapisać pliku. Spróbuj ponownie."
+  },
+  "patterns": {
+    "horizontal_push": "wyciskanie poziome",
+    "vertical_push": "wyciskanie pionowe",
+    "horizontal_pull": "przyciąganie poziome",
+    "vertical_pull": "przyciąganie pionowe",
+    "squat": "przysiad",
+    "hinge": "zawias biodrowy",
+    "lunge": "wykrok",
+    "core": "stabilizacja tułowia",
+    "isolation": "izolacja"
   }
 }

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { balanceSnapshot, DEFAULT_BALANCE_SETTINGS } from '@liftwise/core';
 import {
   IonButton,
   IonItem,
@@ -11,9 +12,11 @@ import {
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppPage from '../components/AppPage.vue';
+import BalanceBoard from '../components/BalanceBoard.vue';
 import LabelChip from '../components/LabelChip.vue';
 import { useFormat } from '../composables/format';
 import { useLiveQueryState } from '../composables/liveQuery';
+import { useToday } from '../composables/today';
 import { dayLabels } from '../workout/calendar';
 import {
   byMonth,
@@ -23,15 +26,21 @@ import {
   type HistoryExercise,
 } from '../workout/history';
 import { loadGroups } from '../workout/logging';
-import { allWorkouts, catalog, historySets, workoutLabels } from '../workout/queries';
+import {
+  allWorkouts,
+  balanceSettings,
+  catalog,
+  historySets,
+  workoutLabels,
+} from '../workout/queries';
 
 // History (§5.4): done workouts by month, newest first, each with its label (D48) and opening
 // its day; and the exercises with history, the most recently done first, each opening its
-// sessions.
+// sessions; and the balance guard (§5.8).
 const { t } = useI18n();
 const format = useFormat();
 
-const view = ref<'workouts' | 'exercises'>('workouts');
+const view = ref<'workouts' | 'exercises' | 'balance'>('workouts');
 const query = ref('');
 
 const { data, loaded } = useLiveQueryState(
@@ -39,8 +48,9 @@ const { data, loaded } = useLiveQueryState(
     sets: await historySets(),
     catalog: await catalog(),
     labels: dayLabels(await allWorkouts(), await workoutLabels()),
+    balance: await balanceSettings(),
   }),
-  { sets: [], catalog: [], labels: new Map() },
+  { sets: [], catalog: [], labels: new Map(), balance: DEFAULT_BALANCE_SETTINGS },
 );
 
 const exercises = computed(
@@ -49,6 +59,16 @@ const exercises = computed(
 const months = computed(() => byMonth(historyDays(data.value.sets)));
 const exerciseList = computed(() =>
   historyExercises(data.value.sets, data.value.catalog, query.value),
+);
+
+const today = useToday();
+const snapshot = computed(() =>
+  balanceSnapshot({
+    sets: data.value.sets,
+    exercises: data.value.catalog,
+    balance: data.value.balance,
+    today: today.value,
+  }),
 );
 
 const names = (day: HistoryDay) =>
@@ -90,6 +110,9 @@ const lastLabel = (item: HistoryExercise) => {
         <ion-segment-button value="exercises">
           <ion-label>{{ t('history.exercises') }}</ion-label>
         </ion-segment-button>
+        <ion-segment-button value="balance">
+          <ion-label>{{ t('history.balance') }}</ion-label>
+        </ion-segment-button>
       </ion-segment>
 
       <template v-if="view === 'workouts'">
@@ -120,6 +143,8 @@ const lastLabel = (item: HistoryExercise) => {
           </ion-list>
         </section>
       </template>
+
+      <balance-board v-else-if="view === 'balance'" :snapshot="snapshot" />
 
       <template v-else>
         <ion-searchbar

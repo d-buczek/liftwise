@@ -4,6 +4,7 @@ import {
   newId,
   SETTING_IDS,
   workoutSchema,
+  type BalanceSettings,
   type Exercise,
   type TrainingSettings,
   type Workout,
@@ -192,4 +193,8 @@ export async function logSet(
 
 export function saveTrainingSettings(value: TrainingSettings) {
   return applyLocal([upsert('settings', { id: SETTING_IDS.training, key: 'training', value })]);
+}
+
+export function saveBalanceSettings(value: BalanceSettings) {
+  return applyLocal([upsert('settings', { id: SETTING_IDS.balance, key: 'balance', value })]);
 }
