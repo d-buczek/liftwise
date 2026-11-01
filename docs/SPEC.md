@@ -71,6 +71,7 @@ On top of that, an AI agent with tools over the app's data logs and edits from a
 | D42 | Visual direction | **"Żeliwo i kreda"** (cast iron and chalk): graphite and chalk palettes with a hammertone accent, Archivo with narrow bold numerals, Ionic `md` mode everywhere; phones get bottom tabs, from 992 px a side menu (split pane) and a 720 px content column; light/dark follows the system with a per-device override (§5.13) | Grounded in the home-gym materials instead of a template look; numbers are what the user reads mid-workout; one look on Android and PC |
 | D43 | Client data path | Every write is **one Dexie transaction** (mirror row + outbox mutation, one `groupId` per action), validated with the core schemas before it is queued; sync pushes, then pulls, and a pull **never replaces a record with queued mutations**; the Worker serves the PWA (static assets, SPA fallback) | Works offline and survives reloads; an invalid mutation would block every later push; the server stays authoritative without per-field merge |
 | D44 | Editing a day on the client | A day shows the sets of **all its workouts** and new sets go to the oldest; an added exercise is planned from its **last session**; the hint chip names the **load** it sets; "Cofnij" after a copy or a manual delete is a **local** write (delete the copied sets, write the deleted rows back), not the server undo | Two offline devices can create a workout for the same date and neither may hide data; the last session is the usual plan; a hint can change the weight of a light copy, so the chip must say so; local undo works offline and right away (agent changes use the server undo, LW-09) |
+| D45 | Logging a workout on the client | A **workout screen** per day (`…/:date/workout`), separate from the day: one exercise at a time with a **draft** of its next set (the next planned set, else the previous done set, else the last session's first working set); one large button logs it, labelled **"Jak poprzednio"** while the draft repeats the previous set and **"Zrobione"** otherwise; sets are logged **today and on past days** only (a future day is planning); the rest timer's end is **kept on the device** | The day stays the planning view, the workout screen is the gym view with big controls; one button that names what it does avoids two near-identical ones; logging the future would fake history; a reload or an app switch mid-rest must not lose the timer |
 
 ## 4. Scope
 
@@ -139,23 +140,24 @@ Calendar and planning (D29):
 
 Active workout (hybrid logging):
 
-- Confirming the first set of the day starts the workout. A workout can also start empty, from an accepted AI proposal (§5.9.6), or implicitly when the agent logs the first set.
-- The current exercise card shows its planned sets, the last session's done sets, the progression hint and the exercise's **setup note** ("ławka na 3", "chwyt neutralny"). The note belongs to the exercise, is editable from the card and shows in every workout.
-- Big controls, no keyboard:
-  - **"Zrobione"**: mark the next planned set as done, as planned.
+- The workout screen (D45) opens from a day dated today or earlier: "Rozpocznij trening" / "Wróć do treningu" on the first exercise with a planned set left, or the exercise's name on the day. A future day is planning only.
+- Confirming the first set of a workout starts it (`started_at`). A workout can also start empty, from an accepted AI proposal (§5.9.6), or implicitly when the agent logs the first set.
+- The current exercise card shows the progression hint, the last session's done sets ("Poprzednio, 27 października: 22,5 kg × 10, 10, 9"), the exercise's sets of the day and its **setup note** ("ławka na 3", "chwyt neutralny"). The note belongs to the exercise, is editable from the card together with the exercise's weight step and rest, and shows in every workout.
+- Big controls, no keyboard. The **draft** of the next set is the next planned set; without one, the previous done set of the day, else the first working set of the last session, else the bottom of the range at 0 kg. It starts over after every set (RIR clears):
+  - **"Zrobione"**: mark the next planned set as done with the draft's values, or add a done set when none is planned.
   - Before confirming: reps −/+ (timed exercises: duration −/+ 5 s), weight −/+ (fixed step, default 1.25 kg, overridable per exercise; D31), RIR chips (optional), warm-up toggle.
-  - **"Jak poprzednio"**: add a done set identical to the previous one (when no planned set is left).
-  - Next/previous exercise, pick exercise.
-  - Mic button and chat drawer for the agent.
-- Swipe a set to edit or delete. A manual delete is immediate with an undo snackbar.
+  - **"Jak poprzednio"**: the same button while no planned set is left and the draft still matches the previous set: adds a done set identical to it.
+  - Next/previous exercise (after the last planned set, "Dalej: <name>"), pick exercise (the day's exercises or any other from the picker).
+  - Mic button and chat drawer for the agent (LW-09/10).
+- Swipe a set to edit or delete (tap opens the editor too). A manual delete is immediate with an undo snackbar.
 - Planned sets left undone stay visible as not done and never count.
 - Screen stays awake during an active workout (Android).
 - A new record shows a short toast.
 
 ### 5.3 Rest timer
 
-- Starts automatically after a set is marked done; default duration per exercise (catalog default, user-editable), global fallback in settings.
-- In-app countdown with +15 s / −15 s / skip.
+- Starts automatically after a set of today is marked done; default duration per exercise (catalog default, user-editable on the exercise card, 0 = no timer), global fallback in settings. The next set restarts it.
+- In-app countdown with +15 s / −15 s / skip, at the bottom of the workout and the day; its end is kept on the device, so a reload keeps a running rest (one that ended meanwhile is dropped). At the end: vibration where the browser supports it and "Przerwa skończona" until dismissed or the next set.
 - Android: local notification + vibration at the end, also with the screen locked (scheduled notification). PC: in-app only.
 - Logging the next set cancels the pending notification.
 
@@ -325,7 +327,7 @@ A card on the calendar for the shown week (Monday–Sunday), computed in core fr
 - **Screens (LW-06):** pairing (`/pair`, without navigation), Settings (equipment, devices, sync status, appearance) and placeholders for Calendar, History and Agent until their tickets.
   - Equipment: a generic item editor; its fields come from the type's props in the core schema (boolean → toggle, number → decimal field, empty = null), labels from the locale file.
   - Devices: list, revoke (revoking this device signs it out), pair a new device: the code in large numerals, a QR code of `<origin>/pair?code=…` and a 5-minute countdown.
-- **Screens (LW-07):** Calendar (home; a "Dziś" row, then the month: a done day is a solid accent tile, a planned-only day an accent outline, today underlined), Day (`/calendar/:date`; the exercises as one bordered block, sets as tiles in the calendar's language: planned outlined, done solid, warm-ups dashed; actions in a ⋮ sheet), the copy dialog (the month as the source picker, a preview, the light switch), the exercise picker, and the set sheet with ± steppers (sized to its content). On phones the back button is the arrow alone, so the day fits in the title.
+- **Screens (LW-07):** Calendar (home; a "Dziś" row, then the month: a done day is a solid accent tile, a planned-only day an accent outline, today underlined), Day (`/calendar/:date`; the exercises as one bordered block, sets as tiles in the calendar's language: planned outlined, done solid, warm-ups dashed; actions in a ⋮ sheet), the copy dialog (the month as the source picker, a preview, the light switch), the exercise picker, and the set sheet with ± steppers (sized to its content). On phones the back button is the arrow alone, so the day fits in the title. The workout screen (`/calendar/:date/workout`): the exercise name, hint chip and last session, then the draft as the loud element (weight and reps in 64 px numerals with ± on both sides, side by side from 576 px), RIR chips, warm-up and a 64 px "Zrobione"; below, the day's sets of the exercise as a swipeable list. The rest timer is a footer bar (a hairline of the rest left, the countdown in 40 px numerals, −15 s / +15 s / Pomiń) that turns solid accent when the rest ends; undo toasts sit above it, record toasts are amber at the top. Settings → Trening is a sheet: default rest, target RIR range, weight step chips.
 - **PWA:** manifest (pl, standalone), icons generated from `apps/web/public/icon.svg` (`pnpm --filter @liftwise/web icons`). The service worker precaches the app shell; `/api/*` and `/health` never come from the cache. A new version waits for the "Odśwież" toast, so the app never reloads mid-workout.
 
 ## 6. Architecture

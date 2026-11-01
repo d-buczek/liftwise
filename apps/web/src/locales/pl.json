@@ -154,7 +154,65 @@
     "done": "zrobiona",
     "planned": "zaplanowana",
     "warmup": "rozgrzewka",
-    "warmupShort": "rozgrz."
+    "warmupShort": "rozgrz.",
+    "start": "Rozpocznij trening",
+    "resume": "Wróć do treningu",
+    "openWorkout": "Trening: {name}"
+  },
+  "workout": {
+    "position": "Ćwiczenie {n} z {total}",
+    "previous": "Poprzednie ćwiczenie",
+    "next": "Następne ćwiczenie",
+    "nextNamed": "Dalej: {name}",
+    "choose": "Wybierz ćwiczenie",
+    "other": "Inne ćwiczenie…",
+    "edit": "Notatka, krok i przerwa: {name}",
+    "lastSession": "Poprzednio, {date}",
+    "firstSession": "Pierwsza sesja tego ćwiczenia.",
+    "setOf": "Seria {n} z {total}",
+    "setNext": "Seria {n}",
+    "done": "Zrobione",
+    "repeat": "Jak poprzednio",
+    "sets": "Serie",
+    "noSets": "Jeszcze bez serii.",
+    "upNext": "teraz",
+    "editSet": "Edytuj",
+    "rir": "RIR {value}",
+    "empty": "Wybierz ćwiczenie, żeby zacząć zapisywać serie."
+  },
+  "rest": {
+    "label": "Przerwa",
+    "timer": "Przerwa, zostało {time}",
+    "less": "−{value} s",
+    "more": "+{value} s",
+    "lessLabel": "Skróć przerwę o {value} s",
+    "moreLabel": "Wydłuż przerwę o {value} s",
+    "skip": "Pomiń",
+    "finished": "Przerwa skończona",
+    "none": "bez timera"
+  },
+  "record": {
+    "toast": "Rekord: {records}",
+    "e1rm": "e1RM {value} kg"
+  },
+  "exercise": {
+    "note": "Notatka do ustawienia",
+    "notePlaceholder": "np. ławka na 3, chwyt neutralny",
+    "step": "Krok ciężaru",
+    "stepDefault": "domyślny",
+    "rest": "Przerwa po serii"
+  },
+  "training": {
+    "title": "Trening",
+    "summary": "przerwa {rest}, RIR {rir}, krok {step} kg",
+    "rest": "Domyślna przerwa",
+    "restHint": "Dla ćwiczeń bez własnej przerwy; każde ćwiczenie zmienisz na jego karcie.",
+    "rir": "Docelowy RIR",
+    "rirHint": "Ile powtórzeń zostawiać w zapasie w seriach roboczych.",
+    "rirMin": "Od",
+    "rirMax": "Do",
+    "step": "Krok ciężaru",
+    "stepHint": "O tyle zmieniają ciężar przyciski − i +, chyba że ćwiczenie ma własny krok."
   },
   "set": {
     "edit": "Seria",

@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import {
-  applyProgressionHint,
   DEFAULT_TRAINING_SETTINGS,
-  progressionHint,
   weightStepKg,
   type Exercise,
   type WorkoutSet,
@@ -22,19 +20,23 @@ import {
 import { ellipsisVertical } from 'ionicons/icons';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useRouter } from 'vue-router';
 import AppPage from '../components/AppPage.vue';
 import CopyWorkout from '../components/CopyWorkout.vue';
 import ExerciseBlock from '../components/ExerciseBlock.vue';
 import ExercisePicker from '../components/ExercisePicker.vue';
+import RestTimer from '../components/RestTimer.vue';
 import SetEditor from '../components/SetEditor.vue';
 import { useFormat } from '../composables/format';
 import { useLiveQuery } from '../composables/liveQuery';
 import { showUndo } from '../composables/undo';
 import { addExercise, deleteSets, restoreSets, saveSets, swapExercise } from '../workout/actions';
+import { today } from '../workout/calendar';
 import {
   exerciseBlocks,
   extraSet,
   nextPosition,
+  plannedHint,
   reorderBlocks,
   type ExerciseBlock as Block,
 } from '../workout/day';
@@ -48,11 +50,21 @@ import {
 } from '../workout/queries';
 
 // A day (§5.2): its exercises with planned and done sets; copy a workout onto it, add, swap,
-// remove and reorder exercises, edit sets with ± and apply progression hints.
-const props = defineProps<{ date: string; backHref: string }>();
+// remove and reorder exercises, edit sets with ± and apply progression hints. Today and past
+// days open the workout screen to log sets; a future day is planning only.
+const props = defineProps<{ date: string; backHref: string; workoutHref: string }>();
 
 const { t } = useI18n();
 const format = useFormat();
+const router = useRouter();
+const loggable = computed(() => props.date <= today());
+
+function openWorkout(exerciseId?: string) {
+  void router.push({
+    path: props.workoutHref,
+    query: exerciseId ? { exercise: exerciseId } : {},
+  });
+}
 
 const view = useLiveQuery(
   async () => {
@@ -71,22 +83,24 @@ const training = useLiveQuery(trainingSettings, DEFAULT_TRAINING_SETTINGS);
 const maxKg = useLiveQuery(async () => maxDumbbellKg(await equipment()), null);
 
 const blocks = computed(() => exerciseBlocks(view.value.sets));
+const started = computed(() => view.value.sets.some((set) => set.status === 'done'));
 
 // The hint per exercise and the planned sets it would change; no chip when nothing changes.
 const hints = computed(() => {
   const result = new Map<string, { label: string; sets: WorkoutSet[] }>();
   for (const block of blocks.value) {
     const exercise = exercises.value.get(block.exerciseId);
-    if (!exercise) continue;
-    const hint = progressionHint({
-      exercise,
-      training: training.value,
-      sets: view.value.history,
-      date: props.date,
-      maxWeightKg: maxKg.value,
-    });
-    const sets = hint ? applyProgressionHint(block.sets, hint) : [];
-    if (hint && sets.length > 0) result.set(block.exerciseId, { label: format.hint(hint), sets });
+    const chip =
+      exercise &&
+      plannedHint({
+        exercise,
+        training: training.value,
+        sets: view.value.history,
+        date: props.date,
+        maxWeightKg: maxKg.value,
+        block: block.sets,
+      });
+    if (chip) result.set(block.exerciseId, { label: format.hint(chip.hint), sets: chip.sets });
   }
   return result;
 });
@@ -220,6 +234,9 @@ async function reorderEnd(event: ReorderEndCustomEvent) {
       </template>
 
       <template v-else-if="blocks.length > 0">
+        <ion-button v-if="loggable" expand="block" class="lw-day__start" @click="openWorkout()">
+          {{ started ? t('day.resume') : t('day.start') }}
+        </ion-button>
         <div class="lw-day__blocks">
           <exercise-block
             v-for="block in blocks"
@@ -227,10 +244,12 @@ async function reorderEnd(event: ReorderEndCustomEvent) {
             :exercise="exercises.get(block.exerciseId)"
             :sets="block.sets"
             :hint="hints.get(block.exerciseId)?.label ?? null"
+            :openable="loggable"
             @edit-set="(set) => (editing = set)"
             @add-set="addSet(block)"
             @apply-hint="applyHint(block.exerciseId)"
             @actions="exerciseActions(block)"
+            @open="openWorkout(block.exerciseId)"
           />
         </div>
         <div class="lw-day__more">
@@ -289,10 +308,23 @@ async function reorderEnd(event: ReorderEndCustomEvent) {
         @close="editing = null"
       />
     </ion-modal>
+
+    <template #footer>
+      <rest-timer />
+    </template>
   </app-page>
 </template>
 
 <style scoped>
+.lw-day__start {
+  --border-radius: 14px;
+  height: 56px;
+  margin: 16px 0 0;
+  font-size: 20px;
+  font-stretch: var(--lw-narrow);
+  font-weight: 700;
+}
+
 .lw-day__blocks {
   margin-top: 16px;
   overflow: hidden;

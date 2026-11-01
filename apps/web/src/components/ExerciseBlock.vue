@@ -6,13 +6,20 @@ import { useI18n } from 'vue-i18n';
 import { useFormat } from '../composables/format';
 
 // One exercise of a day: its sets as tiles (planned outlined, done solid, like the calendar),
-// the setup note and the progression hint chip (§5.2).
-defineProps<{ exercise: Exercise | undefined; sets: WorkoutSet[]; hint: string | null }>();
+// the setup note and the progression hint chip (§5.2). With `openable` the name opens the
+// workout on this exercise.
+defineProps<{
+  exercise: Exercise | undefined;
+  sets: WorkoutSet[];
+  hint: string | null;
+  openable: boolean;
+}>();
 const emit = defineEmits<{
   editSet: [set: WorkoutSet];
   addSet: [];
   applyHint: [];
   actions: [];
+  open: [];
 }>();
 
 const { t } = useI18n();
@@ -27,7 +34,18 @@ function setLabel(set: WorkoutSet, index: number): string {
 <template>
   <article class="lw-block">
     <header class="lw-block__head">
-      <h2 class="lw-block__name">{{ format.exerciseName(exercise) }}</h2>
+      <h2 class="lw-block__name">
+        <button
+          v-if="openable"
+          type="button"
+          class="lw-block__open"
+          :aria-label="t('day.openWorkout', { name: format.exerciseName(exercise) })"
+          @click="emit('open')"
+        >
+          {{ format.exerciseName(exercise) }}
+        </button>
+        <template v-else>{{ format.exerciseName(exercise) }}</template>
+      </h2>
       <ion-button
         fill="clear"
         class="lw-block__more"
@@ -41,7 +59,7 @@ function setLabel(set: WorkoutSet, index: number): string {
     <button
       v-if="hint"
       type="button"
-      class="lw-block__hint lw-num"
+      class="lw-hint lw-num"
       :aria-label="t('hint.apply', { hint })"
       @click="emit('applyHint')"
     >
@@ -114,6 +132,20 @@ function setLabel(set: WorkoutSet, index: number): string {
   line-height: 1.2;
 }
 
+.lw-block__open {
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.lw-block__open:hover {
+  color: var(--ion-color-primary);
+}
+
 .lw-block__more {
   margin: -8px -12px -8px 0;
   --color: var(--lw-muted);
@@ -123,19 +155,6 @@ function setLabel(set: WorkoutSet, index: number): string {
   margin: 2px 0 0;
   font-size: 14px;
   color: var(--lw-muted);
-}
-
-.lw-block__hint {
-  min-height: 36px;
-  margin-top: 8px;
-  padding: 0 12px;
-  font-family: inherit;
-  font-size: 16px;
-  color: var(--ion-color-primary);
-  background: transparent;
-  border: 1px solid var(--ion-color-primary);
-  border-radius: 18px;
-  cursor: pointer;
 }
 
 .lw-block__sets {

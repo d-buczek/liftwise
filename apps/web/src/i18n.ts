@@ -39,7 +39,7 @@ export const i18n = createI18n<[MessageSchema], 'pl', false>({
   },
   numberFormats: {
     // Weights have a 0.25 kg precision (§5.1): 32,5 / 31,25.
-    pl: { kg: { maximumFractionDigits: 2 } },
+    pl: { kg: { maximumFractionDigits: 2 }, e1rm: { maximumFractionDigits: 1 } },
   },
 });
 

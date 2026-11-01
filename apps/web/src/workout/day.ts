@@ -1,11 +1,15 @@
 import {
+  applyProgressionHint,
   exerciseSessions,
   newId as defaultNewId,
+  progressionHint,
   roundWeightKg,
   TIME_STEP_S,
   type DatedSet,
   type Exercise,
   type Measure,
+  type ProgressionHint,
+  type ProgressionHintInput,
   type Workout,
   type WorkoutSet,
 } from '@liftwise/core';
@@ -95,6 +99,16 @@ export function extraSet(block: ExerciseBlock, start: number, newId = defaultNew
     performed_at: null,
     source: 'manual',
   };
+}
+
+// The chip of an exercise of a day (§5.2): its hint and the planned sets applying it changes;
+// null when it changes nothing. `block` are the exercise's sets of the day.
+export function plannedHint(
+  input: ProgressionHintInput & { block: WorkoutSet[] },
+): { hint: ProgressionHint; sets: WorkoutSet[] } | null {
+  const hint = progressionHint(input);
+  const sets = hint ? applyProgressionHint(input.block, hint) : [];
+  return hint && sets.length > 0 ? { hint, sets } : null;
 }
 
 // The ± controls (§5.2): the weight by the exercise's step, never below 0; reps by 1 and

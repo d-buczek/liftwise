@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from 'vite-plus/test';
 import { db } from '../db/database';
 import { applyLocal } from '../db/mutate';
 import { makeExercise, makeSet, resetDb } from '../testing';
-import { addExercise, copyDay, deleteSets, restoreSets } from './actions';
+import { addExercise, copyDay, deleteSets, logSet, restoreSets } from './actions';
 import { dayData } from './queries';
 
 const press = makeExercise({ weight_step_kg: 2 });
@@ -65,6 +65,35 @@ describe('day actions', () => {
     await addExercise('2026-10-05', press);
     const day = await dayData('2026-10-05');
     expect(day.sets).toMatchObject([{ status: 'planned', weight_kg: 22, reps: 9, position: 0 }]);
+  });
+
+  it('logs the planned set as done and starts its workout', async () => {
+    const { workout, rows } = await seedDay('2026-11-01', [{ status: 'planned' }, {}]);
+    const now = new Date('2026-11-01T17:30:00Z');
+    const draft = { weight_kg: 22, reps: 9, duration_s: null, warmup: false, rir: 1 };
+    const set = await logSet('2026-11-01', press.id, rows[0] ?? null, draft, now);
+
+    const day = await dayData('2026-11-01');
+    expect(day.sets.find((row) => row.id === set.id)).toMatchObject({
+      status: 'done',
+      weight_kg: 22,
+      reps: 9,
+      rir: 1,
+      performed_at: now.toISOString(),
+      position: 0,
+    });
+    expect(day.workouts.find((row) => row.id === workout.id)?.started_at).toBe(now.toISOString());
+  });
+
+  it('logs a new set on an empty day: its workout and the set in one group', async () => {
+    await seedDay('2026-10-01', []);
+    const draft = { weight_kg: 0, reps: 8, duration_s: null, warmup: true, rir: null };
+    const set = await logSet('2026-11-02', press.id, null, draft);
+
+    const day = await dayData('2026-11-02');
+    expect(day.sets).toMatchObject([{ id: set.id, status: 'done', warmup: true, position: 0 }]);
+    expect(day.workouts[0]?.started_at).toBe(set.performed_at);
+    expect(await groupsOf([set.id, ...day.workouts.map((row) => row.id)])).toHaveLength(1);
   });
 
   it('restores deleted sets', async () => {

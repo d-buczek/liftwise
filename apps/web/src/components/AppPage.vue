@@ -34,5 +34,6 @@ const { t } = useI18n();
         <slot />
       </div>
     </ion-content>
+    <slot name="footer" />
   </ion-page>
 </template>

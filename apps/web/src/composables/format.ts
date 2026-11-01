@@ -1,6 +1,14 @@
-import type { Exercise, ProgressionHint, WorkoutSet } from '@liftwise/core';
+import {
+  RIR_MAX,
+  type Exercise,
+  type ProgressionHint,
+  type Range,
+  type RecordEvent,
+  type WorkoutSet,
+} from '@liftwise/core';
 import { useI18n } from 'vue-i18n';
 import { dateValue } from '../workout/calendar';
+import type { LoadGroup } from '../workout/logging';
 
 // Shared wording of training data: weights with a decimal comma, sets, days and hints.
 export function useFormat() {
@@ -8,9 +16,20 @@ export function useFormat() {
 
   const kg = (value: number) => n(value, 'kg');
 
-  // Several per-set values read as "11, 11, 10"; equal ones as one.
-  const values = (list: number[]) =>
-    new Set(list).size === 1 ? String(list[0]) : list.map(String).join(', ');
+  // "22,5 kg × 11, 11, 10", "11, 11, 10 powt." at bodyweight, "50, 45 s".
+  const load = (weight: number, values: number[], timed: boolean) => {
+    const params = { weight: kg(weight), values: values.map(String).join(', ') };
+    return weight > 0
+      ? t(timed ? 'hint.loadWeightTime' : 'hint.loadWeight', params)
+      : t(timed ? 'hint.loadTime' : 'hint.loadReps', params);
+  };
+
+  // 90 → "1:30".
+  const clock = (seconds: number) =>
+    `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+
+  // RIR 4 means "4+" (D4).
+  const rir = (value: number) => (value === RIR_MAX ? t('set.rirMax') : String(value));
 
   return {
     kg,
@@ -31,18 +50,33 @@ export function useFormat() {
         : t('set.summaryTime', { weight: kg(set.weight_kg), value: set.duration_s }),
     // "↑ 22,5 kg × 11, 11, 10", "= 24 kg × 10", "↑ 50, 45 s" at bodyweight: always the load the
     // planned sets get, since applying a hint may change the weight as well.
+    // Per-set values that are all equal read as one: "↑ 25 kg × 8".
     hint: (hint: ProgressionHint) => {
-      const timed = hint.duration_s !== null;
-      const params = {
-        weight: kg(hint.weight),
-        values: values(hint.reps ?? hint.duration_s ?? []),
-      };
-      const load =
-        hint.weight > 0
-          ? t(timed ? 'hint.loadWeightTime' : 'hint.loadWeight', params)
-          : t(timed ? 'hint.loadTime' : 'hint.loadReps', params);
+      const values = hint.reps ?? hint.duration_s ?? [];
       const kind = hint.reason === 'hold' || hint.reason === 'reentry' ? hint.reason : 'up';
-      return t(`hint.${kind}`, { load });
+      const shown = new Set(values).size === 1 ? values.slice(0, 1) : values;
+      return t(`hint.${kind}`, { load: load(hint.weight, shown, hint.duration_s !== null) });
     },
+    // A session: "22,5 kg × 10, 10, 9; 20 kg × 12".
+    session: (groups: LoadGroup[]) =>
+      groups.map((group) => load(group.weight_kg, group.values, group.timed)).join('; '),
+    clock,
+    rir,
+    // "1–2", or "2" when both bounds are equal.
+    rirRange: (range: Range) =>
+      range.min === range.max ? rir(range.min) : `${rir(range.min)}–${rir(range.max)}`,
+    // An exercise's rest: "1:30", or none.
+    rest: (seconds: number) => (seconds > 0 ? clock(seconds) : t('rest.none')),
+    // "Rekord: 12 powt. × 24 kg, e1RM 31,2 kg".
+    records: (events: RecordEvent[]) =>
+      t('record.toast', {
+        records: events
+          .map((event) =>
+            event.kind === 'e1rm'
+              ? t('record.e1rm', { value: n(event.value, 'e1rm') })
+              : load(event.weight_kg, [event.value], event.kind === 'time'),
+          )
+          .join(', '),
+      }),
   };
 }

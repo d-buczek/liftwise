@@ -1,6 +1,15 @@
-import { copyWorkout, newId, workoutSchema, type Exercise, type WorkoutSet } from '@liftwise/core';
+import {
+  copyWorkout,
+  newId,
+  SETTING_IDS,
+  workoutSchema,
+  type Exercise,
+  type TrainingSettings,
+  type WorkoutSet,
+} from '@liftwise/core';
 import { applyLocal, type LocalChange } from '../db/mutate';
 import { dayWorkout, nextPosition, plannedSetsFor } from './day';
+import type { Draft } from './logging';
 import { catalog, dayData, historySets, trainingSettings } from './queries';
 
 // User actions on a day; each is one `applyLocal` call, so one change group (D41).
@@ -11,10 +20,10 @@ async function targetOf(date: string) {
   const existing = dayWorkout(day.workouts);
   const workout = existing ?? workoutSchema.parse({ id: newId(), date });
   const changes: LocalChange[] = existing ? [] : [upsert('workouts', workout)];
-  return { day, workoutId: workout.id, changes };
+  return { day, workout, workoutId: workout.id, changes };
 }
 
-function upsert<E extends 'workouts' | 'sets' | 'exercises'>(
+function upsert<E extends 'workouts' | 'sets' | 'exercises' | 'settings'>(
   entity: E,
   row: Extract<LocalChange, { op: 'upsert'; entity: E }>['row'],
 ): LocalChange {
@@ -66,4 +75,46 @@ export function swapExercise(sets: WorkoutSet[], exercise: Pick<Exercise, 'id'>)
 
 export function saveExercise(exercise: Exercise) {
   return applyLocal([upsert('exercises', exercise)]);
+}
+
+// "Zrobione" (§5.2): the planned set, or a new one at the end of the day, saved as done with the
+// draft; the first done set of a workout starts it. Returns the saved set.
+export async function logSet(
+  date: string,
+  exerciseId: string,
+  planned: WorkoutSet | null,
+  draft: Draft,
+  now = new Date(),
+): Promise<WorkoutSet> {
+  const performedAt = now.toISOString();
+  const target = await targetOf(date);
+  const base: WorkoutSet = planned ?? {
+    id: newId(),
+    workout_id: target.workoutId,
+    exercise_id: exerciseId,
+    position: nextPosition(target.day.sets),
+    status: 'planned',
+    weight_kg: 0,
+    reps: null,
+    duration_s: null,
+    rir: null,
+    warmup: false,
+    note: '',
+    performed_at: null,
+    source: 'manual',
+  };
+  const set: WorkoutSet = { ...base, ...draft, status: 'done', performed_at: performedAt };
+  const workout =
+    target.day.workouts.find((row) => row.id === set.workout_id) ??
+    (target.workoutId === set.workout_id ? target.workout : null);
+  const start =
+    workout && workout.started_at === null
+      ? [upsert('workouts', { ...workout, started_at: performedAt })]
+      : [];
+  await applyLocal([...start, upsert('sets', set)]);
+  return set;
+}
+
+export function saveTrainingSettings(value: TrainingSettings) {
+  return applyLocal([upsert('settings', { id: SETTING_IDS.training, key: 'training', value })]);
 }

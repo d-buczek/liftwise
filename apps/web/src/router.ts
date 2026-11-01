@@ -10,6 +10,8 @@ import EquipmentPage from './views/EquipmentPage.vue';
 import PairPage from './views/PairPage.vue';
 import SettingsPage from './views/SettingsPage.vue';
 import TabsPage from './views/TabsPage.vue';
+import WorkoutPage from './views/WorkoutPage.vue';
+import { today } from './workout/calendar';
 
 declare module 'vue-router' {
   interface RouteMeta {
@@ -18,14 +20,38 @@ declare module 'vue-router' {
   }
 }
 
-// A day under a section's path keeps that tab active; an invalid date goes back to the calendar.
-function dayRoute(path: string, backHref: string): RouteRecordRaw {
-  return {
-    path,
-    component: DayPage,
-    props: (route: RouteLocationNormalized) => ({ date: route.params.date, backHref }),
-    beforeEnter: (to) => (localDateSchema.safeParse(to.params.date).success ? true : '/calendar'),
-  };
+const validDate = (to: RouteLocationNormalized) =>
+  localDateSchema.safeParse(to.params.date).success;
+
+// A day and its workout under a section's path keep that tab active. An invalid date goes back
+// to the calendar; a future day has no workout to log, only its plan.
+function dayRoutes(section: string): RouteRecordRaw[] {
+  const dayHref = (route: RouteLocationNormalized) => `/${section}/${String(route.params.date)}`;
+  return [
+    {
+      path: `${section}/:date`,
+      component: DayPage,
+      props: (route) => ({
+        date: route.params.date,
+        backHref: `/${section}`,
+        workoutHref: `${dayHref(route)}/workout`,
+      }),
+      beforeEnter: (to) => (validDate(to) ? true : '/calendar'),
+    },
+    {
+      path: `${section}/:date/workout`,
+      component: WorkoutPage,
+      props: (route) => ({
+        date: route.params.date,
+        exerciseId: typeof route.query.exercise === 'string' ? route.query.exercise || null : null,
+        dayHref: dayHref(route),
+      }),
+      beforeEnter: (to) => {
+        if (!validDate(to)) return '/calendar';
+        return String(to.params.date) <= today() ? true : dayHref(to);
+      },
+    },
+  ];
 }
 
 const routes: RouteRecordRaw[] = [
@@ -36,7 +62,7 @@ const routes: RouteRecordRaw[] = [
     children: [
       { path: '', redirect: '/calendar' },
       { path: 'calendar', component: CalendarPage },
-      dayRoute('calendar/:date', '/calendar'),
+      ...dayRoutes('calendar'),
       { path: 'history', component: EmptyPage, props: { section: 'history' } },
       { path: 'agent', component: EmptyPage, props: { section: 'agent' } },
       { path: 'settings', component: SettingsPage },
