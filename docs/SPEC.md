@@ -558,6 +558,7 @@ Each line is meant to be one `/ticket` task.
 | LW-11 | Optional workout proposal flow: check-in → plan → planned sets on a day |
 | LW-12 | Charts & records UI, balance guard dashboard, weekly summary card, data export |
 | LW-13 | Agent eval suite |
+| LW-14 | Workout labels (training sets such as A / B) with colors: synced entity, shown on the calendar, day and history; a copy keeps the label and the copy dialog offers "the last A / B" |
 | LW-20 | Phase 2: MCP endpoint with token auth |
 | LW-21 | Phase 2: OAuth for claude.ai connectors |
 
