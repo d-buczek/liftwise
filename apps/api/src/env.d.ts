@@ -5,5 +5,9 @@ declare namespace Cloudflare {
     ANTHROPIC_API_KEY?: string;
     OPENAI_API_KEY?: string;
     GOOGLE_GENERATIVE_AI_API_KEY?: string;
+    // Optional provider endpoints (plain variables); `profile:chat` points Anthropic at a replay.
+    ANTHROPIC_BASE_URL?: string;
+    OPENAI_BASE_URL?: string;
+    GOOGLE_GENERATIVE_AI_BASE_URL?: string;
   }
 }

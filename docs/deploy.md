@@ -58,6 +58,21 @@ One Worker, `liftwise`, serves the API and the PWA from the same origin (SPEC §
 - Workers Free allows 10 ms CPU per request with some tolerance for overruns; a Worker that keeps
   exceeding it gets error 1102 (`outcome: exceededCpu`). An agent turn uses far more (SPEC §9, LW-15),
   so watch the chat for 1102 errors.
+- Each chat turn logs `{"chatTurn":{"isolateTurn":N,"steps":S}}`: `isolateTurn` 1 is a cold isolate
+  (the most expensive turn), `steps` the model calls. Read it next to the invocation's `cpuTime`.
+
+## CPU profile of a chat turn
+
+`pnpm --filter @liftwise/api profile:chat [--runs N]` (needs the PWA build, `pnpm --filter
+@liftwise/web build`) starts `wrangler dev` on its own local D1 (`apps/api/.wrangler/profile`,
+seeded with a year of training), points Anthropic at a local server that replays fixed model
+streams (`ANTHROPIC_BASE_URL`, no key, no cost) and samples the CPU of each turn through the
+DevTools protocol. It prints the CPU per scenario (a cold isolate's first turn, a write, a history
+question, a plain reply), where it goes (tool handlers, message writes, provider stream, packages)
+and the hottest functions; the `.cpuprofile` files open in Chrome DevTools → Performance. The
+numbers are the PC's — compare runs before and after a change, not against the 10 ms limit;
+production is ~2–5× slower (SPEC §9). Production profiling (`cf workers versions profile`, API)
+answered "No recent executions were found" for this Worker in LW-15.
 
 ## Where to log in
 

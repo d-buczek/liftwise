@@ -16,7 +16,7 @@ import { messages, threads } from '../db/schema';
 import { apiError, readJson } from '../http';
 import { applyWrites, type Write } from '../sync/write';
 import { agentTools } from '../tools';
-import { balanceSettings, catalog, equipment, history, profile } from '../tools/data';
+import { balanceSets, balanceSettings, catalog, equipment, profile } from '../tools/data';
 import type { ToolContext } from '../tools/registry';
 import { systemMessages } from './prompt';
 import { modelSettings, ProviderUnavailable, resolveModel } from './providers';
@@ -27,6 +27,10 @@ import { modelSettings, ProviderUnavailable, resolveModel } from './providers';
 
 // Model calls per turn: a lookup, a write and the answer leave room for a question or a retry.
 const MAX_STEPS = 8;
+
+// Turns this isolate has served: 1 is a cold isolate. Logged with the steps, next to the CPU time
+// of the invocation in Workers Logs (§9).
+let isolateTurns = 0;
 
 const chatSchema = z.object({
   threadId: idSchema,
@@ -67,6 +71,7 @@ export function createChatRoutes(resolve = resolveModel) {
     const db = c.var.db;
     const { threadId, localTime } = body;
     const today = localTime.slice(0, 10);
+    const isolateTurn = ++isolateTurns;
 
     let resolved: ReturnType<typeof resolveModel>;
     try {
@@ -102,7 +107,7 @@ export function createChatRoutes(resolve = resolveModel) {
       equipment(db),
       profile(db),
       balanceSettings(db),
-      history(db),
+      balanceSets(db, today),
     ]);
     const ctx: ToolContext = { db, threadId, today, now: localTime };
     const tools = agentTools(ctx);
@@ -130,12 +135,22 @@ export function createChatRoutes(resolve = resolveModel) {
     c.executionCtx.waitUntil(new Promise<void>((done) => (stored = done)));
     const assistantId = newId();
     const stream = toUIMessageStream({
-      stream: result.stream,
+      // The UI needs a tool call's input only once it is complete; each input delta would make
+      // the stored message (built from this stream) and the client re-parse it all (LW-15).
+      stream: result.stream.pipeThrough(
+        new TransformStream({
+          transform(part, controller) {
+            if (part.type !== 'tool-input-delta') controller.enqueue(part);
+          },
+        }),
+      ),
       tools,
       originalMessages: conversation,
       generateMessageId: () => assistantId,
       onEnd: async ({ responseMessage }) => {
         try {
+          const steps = responseMessage.parts.filter((part) => part.type === 'step-start').length;
+          console.log(JSON.stringify({ chatTurn: { isolateTurn, steps } }));
           if (responseMessage.parts.length === 0) return;
           const { id, parts } = responseMessage;
           await applyWrites(db, { actor: 'agent', threadId }, [

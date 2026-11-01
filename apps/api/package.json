@@ -11,7 +11,8 @@
     "db:seed": "tsx scripts/seed-catalog.ts",
     "db:migrate:local": "wrangler d1 migrations apply DB --local",
     "db:migrate:remote": "wrangler d1 migrations apply DB --remote",
-    "device:create": "node scripts/device-create.ts"
+    "device:create": "node scripts/device-create.ts",
+    "profile:chat": "node scripts/profile-chat.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.94",

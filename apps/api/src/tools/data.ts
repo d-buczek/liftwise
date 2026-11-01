@@ -1,5 +1,7 @@
 import {
+  addDays,
   ATHLETE_PROFILE_ID,
+  BALANCE_WINDOW_DAYS,
   DEFAULT_BALANCE_SETTINGS,
   DEFAULT_TRAINING_SETTINGS,
   SETTING_IDS,
@@ -12,7 +14,7 @@ import {
   type WorkoutLabel,
   type WorkoutSet,
 } from '@liftwise/core';
-import { and, asc, eq, gte, inArray, isNull, lte, type SQL } from 'drizzle-orm';
+import { and, asc, eq, gte, inArray, isNull, lt, lte, sql, type SQL } from 'drizzle-orm';
 import type { Db } from '../db';
 import {
   athleteProfile,
@@ -103,6 +105,31 @@ function datedSetsQuery(db: Db, where: SQL | undefined) {
 
 function toDatedSet({ set, date }: { set: WorkoutSet; date: string }): DatedSet {
   return { ...set, date };
+}
+
+// What `balanceSnapshot` needs up to `today`, without loading the whole history: every set of
+// the window, plus per exercise its latest working set before the window (for "days since").
+// SQLite takes the other columns of a `max()` group from the row with the maximum.
+export async function balanceSets(db: Db, today: string): Promise<DatedSet[]> {
+  const windowStart = addDays(today, 1 - BALANCE_WINDOW_DAYS);
+  const [inWindow, before] = await db.batch([
+    datedSetsQuery(db, and(gte(workouts.date, windowStart), lte(workouts.date, today))),
+    db
+      .select({ set: sets, date: sql<string>`max(${workouts.date})` })
+      .from(sets)
+      .innerJoin(workouts, eq(sets.workout_id, workouts.id))
+      .where(
+        and(
+          lt(workouts.date, windowStart),
+          eq(sets.status, 'done'),
+          eq(sets.warmup, false),
+          isNull(sets.deleted_at),
+          isNull(workouts.deleted_at),
+        ),
+      )
+      .groupBy(sets.exercise_id),
+  ]);
+  return [...before, ...inWindow].map(toDatedSet);
 }
 
 // Live sets by id with their date; missing ones are left out.

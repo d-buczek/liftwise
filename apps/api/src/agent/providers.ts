@@ -18,33 +18,38 @@ import { settings } from '../db/schema';
 
 // The model provider layer (§6.7): provider → secret and model factory. A provider is available
 // iff its secret is set. Model ids are settings; these defaults apply until the user picks one.
+// An optional base URL variable points a provider elsewhere (the chat profile's replay server).
 
 type ProviderEntry = {
   secretName: 'ANTHROPIC_API_KEY' | 'OPENAI_API_KEY' | 'GOOGLE_GENERATIVE_AI_API_KEY';
-  createModel: (apiKey: string, modelId: string) => LanguageModel;
+  baseUrlName: 'ANTHROPIC_BASE_URL' | 'OPENAI_BASE_URL' | 'GOOGLE_GENERATIVE_AI_BASE_URL';
+  createModel: (apiKey: string, modelId: string, baseURL?: string) => LanguageModel;
   defaults: Record<keyof ModelSettings, string>;
 };
 
 export const PROVIDERS: Record<Provider, ProviderEntry> = {
   anthropic: {
     secretName: 'ANTHROPIC_API_KEY',
-    createModel: (apiKey, modelId) => createAnthropic({ apiKey })(modelId),
+    baseUrlName: 'ANTHROPIC_BASE_URL',
+    createModel: (apiKey, modelId, baseURL) => createAnthropic({ apiKey, baseURL })(modelId),
     defaults: { fast: 'claude-haiku-5-5', planner: 'claude-sonnet-5-5' },
   },
   openai: {
     secretName: 'OPENAI_API_KEY',
-    createModel: (apiKey, modelId) => createOpenAI({ apiKey })(modelId),
+    baseUrlName: 'OPENAI_BASE_URL',
+    createModel: (apiKey, modelId, baseURL) => createOpenAI({ apiKey, baseURL })(modelId),
     defaults: { fast: 'gpt-6-luna', planner: 'gpt-6-sol' },
   },
   google: {
     secretName: 'GOOGLE_GENERATIVE_AI_API_KEY',
-    createModel: (apiKey, modelId) => createGoogle({ apiKey })(modelId),
+    baseUrlName: 'GOOGLE_GENERATIVE_AI_BASE_URL',
+    createModel: (apiKey, modelId, baseURL) => createGoogle({ apiKey, baseURL })(modelId),
     defaults: { fast: 'gemini-3.8-flash', planner: 'gemini-pro-latest' },
   },
 };
 
 export type Role = keyof ModelSettings;
-type Secrets = Partial<Record<ProviderEntry['secretName'], string>>;
+type Secrets = Partial<Record<ProviderEntry['secretName'] | ProviderEntry['baseUrlName'], string>>;
 
 export function configuredProviders(env: Secrets): Provider[] {
   return providerSchema.options.filter((provider) => Boolean(env[PROVIDERS[provider].secretName]));
@@ -82,11 +87,12 @@ export function resolveModel(
   env: Secrets,
   choice: ModelSettings[Role],
 ): { provider: Provider; model: LanguageModel } {
-  const apiKey = env[PROVIDERS[choice.provider].secretName];
+  const entry = PROVIDERS[choice.provider];
+  const apiKey = env[entry.secretName];
   if (!apiKey) throw new ProviderUnavailable(choice.provider);
   return {
     provider: choice.provider,
-    model: PROVIDERS[choice.provider].createModel(apiKey, choice.model),
+    model: entry.createModel(apiKey, choice.model, env[entry.baseUrlName] || undefined),
   };
 }
 

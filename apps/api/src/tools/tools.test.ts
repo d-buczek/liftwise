@@ -1,5 +1,8 @@
 import {
+  balanceSnapshot,
+  DEFAULT_BALANCE_SETTINGS,
   newId,
+  seedCatalog,
   type ProposalToolOutput,
   type SyncMutationInput,
   type WriteToolOutput,
@@ -11,6 +14,7 @@ import {
   createDevice,
   db,
   push,
+  remove,
   repsExercise,
   setRow,
   timedExercise,
@@ -20,6 +24,7 @@ import {
 import { changeLog, messages, sets, workouts } from '../db/schema';
 import { applyWrites } from '../sync/write';
 import { TOOLS, toolByName } from '.';
+import { balanceSets, catalog, history } from './data';
 import { runTool, type ToolContext } from './registry';
 
 const TODAY = '2026-10-31';
@@ -99,6 +104,37 @@ describe('read tools', () => {
     expect(await run('get_exercise_history', { exercise_id: newId() })).toMatchObject({
       error: 'exercise_not_found',
     });
+  });
+
+  it('computes the balance from the window and the last working set before it', async () => {
+    const other = seedCatalog().find(
+      (exercise) =>
+        exercise.measure === 'reps' &&
+        !exercise.primary_muscles.some((group) => repsExercise.primary_muscles.includes(group)),
+    )!;
+    await day('2026-09-01', [done({ exercise_id: other.id })]);
+    // The latest set before the window is a warm-up: "days since" comes from 09-01.
+    await day('2026-09-15', [done({ exercise_id: other.id, warmup: true })]);
+    await day('2026-10-10', [done(), done(), { status: 'planned' }]);
+    await day('2026-10-20', [done({ warmup: true })]);
+    await day('2026-10-26', [done(), done({ rir: 4 })]);
+    await day(TODAY, [done(), { status: 'planned', exercise_id: other.id }]);
+    await day('2026-11-02', [{ status: 'planned' }]);
+    const deleted = await day('2026-10-30', [done({ exercise_id: other.id })]);
+    await push(token, [remove('workouts', deleted.workout.id)]);
+
+    const [all, exercises] = await Promise.all([history(db()), catalog(db())]);
+    const full = balanceSnapshot({
+      sets: all,
+      exercises,
+      balance: DEFAULT_BALANCE_SETTINGS,
+      today: TODAY,
+    });
+    expect(await run('get_balance', {})).toEqual(full);
+    expect(full.muscles.find((muscle) => muscle.group === other.primary_muscles[0])).toMatchObject({
+      daysSince: 60,
+    });
+    expect((await balanceSets(db(), TODAY)).length).toBeLessThan(all.length);
   });
 
   it("shows today's workout and rejects a too long range", async () => {

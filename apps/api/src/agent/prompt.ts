@@ -25,11 +25,15 @@ Rules:
 - A tool result with "error" explains why the call didn't run: correct the call or ask the user.
 - Change the athlete profile, the catalog or the settings only when the user asks; when they state a lasting goal, limitation or preference, offer to add it to the profile.`;
 
+// One collator for the isolate: `localeCompare(…, 'pl')` per comparison costs ~7 ms on a cold
+// isolate (LW-15).
+const polish = new Intl.Collator('pl');
+
 // Name, aliases and measure per exercise: enough to match what the user says to an id.
 function catalogLines(exercises: Exercise[]): string {
   return exercises
     .filter((exercise) => !exercise.archived)
-    .sort((a, b) => a.name_pl.localeCompare(b.name_pl, 'pl'))
+    .sort((a, b) => polish.compare(a.name_pl, b.name_pl))
     .map((exercise) => {
       const aliases = exercise.aliases.length > 0 ? ` (${exercise.aliases.join(', ')})` : '';
       return `- ${exercise.id} | ${exercise.name_pl}${aliases} | ${exercise.measure}`;

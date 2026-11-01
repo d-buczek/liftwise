@@ -13,6 +13,7 @@ import {
 } from '@liftwise/core';
 import { z } from 'zod';
 import {
+  balanceSets,
   balanceSettings,
   catalog,
   days,
@@ -142,7 +143,7 @@ export const readTools = [
     risk: 'read',
     run: async (ctx) => {
       const [sets, exercises, balance] = await Promise.all([
-        history(ctx.db),
+        balanceSets(ctx.db, ctx.today),
         catalog(ctx.db),
         balanceSettings(ctx.db),
       ]);
