@@ -1,10 +1,15 @@
-name = "liftwise-api"
+name = "liftwise"
 main = "src/index.ts"
 compatibility_date = "2026-10-01"
+
+# Workers Logs in the dashboard: CPU / wall time and console output per invocation (docs/deploy.md).
+[observability]
+enabled = true
 
 [[d1_databases]]
 binding = "DB"
 database_name = "liftwise"
+database_id = "1b568ab0-c306-49ce-8201-93d2ad215d5c"
 migrations_dir = "migrations"
 
 # The PWA (the apps/web build) comes from the same origin as the API (§6.1); the Worker runs

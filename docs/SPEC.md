@@ -77,6 +77,7 @@ On top of that, an AI agent with tools over the app's data logs and edits from a
 | D48 | Workout labels | A workout has an optional **label** (`workout_labels`: a name of at most 6 characters, a color key from a fixed palette of 6, archived); a day's label is that of its oldest labelled workout, and picking one on the day writes every workout of the day. A copy gives the workout it writes to the source's label unless the target day has its own or the label is archived; the copy dialog offers **"Ostatni A / B…"**. Labels are set by hand, not derived from muscle groups. On the calendar a labelled day takes the label's color **and shows its name**; cobalt, the accent of unlabelled days, is the palette's last color. Clients built before labels stop syncing on the first label (unknown table) and drop labels from the workouts they write, so every device is updated before labels are used | Training sets such as A / B usually share muscle groups (full body), so groups wouldn't tell them apart and couldn't pick "the last A"; inheriting on copy means a label is set once; color keys let each theme pick its own values; the name keeps the label readable without color (color blindness, two similar colors) and fits a phone's calendar cell; a stopped sync keeps the pull cursor, so an updated client loses nothing |
 | D49 | Charts, balance and export UI | **Self-drawn SVG charts** (no chart library): one series per chart, the chosen point in plate numerals, a table twin for screen readers. The **balance guard** is a third segment of History, a muscle group opens its weekly sets; the **weekly summary** card under the calendar follows the shown month (this week, else the month's last) with its own ‹ ›. Export on Android goes through the **share sheet** (filesystem + share plugins), in the browser it downloads | Simple series need no 100 kB dependency and keep the type and colors of D42; the WebView can't download a blob, and the share sheet reaches Drive, Files and mail |
 | D50 | Risky tool confirmation | **Own proposals, not the AI SDK tool approval**: a risky call stores its input in `pending_proposals` and returns the diff; confirming runs the tool again on the current data as one change group, **without the model**, rejecting writes nothing; both record the status (and the written changes) in the tool result of the stored message | The built-in `needsApproval` pauses the model turn and needs another model call to continue; a stored proposal costs no tokens, survives a reload and the other device, and keeps the same semantics for MCP (§6.11) |
+| D51 | Deployment | One Worker **`liftwise`** serves the API and the PWA on `liftwise.<account-subdomain>.workers.dev`; D1 `liftwise` in **WEUR**; Workers Logs on; `pnpm deploy:api` from the PC applies the D1 migrations, then deploys (`docs/deploy.md`). Stays on **Workers Free** although an agent turn takes 54–265 ms CPU against the 10 ms limit (§9); provider keys are set with `wrangler secret put` from the clipboard | Zero running cost is a goal; Cloudflare tolerated every measured turn (outcome `ok`) and sync, undo and pairing stay within 10 ms; the CPU cut is LW-15, Workers Paid ($5/mo) only if chat turns start failing with 1102; a key typed as the secret's name shows in plain text in `wrangler secret list` |
 
 ## 4. Scope
 
@@ -247,6 +248,7 @@ Computed in core (`balanceSnapshot`) from done working sets dated up to today.
   - the exercise match is ambiguous (more than one plausible candidate) or unknown;
   - sets or reps are missing;
   - the target set or session is unclear ("ostatnia seria" while two exercises are in progress).
+- A question about history needs no exact match: it checks every plausible variant and names the one it found ("wiosłowanie" covers all rows).
 - All data access goes through tools; never invents history.
 - After each write, a one-line summary appears in the chat as a change card with **Cofnij**.
 
@@ -481,7 +483,7 @@ Client-only (Dexie): `outbox` (pending mutations), `prompt_queue`, `sync_state` 
 
 - **API keys:** Worker secrets only (`wrangler secret put ANTHROPIC_API_KEY | OPENAI_API_KEY | GOOGLE_GENERATIVE_AI_API_KEY`). Local dev uses `.dev.vars` (gitignored). Keys are never stored in D1, never sent to clients, never logged.
 - **Device tokens:** 32 random bytes (base64url), shown once. Only the SHA-256 hash is stored. Sent as `Authorization: Bearer`.
-  - First token: `pnpm --filter api device:create <name>` (writes the hash via wrangler, prints the token once).
+  - First token: `pnpm --filter @liftwise/api device:create <name> [--remote]` (writes the hash via wrangler, prints the token once; `--remote` for the deployed D1, `docs/deploy.md`).
   - Next devices: QR pairing; codes are single-use, TTL 5 min, rate-limited.
     - Code: 8 characters from `23456789ABCDEFGHJKLMNPQRSTUVWXYZ` (no 0/O, 1/I), shown as QR and text; redeem accepts any case, spaces and dashes. Only the SHA-256 hash is stored; a new code replaces any unused one.
     - Limit: global, 5 failed redeems in 10 minutes → `429` for every redeem (single user, deterministic). Wrong, expired and used codes return the same `invalid_code`. Each attempt is recorded and counted in one D1 batch, so parallel requests can't exceed the limit; a blocked attempt doesn't extend the block.
@@ -515,6 +517,7 @@ Client-only (Dexie): `outbox` (pending mutations), `prompt_queue`, `sync_state` 
 
 ### 6.10 Platforms and distribution
 
+- **Server:** Worker `liftwise` (API + PWA) and D1 `liftwise` on Cloudflare Workers Free (D51). Deploy with `pnpm deploy:api`; first setup, secrets, logs and the services to log in to: `docs/deploy.md`.
 - **Android:** Capacitor app built from `apps/web` (`apps/web/android/`, D47). App id `io.github.d_buczek.liftwise`. Setup, signing and install: `docs/android.md`.
   - Native plugins:
     - local notifications (rest timer)
@@ -557,7 +560,7 @@ Client-only (Dexie): `outbox` (pending mutations), `prompt_queue`, `sync_state` 
 - **CI (GitHub Actions)** is thin; each job runs one pnpm script:
   - `pnpm ci:check` (lint, typecheck, test)
   - `pnpm ci:build`
-  - `pnpm deploy:api` on `main` (Cloudflare API token secret)
+  - `pnpm deploy:api` on `main` (Cloudflare API token secret), later; for now it runs from the PC (D51)
   - gitleaks
   - APK artifact build later
 
@@ -581,6 +584,7 @@ Each line is meant to be one `/ticket` task.
 | LW-12 | Charts & records UI, balance guard dashboard, weekly summary card, data export |
 | LW-13 | Agent eval suite |
 | LW-14 | Workout labels (training sets such as A / B) with colors: synced entity, shown on the calendar, day and history; a copy keeps the label and the copy dialog offers "the last A / B" |
+| LW-15 | Agent CPU on Workers Free: profile a chat turn in workerd, cut the CPU per model step (tool schemas, context, message persistence), measure again on the deployed Worker (§9) |
 | LW-20 | Phase 2: MCP endpoint with token auth |
 | LW-21 | Phase 2: OAuth for claude.ai connectors |
 
@@ -588,11 +592,11 @@ Each line is meant to be one `/ticket` task.
 
 | Item | Resolve in | Note |
 |---|---|---|
-| Workers Free limits under agent loops | LW-09 | 10 ms CPU per request; 50 subrequests per invocation, D1 calls count. Measure; switch to Workers Paid ($5/mo) if exceeded |
+| Workers Free limits under agent loops | Measured in LW-09, CPU cut in LW-15 | Limits: 10 ms CPU per request (with tolerance for occasional overruns, error 1102 when consistently exceeded), 50 external subrequests, 1,000 to Cloudflare services (D1). Measured on 2026-11-01 (Anthropic `claude-haiku-5-5`, `wrangler tail`): a chat turn takes **54–265 ms CPU**, about 50–100 ms per model step (175–265 ms on a cold isolate), 1.6–5.2 s wall, 1–2 model steps (= external subrequests); sync 3–8 ms, undo 8 ms. Every turn finished with outcome `ok`. Staying on Free (D51) |
 | ~~AI SDK current major~~ | Resolved in LW-09 | `ai` 7 / `@ai-sdk/vue` 4; built-in tool approval doesn't fit §5.9.3 (D50) |
 | ~~Exact rest-timer notifications~~ | Resolved in LW-08 | `USE_EXACT_ALARM` (sideloaded APK, D47) + `allowWhileIdle`: on a real phone the notification came on time and vibrated with the screen locked. Some vendors also need a setting for ADB installs (`docs/android.md`) |
 | Speech-recognition plugin | LW-10 | Compatibility with current Capacitor/Android |
-| Default OpenAI/Gemini model ids | Picked in LW-09, verify with keys | §6.7: the cheapest current tier for `fast` (OpenAI's model list, Google's "use for new projects" note); not yet run without OpenAI/Gemini keys |
+| Default OpenAI/Gemini model ids | Picked in LW-09, verify with keys | §6.7: the cheapest current tier for `fast` (OpenAI's model list, Google's "use for new projects" note); not yet run without OpenAI/Gemini keys. `gemini-3.8-flash` is on Gemini's free tier, which may use the content to improve Google's products |
 | ~~Capacitor app id~~ | Resolved in LW-08 | `io.github.d_buczek.liftwise`: a hyphen isn't allowed, so the GitHub login `d-buczek` becomes `d_buczek` (Java package convention) |
 | ~~D1 Time Travel retention~~ | Resolved in LW-04 | Always on; 7 days on Workers Free, 30 days on Workers Paid (§5.12) |
 
