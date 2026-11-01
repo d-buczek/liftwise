@@ -29,13 +29,17 @@ export async function createDevice(name = 'PC', fields: Partial<typeof devices.$
   return { id, token };
 }
 
-export function call(path: string, init: RequestInit & { token?: string; json?: unknown } = {}) {
-  const { token, json, ...rest } = init;
+// `env` overrides bindings, e.g. provider keys (a local .dev.vars must not leak into tests).
+export function call(
+  path: string,
+  init: RequestInit & { token?: string; json?: unknown; env?: Partial<Cloudflare.Env> } = {},
+) {
+  const { token, json, env: overrides, ...rest } = init;
   const headers = new Headers(rest.headers);
   if (token) headers.set('Authorization', `Bearer ${token}`);
   if (json !== undefined) headers.set('Content-Type', 'application/json');
   const body = json === undefined ? rest.body : JSON.stringify(json);
-  return app.request(path, { ...rest, headers, body }, env);
+  return app.request(path, { ...rest, headers, body }, { ...env, ...overrides });
 }
 
 // Sync fixtures: seed exercises by measure, rows with defaults, mutations, push and pull.

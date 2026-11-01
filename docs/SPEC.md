@@ -458,12 +458,17 @@ Client-only (Dexie): `outbox` (pending mutations), `prompt_queue`, `sync_state` 
 
 ### 6.7 Model provider layer
 
-- Built on the Vercel AI SDK provider packages (`@ai-sdk/anthropic`, `@ai-sdk/openai`, `@ai-sdk/google`).
+- Built on the Vercel AI SDK (`ai` 7) provider packages (`@ai-sdk/anthropic`, `@ai-sdk/openai`, `@ai-sdk/google`), in `apps/api/src/agent/providers.ts`.
 - Our own **registry** maps `provider → { secretName, createModel(modelId) }`. A provider is available iff its secret exists.
-- Model ids are **settings**, not code, because they change faster than the app. Defaults for Anthropic:
-  - `fast`: `claude-haiku-5-5`
-  - `planner`: `claude-sonnet-5-5`
-  - OpenAI and Gemini defaults are picked from provider docs at implementation time.
+- Model ids are **settings** (`models`), not code, because they change faster than the app. Without a saved choice both roles take the defaults of the first configured provider (Anthropic, OpenAI, Gemini in this order):
+
+  | Provider | `fast` | `planner` |
+  |---|---|---|
+  | Anthropic | `claude-haiku-5-5` | `claude-sonnet-5-5` |
+  | OpenAI | `gpt-6-luna` | `gpt-6-sol` |
+  | Gemini | `gemini-3.8-flash` | `gemini-pro-latest` |
+- A role whose provider has no key fails with `provider_unavailable`; there is no silent fallback to another provider.
+- `GET /api/providers` returns per provider `{ id, configured, defaults }` (never a key) and the effective `models`.
 - Adding a provider (e.g. an OpenAI-compatible endpoint for Ollama) = registry entry + secret + eval run.
 
 ### 6.8 Security
@@ -581,7 +586,7 @@ Each line is meant to be one `/ticket` task.
 | AI SDK current major | LW-09 | Check tool-approval support and `@ai-sdk/vue` API; use built-in approval if it fits §5.9.3 |
 | ~~Exact rest-timer notifications~~ | Resolved in LW-08 | `USE_EXACT_ALARM` (sideloaded APK, D47) + `allowWhileIdle`: on a real phone the notification came on time and vibrated with the screen locked. Some vendors also need a setting for ADB installs (`docs/android.md`) |
 | Speech-recognition plugin | LW-10 | Compatibility with current Capacitor/Android |
-| Default OpenAI/Gemini model ids | LW-09 | From provider docs |
+| Default OpenAI/Gemini model ids | Picked in LW-09, verify with keys | §6.7: the cheapest current tier for `fast` (OpenAI's model list, Google's "use for new projects" note); not yet run without OpenAI/Gemini keys |
 | ~~Capacitor app id~~ | Resolved in LW-08 | `io.github.d_buczek.liftwise`: a hyphen isn't allowed, so the GitHub login `d-buczek` becomes `d_buczek` (Java package convention) |
 | ~~D1 Time Travel retention~~ | Resolved in LW-04 | Always on; 7 days on Workers Free, 30 days on Workers Paid (§5.12) |
 
