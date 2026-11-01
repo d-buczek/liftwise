@@ -6,12 +6,13 @@ import type { WorkoutLabel } from './schemas/label';
 import type { AthleteProfile } from './schemas/profile';
 import type { WorkoutSet } from './schemas/set';
 import type { Setting } from './schemas/settings';
+import type { Message, Thread } from './schemas/thread';
 import type { Workout } from './schemas/workout';
 
 // Bumped when the JSON layout changes.
 export const EXPORT_VERSION = 1;
 
-// The synced tables as stored, one array of rows each; `threads` / `messages` join with LW-09.
+// The synced tables as stored, one array of rows each, the agent's conversations included.
 export type ExportTables = {
   exercises: Exercise[];
   equipment_items: EquipmentItem[];
@@ -20,6 +21,8 @@ export type ExportTables = {
   sets: WorkoutSet[];
   athlete_profile: AthleteProfile[];
   settings: Setting[];
+  threads: Thread[];
+  messages: Message[];
 };
 
 export const CSV_COLUMNS = [
@@ -48,6 +51,8 @@ export function jsonExport(tables: ExportTables, exportedAt: string): string {
         sets: tables.sets,
         athlete_profile: tables.athlete_profile,
         settings: tables.settings,
+        threads: tables.threads,
+        messages: tables.messages,
       },
     },
     null,

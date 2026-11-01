@@ -1,4 +1,10 @@
-import type { SyncMutation, SyncPullResponse, SyncPushResponse } from '@liftwise/core';
+import type {
+  ProposalToolOutput,
+  ProvidersResponse,
+  SyncMutation,
+  SyncPullResponse,
+  SyncPushResponse,
+} from '@liftwise/core';
 
 // Empty for the PWA, which the Worker serves from the API's origin (§6.1).
 const BASE_URL = import.meta.env.VITE_API_URL ?? '';
@@ -6,6 +12,11 @@ const BASE_URL = import.meta.env.VITE_API_URL ?? '';
 // Where the PWA lives: the Android app's own origin is https://localhost (pairing QR code).
 export function appOrigin(): string {
   return BASE_URL ? new URL(BASE_URL).origin : window.location.origin;
+}
+
+// An endpoint's URL, for clients that fetch on their own (the agent chat stream).
+export function apiUrl(path: string): string {
+  return `${BASE_URL}${path}`;
 }
 
 // `fetch` itself failed: no network, or the server can't be reached.
@@ -32,7 +43,7 @@ async function request<T>(
 
   let response: Response;
   try {
-    response = await fetch(`${BASE_URL}${path}`, {
+    response = await fetch(apiUrl(path), {
       method,
       headers,
       body: body === undefined ? undefined : JSON.stringify(body),
@@ -76,4 +87,17 @@ export const api = {
     request<SyncPushResponse>('/api/sync/push', { method: 'POST', token, body: { mutations } }),
   pull: (token: string, since: number) =>
     request<SyncPullResponse>(`/api/sync/pull?since=${since}`, { token }),
+  providers: (token: string) => request<ProvidersResponse>('/api/providers', { token }),
+  // `confirm` reverts records changed after the group too (409 `conflict` without it).
+  undo: (token: string, groupId: string, confirm = false) =>
+    request<{ groupId: string | null }>(`/api/changes/${encodeURIComponent(groupId)}/undo`, {
+      method: 'POST',
+      token,
+      body: { confirm },
+    }),
+  resolveProposal: (token: string, id: string, action: 'confirm' | 'reject') =>
+    request<Pick<ProposalToolOutput, 'status' | 'groupId' | 'changes'>>(
+      `/api/agent/proposals/${encodeURIComponent(id)}/${action}`,
+      { method: 'POST', token },
+    ),
 };

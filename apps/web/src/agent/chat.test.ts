@@ -1,0 +1,59 @@
+import { newId, timestampSchema } from '@liftwise/core';
+import { describe, expect, it } from 'vite-plus/test';
+import { today } from '../workout/calendar';
+import { chatFailure, chatRequest, localTimestamp } from './chat';
+
+describe('localTimestamp', () => {
+  it('is the local date and time with the offset, the same instant to the second', () => {
+    const now = new Date('2026-11-01T23:30:15.678Z');
+    const value = localTimestamp(now);
+    expect(timestampSchema.safeParse(value).success).toBe(true);
+    expect(value.slice(0, 10)).toBe(today(now));
+    expect(new Date(value).getTime()).toBe(Math.floor(now.getTime() / 1000) * 1000);
+  });
+});
+
+describe('chatRequest', () => {
+  it('sends only the last user message, text parts only', () => {
+    const threadId = newId();
+    const earlier = { id: newId(), role: 'user', parts: [{ type: 'text', text: 'hej' }] };
+    const answer = { id: newId(), role: 'assistant', parts: [{ type: 'text', text: 'Cześć' }] };
+    const last = {
+      id: newId(),
+      role: 'user',
+      parts: [{ type: 'text', text: 'wyciskanie 24 kg 4x10', state: 'done' }, { type: 'file' }],
+    };
+    const now = new Date('2026-11-01T17:00:00Z');
+    expect(chatRequest(threadId, [earlier, answer, last], now)).toEqual({
+      threadId,
+      message: {
+        id: last.id,
+        role: 'user',
+        parts: [{ type: 'text', text: 'wyciskanie 24 kg 4x10' }],
+      },
+      localTime: localTimestamp(now),
+    });
+  });
+});
+
+describe('chatFailure', () => {
+  const apiError = (status: number, body: string) =>
+    Object.assign(new Error(body), { statusCode: status, responseBody: body });
+
+  it('reads the API error code and the provider', () => {
+    expect(
+      chatFailure(
+        apiError(409, JSON.stringify({ error: 'provider_unavailable', provider: 'openai' })),
+      ),
+    ).toEqual({ code: 'provider_unavailable', provider: 'openai' });
+    expect(chatFailure(apiError(401, JSON.stringify({ error: 'unauthorized' })))).toEqual({
+      code: 'unauthorized',
+    });
+    expect(chatFailure(apiError(502, '<html>Bad gateway</html>'))).toEqual({ code: 'unknown' });
+  });
+
+  it('tells a failed request from an error of the model', () => {
+    expect(chatFailure(new TypeError('Failed to fetch'))).toEqual({ code: 'unreachable' });
+    expect(chatFailure(new Error('model_error'))).toEqual({ code: 'model_error' });
+  });
+});

@@ -8,6 +8,7 @@ import { makeExercise, makeSet, makeTimedExercise } from './testing';
 describe('jsonExport', () => {
   it('wraps all tables, rows as given, indented by 2', () => {
     const exercise = { ...makeExercise(), seq: 7, deleted_at: null };
+    const thread = newId();
     const tables: ExportTables = {
       exercises: [exercise],
       equipment_items: [],
@@ -16,6 +17,10 @@ describe('jsonExport', () => {
       sets: [],
       athlete_profile: [{ id: newId(), content: '# Cele' }],
       settings: [{ id: newId(), key: 'training', value: DEFAULT_TRAINING_SETTINGS }],
+      threads: [{ id: thread, date: '2026-10-31', workout_id: null }],
+      messages: [
+        { id: newId(), thread_id: thread, role: 'user', parts: [{ type: 'text', text: 'hej' }] },
+      ],
     };
     const json = jsonExport(tables, '2026-10-31T12:00:00+01:00');
     expect(json.startsWith('{\n  "app": "liftwise",\n  "version": 1,')).toBe(true);
@@ -33,6 +38,8 @@ describe('jsonExport', () => {
       'sets',
       'athlete_profile',
       'settings',
+      'threads',
+      'messages',
     ]);
   });
 });

@@ -19,6 +19,8 @@ async function exportTables(): Promise<ExportTables> {
     sets: alive(await db.sets.toArray()),
     athlete_profile: alive(await db.athlete_profile.toArray()),
     settings: alive(await db.settings.toArray()),
+    threads: alive(await db.threads.toArray()),
+    messages: alive(await db.messages.toArray()),
   };
 }
 

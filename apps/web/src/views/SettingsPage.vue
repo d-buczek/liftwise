@@ -16,8 +16,10 @@ import {
   bodyOutline,
   downloadOutline,
   gridOutline,
+  personOutline,
   phonePortraitOutline,
   pricetagOutline,
+  sparklesOutline,
   timerOutline,
 } from 'ionicons/icons';
 import { computed, ref } from 'vue';
@@ -34,7 +36,12 @@ import { saveFile } from '../native/files';
 import { useSyncStore } from '../stores/sync';
 import { THEME_PREFERENCES, useThemeStore } from '../stores/theme';
 import { saveTrainingSettings } from '../workout/actions';
-import { trainingSettings, workoutLabels } from '../workout/queries';
+import {
+  athleteProfile,
+  savedModelSettings,
+  trainingSettings,
+  workoutLabels,
+} from '../workout/queries';
 
 const { t, d } = useI18n();
 const format = useFormat();
@@ -49,6 +56,16 @@ const labelCount = useLiveQuery(
 );
 const training = useLiveQuery(trainingSettings, DEFAULT_TRAINING_SETTINGS);
 const editingTraining = ref(false);
+const models = useLiveQuery(savedModelSettings, null);
+const profile = useLiveQuery(athleteProfile, '');
+// The profile's first line of text, without markdown heading marks.
+const profilePreview = computed(
+  () =>
+    profile.value
+      .split('\n')
+      .map((line) => line.replace(/^#+\s*/, '').trim())
+      .find((line) => line !== '') ?? '',
+);
 
 const trainingSummary = computed(() => {
   const { rest_seconds, target_rir, weight_step_kg } = training.value;
@@ -118,6 +135,24 @@ async function exportData(kind: 'json' | 'csv') {
       <ion-item router-link="/settings/devices">
         <ion-icon slot="start" :icon="phonePortraitOutline" aria-hidden="true" />
         <ion-label>{{ t('settings.devices') }}</ion-label>
+      </ion-item>
+    </ion-list>
+
+    <h2 class="lw-heading">{{ t('nav.agent') }}</h2>
+    <ion-list>
+      <ion-item router-link="/settings/models">
+        <ion-icon slot="start" :icon="sparklesOutline" aria-hidden="true" />
+        <ion-label>
+          {{ t('models.title') }}
+          <p>{{ models ? models.fast.model : t('models.serverDefault') }}</p>
+        </ion-label>
+      </ion-item>
+      <ion-item router-link="/settings/profile">
+        <ion-icon slot="start" :icon="personOutline" aria-hidden="true" />
+        <ion-label>
+          {{ t('profile.title') }}
+          <p>{{ profilePreview || t('profile.empty') }}</p>
+        </ion-label>
       </ion-item>
     </ion-list>
 

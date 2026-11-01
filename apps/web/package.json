@@ -13,6 +13,7 @@
     "android:install": "node scripts/android.ts install"
   },
   "dependencies": {
+    "@ai-sdk/vue": "^4.0.159",
     "@aparajita/capacitor-secure-storage": "^8.0.1",
     "@capacitor-community/keep-awake": "^8.0.1",
     "@capacitor/android": "^8.6.0",
@@ -26,6 +27,7 @@
     "@ionic/vue": "^9.0.10",
     "@ionic/vue-router": "^9.0.10",
     "@liftwise/core": "workspace:*",
+    "ai": "^7.0.159",
     "dexie": "^4.4.7",
     "ionicons": "^8.1.0",
     "pinia": "^4.1.0",

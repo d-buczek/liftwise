@@ -14,10 +14,121 @@
     "retry": "Spróbuj ponownie",
     "close": "Zamknij"
   },
-  "empty": {
-    "agent": "Tu będzie rozmowa z agentem: zapis serii jednym zdaniem albo głosem.",
-    "hint": "Na razie możesz ustawić swój sprzęt.",
-    "action": "Ustaw sprzęt"
+  "agent": {
+    "empty": "Napisz, co zrobiłeś albo o co chcesz zapytać.",
+    "examples": {
+      "log": "wyciskanie 24 kg 4x10",
+      "edit": "zmień ostatnią serię na 22 kg",
+      "ask": "kiedy ostatnio robiłem wiosłowanie?"
+    },
+    "input": "Wiadomość do agenta",
+    "placeholder": "Np. wyciskanie 24 kg 4x10",
+    "send": "Wyślij",
+    "stop": "Zatrzymaj",
+    "thinking": "Agent myśli…",
+    "working": "Sprawdzam dane…",
+    "offline": "Agent potrzebuje internetu. Serie zapiszesz w treningu także bez sieci.",
+    "errors": {
+      "provider_unavailable": "{provider} nie ma klucza API na serwerze. Wybierz innego dostawcę w ustawieniach modeli.",
+      "model_error": "Model nie odpowiedział poprawnie. Spróbuj ponownie albo wybierz inny model.",
+      "invalid_request": "Serwer nie przyjął wiadomości. Skróć ją i spróbuj ponownie."
+    },
+    "change": {
+      "kinds": {
+        "setLogged": "zapisano {n} serię | zapisano {n} serie | zapisano {n} serii",
+        "setPlanned": "zaplanowano {n} serię | zaplanowano {n} serie | zaplanowano {n} serii",
+        "setChanged": "zmieniono {n} serię | zmieniono {n} serie | zmieniono {n} serii",
+        "setDeleted": "usunięto {n} serię | usunięto {n} serie | usunięto {n} serii",
+        "workoutCreated": "dodano trening | dodano {n} treningi | dodano {n} treningów",
+        "workoutStarted": "rozpoczęto trening | rozpoczęto {n} treningi | rozpoczęto {n} treningów",
+        "workoutFinished": "zakończono trening | zakończono {n} treningi | zakończono {n} treningów",
+        "workoutChanged": "zmieniono trening | zmieniono {n} treningi | zmieniono {n} treningów",
+        "workoutDeleted": "usunięto trening | usunięto {n} treningi | usunięto {n} treningów",
+        "exerciseCreated": "dodano ćwiczenie | dodano {n} ćwiczenia | dodano {n} ćwiczeń",
+        "exerciseChanged": "zmieniono ćwiczenie | zmieniono {n} ćwiczenia | zmieniono {n} ćwiczeń",
+        "profileChanged": "zmieniono profil zawodnika",
+        "settingsChanged": "zmieniono ustawienia",
+        "other": "{n} zmiana | {n} zmiany | {n} zmian"
+      },
+      "warmup": "rozgrzewka",
+      "planned": "plan",
+      "settingKeys": {
+        "training": "Trening",
+        "balance": "Balans",
+        "models": "Modele"
+      }
+    },
+    "proposal": {
+      "kinds": {
+        "setLogged": "zapis {n} serii",
+        "setPlanned": "plan {n} serii",
+        "setChanged": "zmiana {n} serii",
+        "setDeleted": "usunięcie {n} serii",
+        "workoutCreated": "nowy trening | {n} nowe treningi | {n} nowych treningów",
+        "workoutStarted": "rozpoczęcie treningu",
+        "workoutFinished": "zakończenie treningu",
+        "workoutChanged": "zmiana treningu",
+        "workoutDeleted": "usunięcie treningu | usunięcie {n} treningów | usunięcie {n} treningów",
+        "exerciseCreated": "nowe ćwiczenie | {n} nowe ćwiczenia | {n} nowych ćwiczeń",
+        "exerciseChanged": "zmiana ćwiczenia | zmiana {n} ćwiczeń | zmiana {n} ćwiczeń",
+        "profileChanged": "zmiana profilu zawodnika",
+        "settingsChanged": "zmiana ustawień",
+        "other": "{n} zmiana | {n} zmiany | {n} zmian"
+      },
+      "status": {
+        "pending": "Do zatwierdzenia",
+        "confirmed": "Zatwierdzone",
+        "rejected": "Odrzucone"
+      },
+      "confirm": "Zatwierdź",
+      "reject": "Odrzuć",
+      "stale": "Dane zmieniły się od tej propozycji. Odrzuć ją i poproś agenta jeszcze raz."
+    },
+    "undo": {
+      "action": "Cofnij",
+      "done": "Cofnięto zmianę.",
+      "undone": "Cofnięte",
+      "conflictTitle": "Te dane zmieniły się później",
+      "conflictMessage": "Cofnięcie przywróci też stan sprzed późniejszych zmian tych rekordów. Cofnąć mimo to?"
+    },
+    "threads": {
+      "title": "Wcześniejsze rozmowy",
+      "today": "Dziś",
+      "empty": "Nie ma jeszcze rozmów. Pierwsza zacznie się od Twojej wiadomości."
+    }
+  },
+  "models": {
+    "title": "Modele",
+    "serverDefault": "Domyślne serwera",
+    "providersTitle": "Dostawcy",
+    "providers": {
+      "anthropic": "Anthropic",
+      "openai": "OpenAI",
+      "google": "Gemini"
+    },
+    "configured": "Klucz ustawiony",
+    "missing": "Brak klucza",
+    "keysHint": "Klucze API są sekretami serwera (wrangler secret put); aplikacja ich nie pokazuje.",
+    "noProvider": "Żaden dostawca nie ma klucza. Dodaj klucz API jako sekret serwera, a agent zacznie działać.",
+    "roles": {
+      "fast": "Rozmowa",
+      "planner": "Planowanie"
+    },
+    "roleHints": {
+      "fast": "Zapis i edycja serii, pytania o historię. Szybki, tani model.",
+      "planner": "Propozycje treningów. Mocniejszy model."
+    },
+    "provider": "Dostawca",
+    "providerMissing": "{provider} nie ma klucza API. Wybierz innego dostawcę.",
+    "model": "Id modelu",
+    "defaultModel": "Domyślnie: {model}",
+    "useDefault": "Domyślny"
+  },
+  "profile": {
+    "title": "Profil zawodnika",
+    "empty": "Pusty: cele, ograniczenia, preferencje",
+    "hint": "Agent dostaje ten tekst z każdą wiadomością. Wpisz cele, kontuzje i ograniczenia, preferencje i zwykłą długość treningu. Możesz używać Markdown.",
+    "placeholder": "## Cele\n\n## Ograniczenia i kontuzje\n\n## Preferencje\n\n## Długość treningu"
   },
   "settings": {
     "equipment": "Sprzęt",
@@ -57,6 +168,7 @@
     "unreachable": "Brak połączenia z serwerem. Sprawdź internet i spróbuj ponownie.",
     "invalid_request": "Wpisz kod i nazwę urządzenia.",
     "invalid_mutation": "Serwer odrzucił zmianę zapisaną na tym urządzeniu. Pozostałe zmiany czekają za nią.",
+    "not_found": "Serwer nie ma już tego wpisu. Odśwież dane synchronizacją.",
     "unknown": "Nieoczekiwany błąd serwera. Spróbuj ponownie."
   },
   "sync": {

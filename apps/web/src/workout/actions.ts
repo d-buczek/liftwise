@@ -1,4 +1,5 @@
 import {
+  ATHLETE_PROFILE_ID,
   copiedLabelId,
   copyWorkout,
   dayWorkout,
@@ -9,6 +10,7 @@ import {
   workoutSchema,
   type BalanceSettings,
   type Exercise,
+  type ModelSettings,
   type TrainingSettings,
   type Workout,
   type WorkoutLabel,
@@ -29,10 +31,9 @@ async function targetOf(date: string) {
   return { day, workout, workoutId: workout.id, changes, created: existing ? null : workout };
 }
 
-function upsert<E extends 'workouts' | 'sets' | 'exercises' | 'settings' | 'workout_labels'>(
-  entity: E,
-  row: Extract<LocalChange, { op: 'upsert'; entity: E }>['row'],
-): LocalChange {
+function upsert<
+  E extends 'workouts' | 'sets' | 'exercises' | 'settings' | 'workout_labels' | 'athlete_profile',
+>(entity: E, row: Extract<LocalChange, { op: 'upsert'; entity: E }>['row']): LocalChange {
   return { op: 'upsert', entity, row } as LocalChange;
 }
 
@@ -199,4 +200,12 @@ export function saveTrainingSettings(value: TrainingSettings) {
 
 export function saveBalanceSettings(value: BalanceSettings) {
   return applyLocal([upsert('settings', { id: SETTING_IDS.balance, key: 'balance', value })]);
+}
+
+export function saveModelSettings(value: ModelSettings) {
+  return applyLocal([upsert('settings', { id: SETTING_IDS.models, key: 'models', value })]);
+}
+
+export function saveAthleteProfile(content: string) {
+  return applyLocal([upsert('athlete_profile', { id: ATHLETE_PROFILE_ID, content })]);
 }

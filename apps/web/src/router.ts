@@ -2,17 +2,21 @@ import { localDateSchema, muscleGroupSchema } from '@liftwise/core';
 import { createRouter, createWebHistory } from '@ionic/vue-router';
 import type { RouteLocationNormalized, RouteRecordRaw } from 'vue-router';
 import { useAuthStore } from './stores/auth';
+import AgentPage from './views/AgentPage.vue';
+import AgentThreadPage from './views/AgentThreadPage.vue';
+import AgentThreadsPage from './views/AgentThreadsPage.vue';
 import BalancePage from './views/BalancePage.vue';
 import CalendarPage from './views/CalendarPage.vue';
 import DayPage from './views/DayPage.vue';
 import DevicesPage from './views/DevicesPage.vue';
-import EmptyPage from './views/EmptyPage.vue';
 import EquipmentPage from './views/EquipmentPage.vue';
 import ExerciseHistoryPage from './views/ExerciseHistoryPage.vue';
 import HistoryPage from './views/HistoryPage.vue';
 import LabelsPage from './views/LabelsPage.vue';
+import ModelsPage from './views/ModelsPage.vue';
 import MuscleHistoryPage from './views/MuscleHistoryPage.vue';
 import PairPage from './views/PairPage.vue';
+import ProfilePage from './views/ProfilePage.vue';
 import SettingsPage from './views/SettingsPage.vue';
 import TabsPage from './views/TabsPage.vue';
 import WorkoutPage from './views/WorkoutPage.vue';
@@ -79,12 +83,16 @@ const routes: RouteRecordRaw[] = [
           muscleGroupSchema.safeParse(to.params.group).success ? true : '/history',
       },
       ...dayRoutes('history'),
-      { path: 'agent', component: EmptyPage, props: { section: 'agent' } },
+      { path: 'agent', component: AgentPage },
+      { path: 'agent/threads', component: AgentThreadsPage },
+      { path: 'agent/threads/:id', component: AgentThreadPage, props: true },
       { path: 'settings', component: SettingsPage },
       { path: 'settings/equipment', component: EquipmentPage },
       { path: 'settings/devices', component: DevicesPage },
       { path: 'settings/labels', component: LabelsPage },
       { path: 'settings/balance', component: BalancePage },
+      { path: 'settings/models', component: ModelsPage },
+      { path: 'settings/profile', component: ProfilePage },
     ],
   },
   { path: '/:pathMatch(.*)*', redirect: '/calendar' },

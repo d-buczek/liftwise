@@ -1,4 +1,5 @@
 import {
+  ATHLETE_PROFILE_ID,
   compareLabels,
   datedSets,
   DEFAULT_BALANCE_SETTINGS,
@@ -7,6 +8,7 @@ import {
   type BalanceSettings,
   type DatedSet,
   type EquipmentItem,
+  type ModelSettings,
   type SyncRow,
   type TrainingSettings,
 } from '@liftwise/core';
@@ -15,7 +17,7 @@ import { db } from '../db/database';
 // Reads of the local mirror for the training screens; tombstones are filtered out. Called inside
 // `useLiveQuery`, so a screen follows every write and pull.
 
-const alive = <R extends { deleted_at: string | null }>(row: R | undefined): row is R =>
+export const alive = <R extends { deleted_at: string | null }>(row: R | undefined): row is R =>
   row !== undefined && row.deleted_at === null;
 
 export type DayData = { workouts: SyncRow<'workouts'>[]; sets: SyncRow<'sets'>[] };
@@ -88,4 +90,15 @@ export async function trainingSettings(): Promise<TrainingSettings> {
 export async function balanceSettings(): Promise<BalanceSettings> {
   const row = await db.settings.get(SETTING_IDS.balance);
   return alive(row) && row.key === 'balance' ? row.value : DEFAULT_BALANCE_SETTINGS;
+}
+
+// The saved model choice; without one the server's defaults apply (§6.7).
+export async function savedModelSettings(): Promise<ModelSettings | null> {
+  const row = await db.settings.get(SETTING_IDS.models);
+  return alive(row) && row.key === 'models' ? row.value : null;
+}
+
+export async function athleteProfile(): Promise<string> {
+  const row = await db.athlete_profile.get(ATHLETE_PROFILE_ID);
+  return alive(row) ? row.content : '';
 }
