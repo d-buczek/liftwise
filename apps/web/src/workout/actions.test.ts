@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from 'vite-plus/test';
 import { db } from '../db/database';
 import { applyLocal } from '../db/mutate';
 import { makeExercise, makeSet, resetDb } from '../testing';
-import { addExercise, copyDay, deleteSets, logSet, restoreSets } from './actions';
+import { addExercise, copyDay, deleteSets, logSet, restoreSets, undoCopy } from './actions';
 import { dayData } from './queries';
 
 const press = makeExercise({ weight_step_kg: 2 });
@@ -43,9 +43,23 @@ describe('day actions', () => {
       ['planned', 10, 'copy'],
       ['planned', 8, 'copy'],
     ]);
-    expect(copied.map((set) => set.id)).toEqual(target.sets.map((set) => set.id));
+    expect(copied.sets.map((set) => set.id)).toEqual(target.sets.map((set) => set.id));
+    expect(copied.created?.id).toBe(target.workouts[0]?.id);
     const ids = [...target.workouts, ...target.sets].map((row) => row.id);
     expect(await groupsOf(ids)).toHaveLength(1);
+  });
+
+  it('undoes a copy: its sets and the workout it created, unless that got other sets', async () => {
+    await seedDay('2026-10-01', [{ weight_kg: 20 }]);
+    await undoCopy(await copyDay('2026-10-01', '2026-10-04', false));
+    expect(await dayData('2026-10-04')).toEqual({ workouts: [], sets: [] });
+
+    const copy = await copyDay('2026-10-01', '2026-10-05', false);
+    const [added] = await addExercise('2026-10-05', makeExercise());
+    await undoCopy(copy);
+    const kept = await dayData('2026-10-05');
+    expect(kept.workouts.map((row) => row.id)).toEqual([copy.created?.id]);
+    expect(kept.sets.map((set) => set.id)).toEqual([added?.id]);
   });
 
   it('appends after the sets the day already has; light drops a set and lowers the weight', async () => {

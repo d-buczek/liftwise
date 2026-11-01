@@ -69,7 +69,7 @@ export function useFormat() {
       range.min === range.max ? rir(range.min) : `${rir(range.min)}–${rir(range.max)}`,
     // An exercise's rest: "1:30", or none.
     rest: (seconds: number) => (seconds > 0 ? clock(seconds) : t('rest.none')),
-    // "Rekord: 12 powt. × 24 kg, e1RM 31,2 kg".
+    // "Rekord: 24 kg × 12, e1RM 33,6 kg"; a timed one at 0 kg "Rekord: 50 s".
     records: (events: RecordEvent[]) =>
       t('record.toast', {
         records: events

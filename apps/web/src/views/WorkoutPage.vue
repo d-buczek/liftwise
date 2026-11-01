@@ -29,7 +29,7 @@ import RestTimer from '../components/RestTimer.vue';
 import SetEditor from '../components/SetEditor.vue';
 import SetLogger from '../components/SetLogger.vue';
 import { useFormat } from '../composables/format';
-import { useLiveQuery } from '../composables/liveQuery';
+import { useLiveQuery, useLiveQueryState } from '../composables/liveQuery';
 import { showUndo } from '../composables/undo';
 import { useRestStore } from '../stores/rest';
 import { deleteSets, logSet, restoreSets, saveExercise, saveSets } from '../workout/actions';
@@ -71,7 +71,7 @@ watch(
   },
 );
 
-const view = useLiveQuery(
+const { data: view, loaded: dayLoaded } = useLiveQueryState(
   async () => {
     const day = await dayData(props.date);
     const ids = new Set(day.sets.map((set) => set.exercise_id));
@@ -81,10 +81,12 @@ const view = useLiveQuery(
   { workouts: [], sets: [], history: [] },
   () => [props.date, extra.value],
 );
-const exercises = useLiveQuery(
+const { data: exercises, loaded: catalogLoaded } = useLiveQueryState(
   async () => new Map((await catalog()).map((exercise) => [exercise.id, exercise])),
   new Map<string, Exercise>(),
 );
+// Nothing shows until the first read, so the empty state and placeholder names do not flash.
+const loaded = computed(() => dayLoaded.value && catalogLoaded.value);
 const training = useLiveQuery(trainingSettings, DEFAULT_TRAINING_SETTINGS);
 const maxKg = useLiveQuery(async () => maxDumbbellKg(await equipment()), null);
 
@@ -113,12 +115,17 @@ const source = computed(() =>
   }),
 );
 // The draft starts over when its source changes (another exercise, a logged or edited set),
-// not on unrelated updates; RIR clears after every set.
+// not on unrelated updates; RIR clears after every set. A tap on the main button waits for that,
+// so a quick second tap can't log the same draft twice.
 const draft = ref<Draft>(source.value.draft);
+const logging = ref(false);
 const doneCount = computed(() => sets.value.filter((set) => set.status === 'done').length);
 watch(
   () => JSON.stringify([current.value, source.value.draft, doneCount.value]),
-  () => (draft.value = source.value.draft),
+  () => {
+    draft.value = source.value.draft;
+    logging.value = false;
+  },
 );
 
 const repeat = computed(() => repeatsPrevious(source.value, draft.value));
@@ -157,9 +164,16 @@ function go(id: string | null) {
 // filled in afterwards) and shows a new record.
 async function done() {
   const id = current.value;
-  if (!id) return;
+  if (!id || logging.value) return;
+  logging.value = true;
   currentId.value = id;
-  const set = await logSet(props.date, id, source.value.planned, draft.value);
+  let set: WorkoutSet;
+  try {
+    set = await logSet(props.date, id, source.value.planned, draft.value);
+  } catch (error) {
+    logging.value = false;
+    throw error;
+  }
   if (props.date === today())
     rest.start(exercise.value?.rest_seconds ?? training.value.rest_seconds);
   const logged = exercise.value;
@@ -251,7 +265,7 @@ function details(set: WorkoutSet): string {
 
     <!-- A stable parent: Ionic moves open modals, so they can't anchor a v-if. -->
     <div>
-      <template v-if="current">
+      <template v-if="loaded && current">
         <header class="lw-workout__head">
           <div class="lw-workout__nav">
             <span class="lw-workout__position">
@@ -364,7 +378,7 @@ function details(set: WorkoutSet): string {
         <p v-else class="lw-muted">{{ t('workout.noSets') }}</p>
       </template>
 
-      <div v-else class="lw-workout__empty">
+      <div v-else-if="loaded" class="lw-workout__empty">
         <p class="lw-workout__lead">{{ t('workout.empty') }}</p>
         <ion-button @click="picking = true">{{ t('workout.choose') }}</ion-button>
       </div>

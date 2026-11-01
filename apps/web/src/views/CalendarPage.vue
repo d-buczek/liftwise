@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { IonButton, IonItem, IonLabel, IonList, IonNote, useIonRouter } from '@ionic/vue';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppPage from '../components/AppPage.vue';
 import MonthCalendar from '../components/MonthCalendar.vue';
 import { useFormat } from '../composables/format';
 import { useLiveQuery } from '../composables/liveQuery';
-import { dayMarks, monthGrid, monthOf, today } from '../workout/calendar';
+import { useToday } from '../composables/today';
+import { dayMarks, monthGrid, monthOf } from '../workout/calendar';
 import { dayData, rangeData } from '../workout/queries';
 
 // The home screen (§5.2): the month with done and planned days; a tap opens the day.
@@ -14,8 +15,12 @@ const { t } = useI18n();
 const format = useFormat();
 const router = useIonRouter();
 
-const now = today();
-const month = ref(monthOf(now));
+const now = useToday();
+const month = ref(monthOf(now.value));
+// At midnight the shown current month moves on with the date.
+watch(now, (date, before) => {
+  if (month.value === monthOf(before)) month.value = monthOf(date);
+});
 
 const marks = useLiveQuery(
   async () => {
@@ -27,7 +32,7 @@ const marks = useLiveQuery(
   month,
 );
 
-const todaySets = useLiveQuery(async () => (await dayData(now)).sets, []);
+const todaySets = useLiveQuery(async () => (await dayData(now.value)).sets, [], now);
 const todayNote = computed(() => {
   if (todaySets.value.length === 0) return t('calendar.restDay');
   const done = todaySets.value.filter((set) => set.status === 'done').length;

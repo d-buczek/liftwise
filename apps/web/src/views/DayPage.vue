@@ -28,11 +28,20 @@ import ExercisePicker from '../components/ExercisePicker.vue';
 import RestTimer from '../components/RestTimer.vue';
 import SetEditor from '../components/SetEditor.vue';
 import { useFormat } from '../composables/format';
-import { useLiveQuery } from '../composables/liveQuery';
+import { useLiveQuery, useLiveQueryState } from '../composables/liveQuery';
+import { useToday } from '../composables/today';
 import { showUndo } from '../composables/undo';
-import { addExercise, deleteSets, restoreSets, saveSets, swapExercise } from '../workout/actions';
-import { today } from '../workout/calendar';
 import {
+  addExercise,
+  deleteSets,
+  restoreSets,
+  saveSets,
+  swapExercise,
+  undoCopy,
+  type CopyResult,
+} from '../workout/actions';
+import {
+  dayWorkout,
   exerciseBlocks,
   extraSet,
   nextPosition,
@@ -57,7 +66,8 @@ const props = defineProps<{ date: string; backHref: string; workoutHref: string 
 const { t } = useI18n();
 const format = useFormat();
 const router = useRouter();
-const loggable = computed(() => props.date <= today());
+const now = useToday();
+const loggable = computed(() => props.date <= now.value);
 
 function openWorkout(exerciseId?: string) {
   void router.push({
@@ -66,7 +76,7 @@ function openWorkout(exerciseId?: string) {
   });
 }
 
-const view = useLiveQuery(
+const { data: view, loaded: dayLoaded } = useLiveQueryState(
   async () => {
     const day = await dayData(props.date);
     const ids = [...new Set(day.sets.map((set) => set.exercise_id))];
@@ -75,10 +85,12 @@ const view = useLiveQuery(
   { workouts: [], sets: [], history: [] },
   () => props.date,
 );
-const exercises = useLiveQuery(
+const { data: exercises, loaded: catalogLoaded } = useLiveQueryState(
   async () => new Map((await catalog()).map((exercise) => [exercise.id, exercise])),
   new Map<string, Exercise>(),
 );
+// Nothing shows until the first read, so the empty state and placeholder names do not flash.
+const loaded = computed(() => dayLoaded.value && catalogLoaded.value);
 const training = useLiveQuery(trainingSettings, DEFAULT_TRAINING_SETTINGS);
 const maxKg = useLiveQuery(async () => maxDumbbellKg(await equipment()), null);
 
@@ -113,11 +125,11 @@ const copyMode = ref<'copy' | 'light' | null>(null);
 const picker = ref<{ swap: Block | null } | null>(null);
 const editing = ref<WorkoutSet | null>(null);
 
-// The copy ran in the modal; the toast offers to remove what it planned.
-async function onCopyDone(sourceDate: string, sets: WorkoutSet[]) {
+// The copy ran in the modal; the toast offers to remove what it wrote.
+async function onCopyDone(sourceDate: string, copy: CopyResult) {
   copyMode.value = null;
-  if (sets.length === 0) return;
-  await showUndo(t('copy.copied', { date: format.dayMonth(sourceDate) }), () => deleteSets(sets));
+  if (copy.sets.length === 0) return;
+  await showUndo(t('copy.copied', { date: format.dayMonth(sourceDate) }), () => undoCopy(copy));
 }
 
 function openCopy(mode: 'copy' | 'light') {
@@ -143,7 +155,11 @@ async function removeSet(set: WorkoutSet) {
 }
 
 async function addSet(block: Block) {
-  await saveSets([extraSet(block, nextPosition(view.value.sets))]);
+  const workout = dayWorkout(view.value.workouts);
+  if (!workout) return;
+  await saveSets([
+    extraSet(block, { workoutId: workout.id, start: nextPosition(view.value.sets) }),
+  ]);
 }
 
 async function applyHint(exerciseId: string) {
@@ -189,7 +205,8 @@ async function dayActions() {
   await sheet.present();
 }
 
-// Reorder mode works on a copy, so Ionic's DOM move and the list stay in step until saved.
+// Reorder mode works on a copy with the saved positions, so the next move compares with them.
+// `complete` gets an array, so Ionic leaves the DOM to Vue.
 const reordering = ref<Block[] | null>(null);
 function startReorder() {
   reordering.value = [...blocks.value];
@@ -198,9 +215,9 @@ function startReorder() {
 async function reorderEnd(event: ReorderEndCustomEvent) {
   const list = reordering.value;
   if (!list) return;
-  const { from, to } = event.detail;
-  const changed = reorderBlocks(list, from, to);
-  reordering.value = event.detail.complete(list) as Block[];
+  const { blocks: reordered, changed } = reorderBlocks(list, event.detail.from, event.detail.to);
+  event.detail.complete(list);
+  reordering.value = reordered;
   if (changed.length > 0) await saveSets(changed);
 }
 </script>
@@ -233,7 +250,7 @@ async function reorderEnd(event: ReorderEndCustomEvent) {
         </ion-list>
       </template>
 
-      <template v-else-if="blocks.length > 0">
+      <template v-else-if="loaded && blocks.length > 0">
         <ion-button v-if="loggable" expand="block" class="lw-day__start" @click="openWorkout()">
           {{ started ? t('day.resume') : t('day.start') }}
         </ion-button>
@@ -259,7 +276,7 @@ async function reorderEnd(event: ReorderEndCustomEvent) {
         </div>
       </template>
 
-      <div v-else class="lw-day__empty">
+      <div v-else-if="loaded" class="lw-day__empty">
         <p class="lw-day__lead">{{ t('day.empty') }}</p>
         <p class="lw-muted">{{ t('day.emptyHint') }}</p>
         <div class="lw-day__empty-actions">
@@ -287,6 +304,7 @@ async function reorderEnd(event: ReorderEndCustomEvent) {
       <exercise-picker
         v-if="picker"
         :swap-for="picker.swap ? exercises.get(picker.swap.exerciseId) : null"
+        :exclude="blocks.map((block) => block.exerciseId)"
         @pick="picked"
         @close="picker = null"
       />

@@ -54,6 +54,22 @@ describe('exercise search', () => {
     ]);
   });
 
+  it('leaves out the excluded exercises from every section', () => {
+    const sets = [{ ...makeSet({ exercise_id: row.id }), date: '2026-10-01' }];
+    const sections = pickerSections({
+      catalog,
+      equipment: dumbbellsOnly,
+      sets,
+      query: '',
+      swapFor: press,
+      exclude: [press.id, floor.id, row.id],
+    });
+    expect(sections.map((s) => [s.key, s.exercises.map((e) => e.name_pl)])).toEqual([
+      ['similar', ['Rozpiętki']],
+      ['unavailable', ['Pullover']],
+    ]);
+  });
+
   it('filters every section by the query', () => {
     const sections = pickerSections({
       catalog,

@@ -102,18 +102,19 @@ function isStalled(sessions: ExerciseSession[]): boolean {
   return first > second && second > third;
 }
 
-// One tap on a hint (§5.2): the exercise's planned working sets in position order get the hint's
-// weight and per-set reps (seconds); sets beyond the hint take its last value. The number of
-// sets stays (adding sets is the user's call). Returns the changed sets only, so an empty
-// result means the plan already matches the hint.
+// One tap on a hint (§5.2): the exercise's working sets of the day in position order meet the
+// hint's per-set reps (seconds), sets beyond the hint its last value; the planned ones get them
+// with the hint's weight, the done ones keep their place in the order. The number of sets stays
+// (adding sets is the user's call). Returns the changed sets only, so an empty result means the
+// plan already matches the hint.
 export function applyProgressionHint(sets: WorkoutSet[], hint: ProgressionHint): WorkoutSet[] {
   const values = hint.reps ?? hint.duration_s ?? [];
   return sets
-    .filter((set) => set.status === 'planned' && !set.warmup)
+    .filter((set) => !set.warmup)
     .sort((a, b) => a.position - b.position)
     .flatMap((set, i) => {
       const value = values[Math.min(i, values.length - 1)];
-      if (value === undefined) return [];
+      if (set.status !== 'planned' || value === undefined) return [];
       const next: WorkoutSet = {
         ...set,
         weight_kg: hint.weight,

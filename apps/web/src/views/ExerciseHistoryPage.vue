@@ -6,7 +6,7 @@ import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppPage from '../components/AppPage.vue';
 import { useFormat } from '../composables/format';
-import { useLiveQuery } from '../composables/liveQuery';
+import { useLiveQueryState } from '../composables/liveQuery';
 import { exerciseLog } from '../workout/history';
 import { exercise, historySets } from '../workout/queries';
 
@@ -18,7 +18,7 @@ const { t } = useI18n();
 const format = useFormat();
 const router = useIonRouter();
 
-const data = useLiveQuery(
+const { data, loaded } = useLiveQueryState(
   async () => ({ exercise: await exercise(props.id), sets: await historySets([props.id]) }),
   { exercise: undefined, sets: [] },
   () => props.id,
@@ -46,7 +46,7 @@ const sessions = computed(() =>
 
 <template>
   <app-page :title="t('history.exerciseTitle')" back-href="/history">
-    <header class="lw-exercise">
+    <header v-if="loaded" class="lw-exercise">
       <h1 class="lw-exercise__name">{{ format.exerciseName(data.exercise) }}</h1>
       <p class="lw-muted">
         {{ sessions.length > 0 ? t('history.sessions', sessions.length) : t('history.noSessions') }}

@@ -12,7 +12,7 @@ import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AppPage from '../components/AppPage.vue';
 import { useFormat } from '../composables/format';
-import { useLiveQuery } from '../composables/liveQuery';
+import { useLiveQueryState } from '../composables/liveQuery';
 import {
   byMonth,
   historyDays,
@@ -31,10 +31,10 @@ const format = useFormat();
 const view = ref<'workouts' | 'exercises'>('workouts');
 const query = ref('');
 
-const data = useLiveQuery(async () => ({ sets: await historySets(), catalog: await catalog() }), {
-  sets: [],
-  catalog: [],
-});
+const { data, loaded } = useLiveQueryState(
+  async () => ({ sets: await historySets(), catalog: await catalog() }),
+  { sets: [], catalog: [] },
+);
 
 const exercises = computed(
   () => new Map(data.value.catalog.map((exercise) => [exercise.id, exercise])),
@@ -64,7 +64,7 @@ const lastLabel = (item: HistoryExercise) => {
 
 <template>
   <app-page :title="t('nav.history')">
-    <div v-if="months.length === 0" class="lw-history__empty">
+    <div v-if="loaded && months.length === 0" class="lw-history__empty">
       <p class="lw-history__lead">{{ t('history.empty') }}</p>
       <p class="lw-muted">{{ t('history.emptyHint') }}</p>
       <ion-button fill="outline" router-link="/calendar" router-direction="root">
@@ -72,7 +72,7 @@ const lastLabel = (item: HistoryExercise) => {
       </ion-button>
     </div>
 
-    <template v-else>
+    <template v-else-if="loaded">
       <ion-segment v-model="view" class="lw-history__view" :aria-label="t('history.view')">
         <ion-segment-button value="workouts">
           <ion-label>{{ t('history.workouts') }}</ion-label>

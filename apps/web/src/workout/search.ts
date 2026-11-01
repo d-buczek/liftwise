@@ -34,21 +34,25 @@ export const RECENT_LIMIT = 5;
 
 // The exercise picker (§5.2): for "Zamień" the similar exercises first, then recently done ones,
 // the rest by name, and last the ones the equipment profile doesn't cover. A swap keeps the
-// sets, so it lists the same measure only. Empty sections are left out.
+// sets, so it lists the same measure only. `exclude` are left out (the exercises a day already
+// has: their sets would join the existing block). Empty sections are left out.
 export function pickerSections({
   catalog,
   equipment,
   sets,
   query,
   swapFor,
+  exclude = [],
 }: {
   catalog: Exercise[];
   equipment: Pick<EquipmentItem, 'type'>[];
   sets: DatedSet[];
   query: string;
   swapFor?: Exercise | null;
+  exclude?: string[];
 }): PickerSection[] {
-  const shown = (exercise: Exercise) => matchesQuery(exercise, query);
+  const shown = (exercise: Exercise) =>
+    matchesQuery(exercise, query) && !exclude.includes(exercise.id);
   const candidates = catalog.filter(
     (exercise) =>
       !exercise.archived &&

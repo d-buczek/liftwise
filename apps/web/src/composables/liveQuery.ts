@@ -8,17 +8,31 @@ export function useLiveQuery<T, I = T>(
   initial: I,
   deps?: WatchSource,
 ): Ref<T | I> {
-  const result = shallowRef<T | I>(initial);
+  return useLiveQueryState(query, initial, deps).data;
+}
+
+// The same with `loaded`: whether the first result has come, so a screen shows its empty state
+// only when the data says so, not while the first read runs.
+export function useLiveQueryState<T, I = T>(
+  query: () => T | Promise<T>,
+  initial: I,
+  deps?: WatchSource,
+): { data: Ref<T | I>; loaded: Ref<boolean> } {
+  const data = shallowRef<T | I>(initial);
+  const loaded = shallowRef(false);
   let subscription: Subscription | null = null;
   const subscribe = () => {
     subscription?.unsubscribe();
     subscription = liveQuery(query).subscribe({
-      next: (value) => (result.value = value),
+      next: (value) => {
+        data.value = value;
+        loaded.value = true;
+      },
       error: (error: unknown) => console.error(error),
     });
   };
   subscribe();
   if (deps) watch(deps, subscribe);
   onScopeDispose(() => subscription?.unsubscribe());
-  return result;
+  return { data, loaded };
 }

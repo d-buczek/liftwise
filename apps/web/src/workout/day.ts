@@ -28,19 +28,29 @@ export function exerciseBlocks<S extends WorkoutSet>(sets: S[]): ExerciseBlock<S
   return [...blocks].map(([exerciseId, blockSets]) => ({ exerciseId, sets: blockSets }));
 }
 
-// Moves a block and numbers every set of the day from 0 in the new order; returns the sets
-// whose position changed.
+// Moves a block and numbers every set of the day from 0 in the new order: the blocks with the
+// new positions (the base of the next move) and the sets whose position changed.
 export function reorderBlocks<S extends WorkoutSet>(
   blocks: ExerciseBlock<S>[],
   from: number,
   to: number,
-): S[] {
+): { blocks: ExerciseBlock<S>[]; changed: S[] } {
   const order = [...blocks];
   const [moved] = order.splice(from, 1);
   if (moved) order.splice(to, 0, moved);
-  return order
-    .flatMap((block) => block.sets)
-    .flatMap((set, position) => (set.position === position ? [] : [{ ...set, position }]));
+  let position = 0;
+  const changed: S[] = [];
+  const renumbered = order.map((block) => ({
+    ...block,
+    sets: block.sets.map((set) => {
+      const next = position++;
+      if (set.position === next) return set;
+      const update = { ...set, position: next };
+      changed.push(update);
+      return update;
+    }),
+  }));
+  return { blocks: renumbered, changed };
 }
 
 // The workout new sets of a day go to. Two devices offline can each create one for the same
@@ -85,14 +95,20 @@ export function plannedSetsFor(
   }));
 }
 
-// One more planned set like the exercise's last one, at the end of the day.
-export function extraSet(block: ExerciseBlock, start: number, newId = defaultNewId): WorkoutSet {
+// One more planned set like the exercise's last one, at the end of the day in the workout new
+// sets go to (D44).
+export function extraSet(
+  block: ExerciseBlock,
+  target: { workoutId: string; start: number },
+  newId = defaultNewId,
+): WorkoutSet {
   const last = block.sets.at(-1);
   if (!last) throw new Error('an exercise block has sets');
   return {
     ...last,
     id: newId(),
-    position: start,
+    workout_id: target.workoutId,
+    position: target.start,
     status: 'planned',
     rir: null,
     note: '',

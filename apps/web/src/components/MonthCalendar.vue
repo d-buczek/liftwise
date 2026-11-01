@@ -3,7 +3,8 @@ import { IonButton, IonIcon } from '@ionic/vue';
 import { chevronBack, chevronForward } from 'ionicons/icons';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { addMonths, dateValue, monthGrid, monthOf, today, type DayMark } from '../workout/calendar';
+import { useToday } from '../composables/today';
+import { addMonths, dateValue, monthGrid, monthOf, type DayMark } from '../workout/calendar';
 
 // The month view (§5.2): done days are solid tiles, planned-only days outlined, today underlined.
 const props = defineProps<{
@@ -17,7 +18,7 @@ const month = defineModel<string>('month', { required: true });
 const emit = defineEmits<{ select: [date: string] }>();
 
 const { t, d } = useI18n();
-const now = today();
+const now = useToday();
 const weeks = computed(() => monthGrid(month.value));
 const weekdays = computed(() =>
   (weeks.value[0] ?? []).map((date) => d(dateValue(date), 'weekdayShort')),

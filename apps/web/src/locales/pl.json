@@ -222,7 +222,7 @@
     "title": "Trening",
     "summary": "przerwa {rest}, RIR {rir}, krok {step} kg",
     "rest": "Domyślna przerwa",
-    "restHint": "Dla ćwiczeń bez własnej przerwy; każde ćwiczenie zmienisz na jego karcie.",
+    "restHint": "Dla nowych ćwiczeń spoza katalogu. Przerwę ćwiczenia zmienisz na jego karcie.",
     "rir": "Docelowy RIR",
     "rirHint": "Ile powtórzeń zostawiać w zapasie w seriach roboczych.",
     "rirMin": "Od",

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { copyWorkout, defaultCopySource, type WorkoutSet } from '@liftwise/core';
+import { copyWorkout, defaultCopySource } from '@liftwise/core';
 import {
   IonButton,
   IonButtons,
@@ -16,7 +16,7 @@ import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useFormat } from '../composables/format';
 import { useLiveQuery } from '../composables/liveQuery';
-import { copyDay } from '../workout/actions';
+import { copyDay, type CopyResult } from '../workout/actions';
 import { dayMarks, monthOf } from '../workout/calendar';
 import { exerciseBlocks } from '../workout/day';
 import { catalog, historySets, trainingSettings } from '../workout/queries';
@@ -25,7 +25,7 @@ import MonthCalendar from './MonthCalendar.vue';
 // "Kopiuj trening" (§5.2): pick the source day, by default the last workout before the target,
 // see what will be planned and copy; the light switch is "Kopiuj jako lżejszy" (D33).
 const props = defineProps<{ targetDate: string; light: boolean }>();
-const emit = defineEmits<{ done: [sourceDate: string, sets: WorkoutSet[]]; close: [] }>();
+const emit = defineEmits<{ done: [sourceDate: string, copy: CopyResult]; close: [] }>();
 
 const { t } = useI18n();
 const format = useFormat();

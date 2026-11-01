@@ -224,6 +224,17 @@ describe('applyProgressionHint', () => {
     expect(applyProgressionHint([sets[0]!, sets[2]!], up)).toEqual([]);
   });
 
+  it('counts the done sets of the day in the order, so a logged set keeps the plan matching', () => {
+    const hint = { ...up, weight: 22.5, reps: [11, 11, 10] };
+    const done = makeSet({ position: 1, weight_kg: 22.5, reps: 11 });
+    const rest = [
+      planned({ position: 2, weight_kg: 22.5, reps: 11 }),
+      planned({ position: 3, weight_kg: 22.5, reps: 11 }),
+    ];
+    expect(applyProgressionHint([done, ...rest], hint)).toMatchObject([{ position: 3, reps: 10 }]);
+    expect(applyProgressionHint([done, rest[0]!, { ...rest[1]!, reps: 10 }], hint)).toEqual([]);
+  });
+
   it('keeps the number of sets; sets beyond the hint take its last value', () => {
     const sets = [1, 2, 3, 4].map((position) => planned({ position, reps: 12 }));
     const changed = applyProgressionHint(sets, { ...up, sets: 2, reps: [8, 9] });

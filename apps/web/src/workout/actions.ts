@@ -5,6 +5,7 @@ import {
   workoutSchema,
   type Exercise,
   type TrainingSettings,
+  type Workout,
   type WorkoutSet,
 } from '@liftwise/core';
 import { applyLocal, type LocalChange } from '../db/mutate';
@@ -20,7 +21,7 @@ async function targetOf(date: string) {
   const existing = dayWorkout(day.workouts);
   const workout = existing ?? workoutSchema.parse({ id: newId(), date });
   const changes: LocalChange[] = existing ? [] : [upsert('workouts', workout)];
-  return { day, workout, workoutId: workout.id, changes };
+  return { day, workout, workoutId: workout.id, changes, created: existing ? null : workout };
 }
 
 function upsert<E extends 'workouts' | 'sets' | 'exercises' | 'settings'>(
@@ -30,9 +31,20 @@ function upsert<E extends 'workouts' | 'sets' | 'exercises' | 'settings'>(
   return { op: 'upsert', entity, row } as LocalChange;
 }
 
+function remove(entity: 'workouts' | 'sets', id: string): LocalChange {
+  return { op: 'delete', entity, row: { id } };
+}
+
+// What a copy wrote: its sets and the workout it created for a day without one.
+export type CopyResult = { sets: WorkoutSet[]; created: Workout | null };
+
 // "Kopiuj trening" / "Kopiuj jako lżejszy" (§5.2, D33): the source day's sets appended to the
-// target day as planned sets. Returns the new sets (for "Cofnij").
-export async function copyDay(sourceDate: string, targetDate: string, light: boolean) {
+// target day as planned sets. Returns what it wrote (for "Cofnij").
+export async function copyDay(
+  sourceDate: string,
+  targetDate: string,
+  light: boolean,
+): Promise<CopyResult> {
   const source = await dayData(sourceDate);
   const target = await targetOf(targetDate);
   const sets = copyWorkout({
@@ -40,9 +52,25 @@ export async function copyDay(sourceDate: string, targetDate: string, light: boo
     target: { workoutId: target.workoutId, sets: target.day.sets },
     light: light ? { exercises: await catalog(), training: await trainingSettings() } : undefined,
   });
-  if (sets.length > 0)
-    await applyLocal([...target.changes, ...sets.map((set) => upsert('sets', set))]);
-  return sets;
+  if (sets.length === 0) return { sets, created: null };
+  await applyLocal([...target.changes, ...sets.map((set) => upsert('sets', set))]);
+  return { sets, created: target.created };
+}
+
+// "Cofnij" after a copy (D44): the copied sets, and the workout the copy created unless it has
+// got other sets since.
+export async function undoCopy(copy: CopyResult) {
+  const copied = new Set(copy.sets.map((set) => set.id));
+  const workout = copy.created;
+  const kept =
+    workout !== null &&
+    (await dayData(workout.date)).sets.some(
+      (set) => set.workout_id === workout.id && !copied.has(set.id),
+    );
+  return applyLocal([
+    ...copy.sets.map((set) => remove('sets', set.id)),
+    ...(workout && !kept ? [remove('workouts', workout.id)] : []),
+  ]);
 }
 
 export async function addExercise(date: string, exercise: Exercise) {
@@ -60,7 +88,7 @@ export function saveSets(sets: WorkoutSet[]) {
 }
 
 export function deleteSets(sets: Pick<WorkoutSet, 'id'>[]) {
-  return applyLocal(sets.map((set) => ({ op: 'delete', entity: 'sets', row: { id: set.id } })));
+  return applyLocal(sets.map((set) => remove('sets', set.id)));
 }
 
 // "Cofnij" after a manual delete: the rows are written back, which revives the tombstones

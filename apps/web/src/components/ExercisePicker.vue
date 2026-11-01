@@ -20,8 +20,8 @@ import { catalog, equipment, historySets } from '../workout/queries';
 import { pickerSections } from '../workout/search';
 
 // Picking an exercise (§5.2): search by name and aliases, recent ones first; for "Zamień" the
-// similar ones come before them.
-const props = defineProps<{ swapFor?: Exercise | null }>();
+// similar ones come before them. `exclude` are exercises not offered (the day's own).
+const props = defineProps<{ swapFor?: Exercise | null; exclude?: string[] }>();
 const emit = defineEmits<{ pick: [exercise: Exercise]; close: [] }>();
 
 const { t } = useI18n();
@@ -38,7 +38,12 @@ const data = useLiveQuery(
 );
 
 const sections = computed(() =>
-  pickerSections({ ...data.value, query: query.value, swapFor: props.swapFor }),
+  pickerSections({
+    ...data.value,
+    query: query.value,
+    swapFor: props.swapFor,
+    exclude: props.exclude,
+  }),
 );
 </script>
 

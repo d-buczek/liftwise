@@ -36,14 +36,26 @@ describe('exerciseBlocks', () => {
       makeSet({ exercise_id: b, position: 2 }),
       makeSet({ exercise_id: c, position: 5 }),
     ];
-    const changed = reorderBlocks(exerciseBlocks(sets), 2, 0);
+    const { changed } = reorderBlocks(exerciseBlocks(sets), 2, 0);
     expect(changed.map((set) => [set.exercise_id, set.position])).toEqual([
       [c, 0],
       [a, 1],
       [a, 2],
       [b, 3],
     ]);
-    expect(reorderBlocks(exerciseBlocks(sets.slice(0, 3)), 0, 0)).toEqual([]);
+    expect(reorderBlocks(exerciseBlocks(sets.slice(0, 3)), 0, 0).changed).toEqual([]);
+  });
+
+  it('bases the next move on the positions of the previous one', () => {
+    const sets = [a, b, c].map((exercise_id, position) => makeSet({ exercise_id, position }));
+    const first = reorderBlocks(exerciseBlocks(sets), 2, 0);
+    // c, a, b → a, c, b: a was at 1 after the first move, so it changes again.
+    const { blocks, changed } = reorderBlocks(first.blocks, 1, 0);
+    expect(changed.map((set) => [set.exercise_id, set.position])).toEqual([
+      [a, 0],
+      [c, 1],
+    ]);
+    expect(blocks.flatMap((block) => block.sets.map((set) => set.position))).toEqual([0, 1, 2]);
   });
 });
 
@@ -85,8 +97,15 @@ describe('day helpers', () => {
 
   it('adds a planned copy of the last set', () => {
     const last = makeSet({ position: 3, rir: 1, note: 'x', weight_kg: 22.5 });
-    const extra = extraSet({ exerciseId: last.exercise_id, sets: [makeSet(), last] }, 7);
-    expect(extra).toMatchObject({ position: 7, status: 'planned', weight_kg: 22.5, rir: null });
+    const block = { exerciseId: last.exercise_id, sets: [makeSet(), last] };
+    const extra = extraSet(block, { workoutId: 'oldest', start: 7 });
+    expect(extra).toMatchObject({
+      workout_id: 'oldest',
+      position: 7,
+      status: 'planned',
+      weight_kg: 22.5,
+      rir: null,
+    });
     expect(extra.id).not.toBe(last.id);
     expect(extra.performed_at).toBeNull();
   });
