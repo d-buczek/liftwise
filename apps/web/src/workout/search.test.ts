@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vite-plus/test';
 import { makeExercise, makeSet } from '../testing';
-import { foldText, matchesQuery, pickerSections } from './search';
+import { pickerSections } from './search';
 
 const press = makeExercise({ name_pl: 'Wyciskanie hantli na ławce', aliases: ['bench press'] });
 const floor = makeExercise({ name_pl: 'Wyciskanie leżąc na podłodze', requires: ['dumbbells'] });
@@ -18,13 +18,6 @@ const catalog = [press, floor, flyes, row, plank, archived, benchOnly];
 const dumbbellsOnly = [{ type: 'dumbbells' as const }];
 
 describe('exercise search', () => {
-  it('folds case and Polish diacritics', () => {
-    expect(foldText(' Ławka Skośna ')).toBe('lawka skosna');
-    expect(matchesQuery(press, 'lawce wycisk')).toBe(true);
-    expect(matchesQuery(press, 'bench')).toBe(true);
-    expect(matchesQuery(press, 'wiosło')).toBe(false);
-  });
-
   it('lists recent exercises first, then available by name, then unavailable', () => {
     const sets = [
       { ...makeSet({ exercise_id: row.id }), date: '2026-10-01' },

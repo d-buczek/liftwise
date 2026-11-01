@@ -1,7 +1,10 @@
 import {
   copiedLabelId,
   copyWorkout,
+  dayWorkout,
   newId,
+  nextPosition,
+  plannedSetsFor,
   SETTING_IDS,
   workoutSchema,
   type BalanceSettings,
@@ -12,7 +15,6 @@ import {
   type WorkoutSet,
 } from '@liftwise/core';
 import { applyLocal, type LocalChange } from '../db/mutate';
-import { dayWorkout, nextPosition, plannedSetsFor } from './day';
 import type { Draft } from './logging';
 import { catalog, dayData, historySets, trainingSettings, workoutLabels } from './queries';
 

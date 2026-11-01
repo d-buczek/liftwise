@@ -1,4 +1,4 @@
-import { newId, type SyncPushResponse } from '@liftwise/core';
+import { newId, type SyncMutationInput, type SyncPushResponse } from '@liftwise/core';
 import { asc, eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vite-plus/test';
 import {
@@ -126,6 +126,19 @@ describe('sync push', () => {
     expect(response.status).toBe(400);
     expect(await response.json()).toEqual({ error: 'invalid_mutation', index: 1 });
     expect(await logOf(workout.id)).toHaveLength(0);
+  });
+
+  it('leaves threads and messages to the server', async () => {
+    const thread = { id: newId(), date: '2026-10-31', workout_id: null };
+    const write = { mutationId: newId(), groupId: newId(), op: 'upsert', entity: 'threads' };
+    const erase = { ...write, mutationId: newId(), op: 'delete', entity: 'messages' };
+    const response = await push(token, [
+      upsert('workouts', workoutRow()),
+      { ...write, row: thread } as unknown as SyncMutationInput,
+    ]);
+    expect(await response.json()).toEqual({ error: 'invalid_mutation', index: 1 });
+    const deleted = await push(token, [{ ...erase, row: { id: thread.id } } as SyncMutationInput]);
+    expect(await deleted.json()).toEqual({ error: 'invalid_mutation', index: 0 });
   });
 
   it('checks what a set refers to', async () => {

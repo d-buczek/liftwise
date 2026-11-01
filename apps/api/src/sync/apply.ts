@@ -8,9 +8,11 @@ import {
   changeLog,
   equipmentItems,
   exercises,
+  messages,
   sets,
   settings,
   syncCounter,
+  threads,
   workoutLabels,
   workouts,
 } from '../db/schema';
@@ -26,6 +28,8 @@ export const syncTables = {
   sets,
   athlete_profile: athleteProfile,
   settings,
+  threads,
+  messages,
 };
 
 // Drizzle can't type a write to a table picked at runtime; rows are checked by core schemas.

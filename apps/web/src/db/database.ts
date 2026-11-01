@@ -27,6 +27,8 @@ export class LiftWiseDb extends Dexie {
   sets!: Table<SyncRow<'sets'>, string>;
   athlete_profile!: Table<SyncRow<'athlete_profile'>, string>;
   settings!: Table<SyncRow<'settings'>, string>;
+  threads!: Table<SyncRow<'threads'>, string>;
+  messages!: Table<SyncRow<'messages'>, string>;
   outbox!: EntityTable<OutboxEntry, 'id'>;
   sync_state!: Table<SyncState, string>;
   device!: Table<DeviceAuth, string>;
@@ -60,6 +62,8 @@ export class LiftWiseDb extends Dexie {
             workout.label_id ??= null;
           }),
       );
+    // Agent threads by day and their messages (§5.9.5), pulled only.
+    this.version(4).stores({ threads: 'id, date', messages: 'id, thread_id' });
   }
 
   mirror(entity: SyncEntity): Table<SyncRow, string> {
@@ -75,6 +79,8 @@ export class LiftWiseDb extends Dexie {
       this.sets,
       this.athlete_profile,
       this.settings,
+      this.threads,
+      this.messages,
     ];
   }
 }

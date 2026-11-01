@@ -1,7 +1,7 @@
 import {
   newId,
   seedCatalog,
-  type SyncEntity,
+  type PushEntity,
   type SyncMutationInput,
   type SyncPullResponse,
 } from '@liftwise/core';
@@ -63,13 +63,13 @@ export const setRow = (workoutId: string, fields: Record<string, unknown> = {}) 
 });
 
 export const upsert = (
-  entity: SyncEntity,
+  entity: PushEntity,
   row: Record<string, unknown>,
   groupId = newId(),
 ): SyncMutationInput =>
   ({ mutationId: newId(), groupId, op: 'upsert', entity, row }) as SyncMutationInput;
 
-export const remove = (entity: SyncEntity, id: string, groupId = newId()): SyncMutationInput => ({
+export const remove = (entity: PushEntity, id: string, groupId = newId()): SyncMutationInput => ({
   mutationId: newId(),
   groupId,
   op: 'delete',

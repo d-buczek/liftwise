@@ -1,13 +1,13 @@
 import {
   compareHistory,
   isWorkingSet,
+  matchesQuery,
   type DatedSet,
   type Exercise,
   type RecordEvent,
 } from '@liftwise/core';
 import { monthOf } from './calendar';
 import { exerciseBlocks } from './day';
-import { matchesQuery } from './search';
 
 // The history screens (§5.4): done workouts, exercises with history and one exercise's sessions.
 // Planned sets never count.

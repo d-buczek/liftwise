@@ -408,7 +408,7 @@ Client-only (Dexie): `outbox` (pending mutations), `prompt_queue`, `sync_state` 
 
 - The server is authoritative. Clients apply changes optimistically to Dexie and enqueue mutations in `outbox`.
 - **Push** `POST /api/sync/push` takes `{ mutations: [{ mutationId, groupId, entity, op: upsert|delete, row }] }` (at most 100; protocol schemas in `packages/core/src/sync.ts`).
-  - Entities: `exercises`, `equipment_items`, `workout_labels`, `workouts`, `sets`, `athlete_profile`, `settings`; `threads` / `messages` join with LW-09.
+  - Entities: `exercises`, `equipment_items`, `workout_labels`, `workouts`, `sets`, `athlete_profile`, `settings`. `threads` / `messages` are pulled but never pushed: only the server (agent) writes them.
   - `groupId` is the client's change group, one per user action (D41). An upsert carries the full domain row; the server sets `created_at`, `updated_at`, `deleted_at`, `seq`. A delete (`row: { id }`) leaves a tombstone.
   - The server validates with the core zod schemas, then references: a set needs its workout and exercise (in D1, tombstones included, or upserted earlier in the push) and the value its exercise measures; a workout's `label_id` needs its label the same way. The profile and settings must use their fixed ids (D41).
   - Mutations whose `mutationId` was applied before are skipped (`duplicate`). The rest are applied in order in **one D1 batch** (a transaction): per change, `sync_counter` is bumped and the row is written with the new `seq` and logged in `change_log`; every `mutationId` goes to `applied_mutations`.

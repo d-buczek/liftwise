@@ -1,16 +1,12 @@
 import {
   applyProgressionHint,
-  exerciseSessions,
   newId as defaultNewId,
   progressionHint,
   roundWeightKg,
   TIME_STEP_S,
-  type DatedSet,
-  type Exercise,
   type Measure,
   type ProgressionHint,
   type ProgressionHintInput,
-  type Workout,
   type WorkoutSet,
 } from '@liftwise/core';
 
@@ -51,48 +47,6 @@ export function reorderBlocks<S extends WorkoutSet>(
     }),
   }));
   return { blocks: renumbered, changed };
-}
-
-// The workout new sets of a day go to. Two devices offline can each create one for the same
-// date; the day shows both and the oldest (smallest UUIDv7) takes new sets.
-export function dayWorkout<W extends Pick<Workout, 'id'>>(workouts: W[]): W | null {
-  return workouts.reduce<W | null>((oldest, w) => (!oldest || w.id < oldest.id ? w : oldest), null);
-}
-
-export function nextPosition(sets: Pick<WorkoutSet, 'position'>[]): number {
-  return Math.max(-1, ...sets.map((set) => set.position)) + 1;
-}
-
-// Planned sets for an exercise added to a day: the working sets of its last session before the
-// day, else one set at the bottom of its range and 0 kg.
-export function plannedSetsFor(
-  exercise: Exercise,
-  history: DatedSet[],
-  date: string,
-  target: { workoutId: string; start: number },
-  newId = defaultNewId,
-): WorkoutSet[] {
-  const last = exerciseSessions(history, exercise, date).at(-1)?.sets;
-  const base: Pick<WorkoutSet, 'weight_kg' | 'reps' | 'duration_s'>[] = last ?? [
-    exercise.measure === 'time'
-      ? { weight_kg: 0, reps: null, duration_s: exercise.time_range_s.min }
-      : { weight_kg: 0, reps: exercise.rep_range.min, duration_s: null },
-  ];
-  return base.map((set, i) => ({
-    id: newId(),
-    workout_id: target.workoutId,
-    exercise_id: exercise.id,
-    position: target.start + i,
-    status: 'planned',
-    weight_kg: set.weight_kg,
-    reps: set.reps,
-    duration_s: set.duration_s,
-    rir: null,
-    warmup: false,
-    note: '',
-    performed_at: null,
-    source: 'manual',
-  }));
 }
 
 // One more planned set like the exercise's last one, at the end of the day in the workout new

@@ -6,12 +6,14 @@ import { workoutLabelSchema } from './schemas/label';
 import { ATHLETE_PROFILE_ID, athleteProfileSchema } from './schemas/profile';
 import { workoutSetSchema } from './schemas/set';
 import { SETTING_IDS, settingSchema } from './schemas/settings';
+import { messageSchema, threadSchema } from './schemas/thread';
 import { workoutSchema } from './schemas/workout';
 
 // Sync protocol (§6.4). Clients push mutations from their outbox and pull rows changed since a
 // `seq`; the server is authoritative and resolves conflicts last-write-wins in apply order.
 
-// Tables clients push and pull; `threads` / `messages` join with LW-09.
+// Tables clients pull. They push all but the agent's threads and messages, which only the
+// server writes.
 export const syncEntitySchema = z.enum([
   'exercises',
   'equipment_items',
@@ -20,8 +22,13 @@ export const syncEntitySchema = z.enum([
   'sets',
   'athlete_profile',
   'settings',
+  'threads',
+  'messages',
 ]);
 export type SyncEntity = z.infer<typeof syncEntitySchema>;
+
+export const pushEntitySchema = syncEntitySchema.exclude(['threads', 'messages']);
+export type PushEntity = z.infer<typeof pushEntitySchema>;
 
 export const syncRowSchemas = {
   exercises: exerciseSchema,
@@ -31,6 +38,8 @@ export const syncRowSchemas = {
   sets: workoutSetSchema,
   athlete_profile: athleteProfileSchema,
   settings: settingSchema,
+  threads: threadSchema,
+  messages: messageSchema,
 };
 export type SyncRows = { [E in SyncEntity]: z.infer<(typeof syncRowSchemas)[E]> };
 
@@ -80,7 +89,7 @@ export const syncMutationSchema = z.discriminatedUnion('op', [
   z.object({
     ...mutationFields,
     op: z.literal('delete'),
-    entity: syncEntitySchema,
+    entity: pushEntitySchema,
     row: z.object({ id: idSchema }),
   }),
 ]);

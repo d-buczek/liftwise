@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import {
   dayLabelId,
+  dayWorkout,
   DEFAULT_TRAINING_SETTINGS,
+  nextPosition,
   weightStepKg,
   type Exercise,
   type WorkoutLabel,
@@ -47,10 +49,8 @@ import {
   type CopyResult,
 } from '../workout/actions';
 import {
-  dayWorkout,
   exerciseBlocks,
   extraSet,
-  nextPosition,
   plannedHint,
   reorderBlocks,
   type ExerciseBlock as Block,

@@ -1,20 +1,8 @@
-import { newId, seedCatalog, type DatedSet, type Exercise } from '@liftwise/core';
+import { newId } from '@liftwise/core';
 import { describe, expect, it } from 'vite-plus/test';
 import { makeSet } from '../testing';
-import {
-  dayWorkout,
-  exerciseBlocks,
-  extraSet,
-  nextPosition,
-  plannedSetsFor,
-  reorderBlocks,
-  stepValue,
-  stepWeight,
-} from './day';
+import { exerciseBlocks, extraSet, reorderBlocks, stepValue, stepWeight } from './day';
 
-const catalog = seedCatalog();
-const press = catalog.find((exercise) => exercise.measure === 'reps') as Exercise;
-const plank = catalog.find((exercise) => exercise.measure === 'time') as Exercise;
 const [a, b, c] = [newId(), newId(), newId()];
 
 describe('exerciseBlocks', () => {
@@ -60,41 +48,6 @@ describe('exerciseBlocks', () => {
 });
 
 describe('day helpers', () => {
-  it('sends new sets to the oldest workout of the day', () => {
-    expect(dayWorkout([{ id: '019a2' }, { id: '019a1' }])?.id).toBe('019a1');
-    expect(dayWorkout([])).toBeNull();
-    expect(nextPosition([])).toBe(0);
-    expect(nextPosition([{ position: 4 }, { position: 2 }])).toBe(5);
-  });
-
-  it('plans an added exercise from its last session before the day', () => {
-    const at = (date: string, fields: Parameters<typeof makeSet>[0]): DatedSet => ({
-      ...makeSet({ exercise_id: press.id, ...fields }),
-      date,
-    });
-    const workout = newId();
-    const history = [
-      at('2026-10-01', { weight_kg: 18 }),
-      at('2026-10-05', { workout_id: workout, weight_kg: 20, reps: 9, position: 1 }),
-      at('2026-10-05', { workout_id: workout, weight_kg: 10, warmup: true, position: 0 }),
-      at('2026-10-09', { weight_kg: 22 }),
-    ];
-    const sets = plannedSetsFor(press, history, '2026-10-09', { workoutId: 'w', start: 3 });
-    expect(sets).toMatchObject([
-      { workout_id: 'w', position: 3, status: 'planned', weight_kg: 20, reps: 9, warmup: false },
-    ]);
-  });
-
-  it('plans one set at the range min and 0 kg without history', () => {
-    const target = { workoutId: 'w', start: 0 };
-    expect(plannedSetsFor(press, [], '2026-10-09', target)).toMatchObject([
-      { weight_kg: 0, reps: press.measure === 'reps' ? press.rep_range.min : null },
-    ]);
-    expect(plannedSetsFor(plank, [], '2026-10-09', target)).toMatchObject([
-      { reps: null, duration_s: plank.measure === 'time' ? plank.time_range_s.min : null },
-    ]);
-  });
-
   it('adds a planned copy of the last set', () => {
     const last = makeSet({ position: 3, rir: 1, note: 'x', weight_kg: 22.5 });
     const block = { exerciseId: last.exercise_id, sets: [makeSet(), last] };
