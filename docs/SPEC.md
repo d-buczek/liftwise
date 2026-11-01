@@ -435,20 +435,21 @@ Client-only (Dexie): `outbox` (pending mutations), `prompt_queue`, `sync_state` 
 | `POST /api/auth/pairing/redeem` | New device exchanges code + name for its token (rate-limited) |
 | `GET /api/devices`, `DELETE /api/devices/:id` | List / revoke devices |
 | `POST /api/sync/push`, `GET /api/sync/pull` | Sync (§6.4) |
-| `POST /api/agent/chat` | Streaming agent turn `{ threadId, message, role?, localTime }` |
+| `POST /api/agent/chat` | Streaming agent turn `{ threadId, message, role?, localTime }` (§6.6): `message` is the new user message (text parts only), `localTime` the user's local time with offset; streams UI message chunks; `409 provider_unavailable` when the role's provider has no key |
 | `POST /api/agent/proposals/:id/confirm` / `reject` | Risky tool confirmation (D50): `{ status, changes, groupId? }`; `409 not_pending` once resolved, `409 stale` when the call no longer fits the data (it stays pending) |
 | `POST /api/changes/:groupId/undo` | Undo a change group (`{ confirm? }` overrides conflicts) |
 | `GET /api/providers` | Provider status (configured ✓/✗) and model settings |
 
 ### 6.6 Agent runtime and tool registry
 
-- The agent runs in the Worker using the AI SDK (`streamText` with tools and a step limit), streamed to the client (`@ai-sdk/vue` on the client).
+- The agent runs in the Worker using the AI SDK (`streamText` with tools, at most 8 model calls per turn), streamed to the client as UI message chunks (`@ai-sdk/vue` on the client).
+- A turn (`apps/api/src/agent/chat.ts`): the user message is stored first (creating the thread, dated by `localTime`), so a failing model never loses it; the assistant message (text, tool calls and results) is stored when the stream ends, also if the client went away. Both go through `applyWrites`; clients pull them like other data.
 - Context per request:
-  - System prompt (rules §5.9.2, conventions, local date/time).
-  - Athlete profile, equipment summary, compact catalog (names + aliases + ids), balance snapshot.
-  - Current thread.
+  - System prompt (rules §5.9.2, conventions §5.1) and compact catalog (ids + names + aliases + measure): the stable prefix.
+  - Local date, time and weekday from `localTime` (also the day and `performed_at` of logged sets), athlete profile, equipment summary, balance snapshot (hard sets per group, last 7 days): a second system message.
+  - Current thread: the stored messages of `threadId`; the client sends only the new message.
   - Details are fetched via tools.
-  - For Anthropic, the stable prefix (system prompt + catalog) is marked for prompt caching.
+  - For Anthropic, the stable prefix gets a cache breakpoint, so tools + rules + catalog are cached together.
 - **Tool registry** (`apps/api/src/tools`): each tool is `{ name, description, input: zod schema, risk: read|write|risky, handler }`. The same registry backs the in-app agent and the MCP server (phase 2).
   - Handlers read D1 and compute with core; ids and dates are plain strings in the input schemas (providers differ in the string formats they accept) and are checked by the handlers.
   - Writes go through the server mutation path (`applyWrites`: core schemas, references, `change_log` with `actor: agent` and the thread); each call is one change group. A write tool returns the change card `{ groupId, changes: [{ entity, id, op: create|update|delete, before, after }] }`.
