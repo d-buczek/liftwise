@@ -31,14 +31,16 @@ export function useFormat() {
   // RIR 4 means "4+" (D4).
   const rir = (value: number) => (value === RIR_MAX ? t('set.rirMax') : String(value));
 
+  const sentence = (text: string) => text.charAt(0).toLocaleUpperCase('pl') + text.slice(1);
+
   return {
     kg,
     // A title: Niedziela, 1 listopada (sentence case).
-    day: (date: string) => {
-      const text = d(dateValue(date), 'dayLong');
-      return text.charAt(0).toLocaleUpperCase('pl') + text.slice(1);
-    },
+    day: (date: string) => sentence(d(dateValue(date), 'dayLong')),
     dayMonth: (date: string) => d(dateValue(date), 'dayMonth'),
+    // `YYYY-MM` as a heading: Listopad 2026.
+    month: (month: string) => sentence(d(dateValue(`${month}-01`), 'month')),
+    weekday: (date: string) => d(dateValue(date), 'weekdayShort'),
     exerciseName: (exercise: Pick<Exercise, 'name_pl'> | undefined) =>
       exercise?.name_pl ?? t('day.unknownExercise'),
     muscles: (exercise: Pick<Exercise, 'primary_muscles'>) =>

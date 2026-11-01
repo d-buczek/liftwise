@@ -58,6 +58,11 @@ export async function catalog(): Promise<SyncRow<'exercises'>[]> {
   return (await db.exercises.toArray()).filter(alive);
 }
 
+export async function exercise(id: string): Promise<SyncRow<'exercises'> | undefined> {
+  const row = await db.exercises.get(id);
+  return alive(row) ? row : undefined;
+}
+
 export async function equipment(): Promise<EquipmentItem[]> {
   return (await db.equipment_items.toArray()).filter(alive);
 }

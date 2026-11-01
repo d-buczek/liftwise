@@ -7,6 +7,8 @@ import DayPage from './views/DayPage.vue';
 import DevicesPage from './views/DevicesPage.vue';
 import EmptyPage from './views/EmptyPage.vue';
 import EquipmentPage from './views/EquipmentPage.vue';
+import ExerciseHistoryPage from './views/ExerciseHistoryPage.vue';
+import HistoryPage from './views/HistoryPage.vue';
 import PairPage from './views/PairPage.vue';
 import SettingsPage from './views/SettingsPage.vue';
 import TabsPage from './views/TabsPage.vue';
@@ -24,8 +26,9 @@ const validDate = (to: RouteLocationNormalized) =>
   localDateSchema.safeParse(to.params.date).success;
 
 // A day and its workout under a section's path keep that tab active. An invalid date goes back
-// to the calendar; a future day has no workout to log, only its plan.
+// to the section; a future day has no workout to log, only its plan.
 function dayRoutes(section: string): RouteRecordRaw[] {
+  const sectionHref = `/${section}`;
   const dayHref = (route: RouteLocationNormalized) => `/${section}/${String(route.params.date)}`;
   return [
     {
@@ -33,10 +36,10 @@ function dayRoutes(section: string): RouteRecordRaw[] {
       component: DayPage,
       props: (route) => ({
         date: route.params.date,
-        backHref: `/${section}`,
+        backHref: sectionHref,
         workoutHref: `${dayHref(route)}/workout`,
       }),
-      beforeEnter: (to) => (validDate(to) ? true : '/calendar'),
+      beforeEnter: (to) => (validDate(to) ? true : sectionHref),
     },
     {
       path: `${section}/:date/workout`,
@@ -47,7 +50,7 @@ function dayRoutes(section: string): RouteRecordRaw[] {
         dayHref: dayHref(route),
       }),
       beforeEnter: (to) => {
-        if (!validDate(to)) return '/calendar';
+        if (!validDate(to)) return sectionHref;
         return String(to.params.date) <= today() ? true : dayHref(to);
       },
     },
@@ -63,7 +66,9 @@ const routes: RouteRecordRaw[] = [
       { path: '', redirect: '/calendar' },
       { path: 'calendar', component: CalendarPage },
       ...dayRoutes('calendar'),
-      { path: 'history', component: EmptyPage, props: { section: 'history' } },
+      { path: 'history', component: HistoryPage },
+      { path: 'history/exercise/:id', component: ExerciseHistoryPage, props: true },
+      ...dayRoutes('history'),
       { path: 'agent', component: EmptyPage, props: { section: 'agent' } },
       { path: 'settings', component: SettingsPage },
       { path: 'settings/equipment', component: EquipmentPage },

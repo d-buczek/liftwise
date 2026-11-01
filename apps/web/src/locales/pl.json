@@ -15,7 +15,6 @@
     "close": "Zamknij"
   },
   "empty": {
-    "history": "Tu będzie historia treningów, wykresy i rekordy.",
     "agent": "Tu będzie rozmowa z agentem: zapis serii jednym zdaniem albo głosem.",
     "hint": "Na razie możesz ustawić swój sprzęt.",
     "action": "Ustaw sprzęt"
@@ -179,6 +178,23 @@
     "editSet": "Edytuj",
     "rir": "RIR {value}",
     "empty": "Wybierz ćwiczenie, żeby zacząć zapisywać serie."
+  },
+  "history": {
+    "view": "Widok historii",
+    "workouts": "Treningi",
+    "exercises": "Ćwiczenia",
+    "openDay": "{date}: {exercises}, {sets}",
+    "last": "Ostatnio {date}",
+    "lastLoad": "Ostatnio {date}: {load}",
+    "empty": "Nie ma jeszcze zrobionych treningów.",
+    "emptyHint": "Zaplanuj trening w kalendarzu i zapisz pierwszą serię, a pojawi się tutaj.",
+    "emptyAction": "Otwórz kalendarz",
+    "noMatch": "Żadne ćwiczenie z historią nie pasuje do „{query}”.",
+    "exerciseTitle": "Historia ćwiczenia",
+    "sessions": "{n} sesja | {n} sesje | {n} sesji",
+    "noSessions": "To ćwiczenie nie ma jeszcze zrobionych serii.",
+    "openSession": "Otwórz dzień: {date}",
+    "record": "rekord"
   },
   "rest": {
     "label": "Przerwa",

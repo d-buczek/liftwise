@@ -3,8 +3,8 @@ import { IonButton } from '@ionic/vue';
 import { useI18n } from 'vue-i18n';
 import AppPage from '../components/AppPage.vue';
 
-// Sections built in later tickets (LW-09, LW-12) until they get their screens.
-defineProps<{ section: 'history' | 'agent' }>();
+// Sections built in later tickets (LW-09) until they get their screens.
+defineProps<{ section: 'agent' }>();
 
 const { t } = useI18n();
 </script>
