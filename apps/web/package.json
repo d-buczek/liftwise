@@ -8,9 +8,18 @@
     "build": "vp build",
     "preview": "vp preview",
     "typecheck": "vue-tsc --build",
-    "icons": "pnpm dlx @vite-pwa/assets-generator@2"
+    "icons": "pnpm dlx @vite-pwa/assets-generator@2",
+    "android:build": "node scripts/android.ts build",
+    "android:install": "node scripts/android.ts install"
   },
   "dependencies": {
+    "@aparajita/capacitor-secure-storage": "^8.0.1",
+    "@capacitor-community/keep-awake": "^8.0.1",
+    "@capacitor/android": "^8.6.0",
+    "@capacitor/app": "^8.1.2",
+    "@capacitor/core": "^8.6.0",
+    "@capacitor/haptics": "^8.0.2",
+    "@capacitor/local-notifications": "^8.3.1",
     "@fontsource-variable/archivo": "^5.3.0",
     "@ionic/vue": "^9.0.10",
     "@ionic/vue-router": "^9.0.10",
@@ -26,6 +35,7 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.6.0",
     "@types/node": "^24.19.2",
     "@vitejs/plugin-vue": "^6.0.10",
     "@vue/test-utils": "^2.5.1",

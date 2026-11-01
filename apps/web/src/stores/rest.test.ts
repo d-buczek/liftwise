@@ -1,8 +1,16 @@
 import { createPinia, setActivePinia } from 'pinia';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
+import { cancelRestAlarm, restAlarmNotifies, scheduleRestAlarm } from '../native/restAlarm';
 import { useRestStore } from './rest';
 
 const vibrate = vi.fn<(pattern: number[]) => boolean>(() => true);
+
+// The Android notification; in the browser it does nothing.
+vi.mock('../native/restAlarm', () => ({
+  scheduleRestAlarm: vi.fn<typeof scheduleRestAlarm>(),
+  cancelRestAlarm: vi.fn<typeof cancelRestAlarm>(),
+  restAlarmNotifies: vi.fn<typeof restAlarmNotifies>(() => false),
+}));
 
 describe('rest store', () => {
   beforeEach(() => {
@@ -10,6 +18,7 @@ describe('rest store', () => {
     vi.setSystemTime(new Date('2026-11-01T18:00:00Z'));
     localStorage.clear();
     vibrate.mockClear();
+    vi.clearAllMocks();
     Object.defineProperty(navigator, 'vibrate', { value: vibrate, configurable: true });
     setActivePinia(createPinia());
   });
@@ -69,5 +78,42 @@ describe('rest store', () => {
     const restored = useRestStore();
     expect([restored.running, restored.finished]).toEqual([false, false]);
     expect(localStorage.getItem('liftwise.rest')).toBeNull();
+  });
+
+  it('schedules the notification for the end, moves it with the rest and cancels it', () => {
+    const rest = useRestStore();
+    const start = Date.now();
+    rest.start(90);
+    expect(scheduleRestAlarm).toHaveBeenLastCalledWith(
+      start + 90_000,
+      'Przerwa skończona',
+      'Koniec przerwy',
+    );
+    rest.adjust(15);
+    expect(scheduleRestAlarm).toHaveBeenLastCalledWith(
+      start + 105_000,
+      'Przerwa skończona',
+      'Koniec przerwy',
+    );
+    expect(cancelRestAlarm).not.toHaveBeenCalled();
+
+    rest.skip();
+    expect(cancelRestAlarm).toHaveBeenCalledOnce();
+    rest.start(0);
+    expect(cancelRestAlarm).toHaveBeenCalledTimes(2);
+  });
+
+  it('leaves the vibration to a notification that can alert, then clears it on dismiss', () => {
+    vi.mocked(restAlarmNotifies).mockReturnValue(true);
+    const rest = useRestStore();
+    rest.start(30);
+    vi.advanceTimersByTime(30_000);
+    expect([rest.running, rest.finished]).toEqual([false, true]);
+    expect(vibrate).not.toHaveBeenCalled();
+    // The rest ended by itself: the notification is due now and must not be cancelled.
+    expect(cancelRestAlarm).not.toHaveBeenCalled();
+
+    rest.dismiss();
+    expect(cancelRestAlarm).toHaveBeenCalledOnce();
   });
 });

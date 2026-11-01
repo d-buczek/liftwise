@@ -12,7 +12,7 @@ import {
 import { trashOutline } from 'ionicons/icons';
 import { computed, onUnmounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { api, ApiError, type DeviceInfo } from '../api/client';
+import { api, ApiError, appOrigin, type DeviceInfo } from '../api/client';
 import AppPage from '../components/AppPage.vue';
 import QrCode from '../components/QrCode.vue';
 import { useErrorMessage } from '../i18n';
@@ -64,7 +64,7 @@ const countdown = computed(
 // Grouped by four, easier to read out and type; redeem ignores the space.
 const shownCode = computed(() => pairing.value?.code.replace(/^(.{4})/, '$1 ') ?? '');
 const pairUrl = computed(
-  () => `${window.location.origin}/pair?code=${encodeURIComponent(pairing.value?.code ?? '')}`,
+  () => `${appOrigin()}/pair?code=${encodeURIComponent(pairing.value?.code ?? '')}`,
 );
 
 async function createCode() {

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- IRON of apps/web/vite.config.ts: icon background and splash screen. -->
+    <color name="ic_launcher_background">#2A2F35</color>
+</resources>

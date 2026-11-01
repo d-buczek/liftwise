@@ -73,6 +73,7 @@ On top of that, an AI agent with tools over the app's data logs and edits from a
 | D44 | Editing a day on the client | A day shows the sets of **all its workouts** and new sets go to the oldest; an added exercise is planned from its **last session**; the hint chip names the **load** it sets; "Cofnij" after a copy or a manual delete is a **local** write (delete the copied sets and the workout the copy created, write the deleted rows back), not the server undo | Two offline devices can create a workout for the same date and neither may hide data; the last session is the usual plan; a hint can change the weight of a light copy, so the chip must say so; local undo works offline and right away (agent changes use the server undo, LW-09) |
 | D45 | Logging a workout on the client | A **workout screen** per day (`…/:date/workout`), separate from the day: one exercise at a time with a **draft** of its next set (the next planned set, else the previous done set, else the last session's first working set); one large button logs it, labelled **"Jak poprzednio"** while the draft repeats the previous set and **"Zrobione"** otherwise; sets are logged **today and on past days** only (a future day is planning); the rest timer's end is **kept on the device** | The day stays the planning view, the workout screen is the gym view with big controls; one button that names what it does avoids two near-identical ones; logging the future would fake history; a reload or an app switch mid-rest must not lose the timer |
 | D46 | Default rest | Every catalog exercise has its **own rest** (edited on its card); the default rest in the training settings is the **starting value of exercises created outside the catalog** (the agent, LW-09), not a live fallback | A fallback would never apply, since every exercise has a rest; one global value over all exercises would erase the catalog's 45–120 s differences |
+| D47 | Android app | Capacitor 8; app id `io.github.d_buczek.liftwise`. The APK bundles the web build (no service worker) and gets its **API origin at build time** (`VITE_API_URL` in the gitignored `apps/web/.env.android.local`; plain HTTP allowed only for a LAN dev server). The rest end is a **scheduled notification** on a max-importance channel with **`USE_EXACT_ALARM`** and `allowWhileIdle`; the in-app vibration is only its fallback. The device token lives in **Keystore-backed secure storage**; Android backup is off. Native calls live in `apps/web/src/native/`, no-ops or web fallbacks in the browser | The page's own origin is `https://localhost`, so the API needs an absolute URL; `USE_EXACT_ALARM` is granted at install and only Play restricts it, while the APK is sideloaded; a single vibration source avoids a double buzz; a restored backup couldn't decrypt the token anyway, and the mirror syncs back from the server |
 
 ## 4. Scope
 
@@ -141,7 +142,7 @@ Calendar and planning (D29):
 
 Active workout (hybrid logging):
 
-- The workout screen (D45) opens from a day dated today or earlier: "Rozpocznij trening" / "Wróć do treningu" on the first exercise with a planned set left, or the exercise's name on the day. A future day is planning only.
+- The workout screen (D45) opens from a day dated today or earlier: "Rozpocznij trening" / "Wróć do treningu" on the first exercise with a planned set left, or the exercise's name on the day. A future day is planning only. While it is shown the screen stays on (keep-awake on Android, Screen Wake Lock in the browser where supported); logging a set gives a short haptic tap on Android.
 - Confirming the first set of a workout starts it (`started_at`). A workout can also start empty, from an accepted AI proposal (§5.9.6), or implicitly when the agent logs the first set.
 - The current exercise card shows the progression hint, the last session's done sets ("Poprzednio, 27 października: 22,5 kg × 10, 10, 9"), the exercise's sets of the day and its **setup note** ("ławka na 3", "chwyt neutralny"). The note belongs to the exercise, is editable from the card together with the exercise's weight step and rest, and shows in every workout.
 - Big controls, no keyboard. The **draft** of the next set is the next planned set; without one, the previous done set of the day, else the first working set of the last session, else the bottom of the range at 0 kg. It starts over after every set (RIR clears):
@@ -159,8 +160,8 @@ Active workout (hybrid logging):
 
 - Starts automatically after a set of today is marked done; default duration per exercise (catalog default, user-editable on the exercise card, 0 = no timer); the next set restarts it. The default rest in settings is the starting value of exercises created outside the catalog (the agent's `create_exercise`, LW-09); it doesn't change existing exercises.
 - In-app countdown with +15 s / −15 s / skip, at the bottom of the workout and the day; its end is kept on the device, so a reload keeps a running rest (one that ended meanwhile is dropped). At the end: vibration where the browser supports it and "Przerwa skończona" until dismissed or the next set.
-- Android: local notification + vibration at the end, also with the screen locked (scheduled notification). PC: in-app only.
-- Logging the next set cancels the pending notification.
+- Android: local notification + vibration at the end, also with the screen locked (scheduled notification, exact alarm allowed in Doze; D47). It replaces the in-app vibration; without notification permission (asked at the first rest) the app vibrates itself. PC: in-app only.
+- Logging the next set cancels the pending notification; skipping the rest cancels it, dismissing "Przerwa skończona" clears the shown one, ±15 s moves it.
 
 ### 5.4 History, charts and records
 
@@ -493,7 +494,7 @@ Client-only (Dexie): `outbox` (pending mutations), `prompt_queue`, `sync_state` 
 
 ### 6.10 Platforms and distribution
 
-- **Android:** Capacitor app built from `apps/web`. App id TBD (reverse-DNS, e.g. `io.github.<user>.liftwise`).
+- **Android:** Capacitor app built from `apps/web` (`apps/web/android/`, D47). App id `io.github.d_buczek.liftwise`. Setup, signing and install: `docs/android.md`.
   - Native plugins:
     - local notifications (rest timer)
     - haptics
@@ -502,11 +503,11 @@ Client-only (Dexie): `outbox` (pending mutations), `prompt_queue`, `sync_state` 
     - Keystore-backed secure storage
 - **Install via ADB over Wi-Fi** (Wireless debugging, Android 11+):
   - One-time setup: `adb pair <ip:port> <code>`.
-  - Each install/update: `adb connect <ip:port>` + `adb install -r app-release.apk`, wrapped as `pnpm android:install`.
+  - Each install/update: `adb connect <ip:port>` + `adb install -r app-release.apk`, wrapped as `pnpm android:install [ip:port]` (builds first; `pnpm android:build` builds only).
   - Google's developer-verification FAQ states that ADB installs don't require verification and are not subject to the advanced flow's 24-hour wait.
   - Fallbacks: a free **limited distribution** developer account (up to 20 devices, no ID) or the one-time **advanced flow**.
 - **Signing:**
-  - Own release keystore kept outside the repo and backed up (password manager).
+  - Own release keystore kept outside the repo and backed up (password manager); Gradle reads its path and passwords from `~/.gradle/gradle.properties`.
   - Losing it means uninstall/reinstall, which wipes only the local mirror; server data is safe.
   - CI signing via GitHub secrets later.
 - **PC:** PWA served by the same Worker (static assets), installed from Edge/Chrome.
@@ -515,7 +516,7 @@ Client-only (Dexie): `outbox` (pending mutations), `prompt_queue`, `sync_state` 
   - Vite dev server with `/api` proxy to `wrangler dev`.
   - Capacitor live reload on the phone.
 - **Toolchain to install:**
-  - Android Studio (bundles JDK, Android SDK, platform-tools/adb).
+  - Android Studio (Android SDK, platform-tools/adb) and JDK 21: the Gradle 8.14 of the Capacitor 8 template doesn't run on the JDK 25 bundled with Android Studio.
   - Cloudflare account (wrangler is a devDependency).
   - Later: GitHub CLI.
 
@@ -566,10 +567,10 @@ Each line is meant to be one `/ticket` task.
 |---|---|---|
 | Workers Free limits under agent loops | LW-09 | 10 ms CPU per request; 50 subrequests per invocation, D1 calls count. Measure; switch to Workers Paid ($5/mo) if exceeded |
 | AI SDK current major | LW-09 | Check tool-approval support and `@ai-sdk/vue` API; use built-in approval if it fits §5.9.3 |
-| Exact rest-timer notifications | LW-08 | Android 12+ exact-alarm permissions and Doze may delay scheduled notifications |
+| ~~Exact rest-timer notifications~~ | Resolved in LW-08 | `USE_EXACT_ALARM` (sideloaded APK, D47) + `allowWhileIdle`: on a real phone the notification came on time and vibrated with the screen locked. Some vendors also need a setting for ADB installs (`docs/android.md`) |
 | Speech-recognition plugin | LW-10 | Compatibility with current Capacitor/Android |
 | Default OpenAI/Gemini model ids | LW-09 | From provider docs |
-| Capacitor app id | LW-08 | |
+| ~~Capacitor app id~~ | Resolved in LW-08 | `io.github.d_buczek.liftwise`: a hyphen isn't allowed, so the GitHub login `d-buczek` becomes `d_buczek` (Java package convention) |
 | ~~D1 Time Travel retention~~ | Resolved in LW-04 | Always on; 7 days on Workers Free, 30 days on Workers Paid (§5.12) |
 
 ## 10. References

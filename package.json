@@ -5,7 +5,9 @@
   "scripts": {
     "format": "vp check --fix",
     "ci:check": "vp check && vp run -r typecheck && vp test",
-    "ci:build": "vp run -r build"
+    "ci:build": "vp run -r build",
+    "android:build": "pnpm --filter @liftwise/web android:build",
+    "android:install": "pnpm --filter @liftwise/web android:install"
   },
   "devDependencies": {
     "vite-plus": "catalog:"

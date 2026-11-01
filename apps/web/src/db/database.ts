@@ -15,7 +15,8 @@ export type OutboxEntry = {
 // Pull cursor (§6.4) and the time of the last finished sync.
 export type SyncState = { id: 'pull'; seq: number; syncedAt: string };
 
-// This device's token (§6.8: IndexedDB on the PC; Keystore on Android comes with LW-08).
+// This device's token (§6.8): kept here on the PC; Android keeps it in the Keystore
+// (native/deviceStorage).
 export type DeviceAuth = { id: 'device'; deviceId: string; token: string };
 
 export class LiftWiseDb extends Dexie {

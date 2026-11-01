@@ -1,8 +1,12 @@
 import { defineStore } from 'pinia';
 import { computed, ref, watch } from 'vue';
+import { i18n } from '../i18n';
+import { vibrate } from '../native/haptics';
+import { cancelRestAlarm, restAlarmNotifies, scheduleRestAlarm } from '../native/restAlarm';
 
 // The rest timer (§5.3): started by a done set, kept on the device, so a reload doesn't lose a
-// running rest; one that ended meanwhile is dropped.
+// running rest; one that ended meanwhile is dropped. On Android a scheduled notification ends it
+// too, with the screen locked; the app vibrates itself only where that notification can't.
 export const REST_ADJUST_S = 15;
 
 const STORAGE_KEY = 'liftwise.rest';
@@ -43,8 +47,14 @@ export const useRestStore = defineStore('rest', () => {
     if (timer.value && timer.value.endsAt <= now.value) {
       timer.value = null;
       finished.value = true;
-      if ('vibrate' in navigator) navigator.vibrate(VIBRATION_MS);
+      if (!restAlarmNotifies()) vibrate(VIBRATION_MS);
     }
+  }
+
+  function schedule(value: Timer | null) {
+    const { t } = i18n.global;
+    if (value) scheduleRestAlarm(value.endsAt, t('rest.finished'), t('rest.channel'));
+    else cancelRestAlarm();
   }
 
   watch(
@@ -65,22 +75,28 @@ export const useRestStore = defineStore('rest', () => {
     finished.value = false;
     now.value = Date.now();
     timer.value = seconds > 0 ? { endsAt: now.value + seconds * 1000, totalS: seconds } : null;
+    schedule(timer.value);
   }
 
+  // Shortened past its end, the notification is due at once and fires right away.
   function adjust(seconds: number) {
     if (!timer.value) return;
     const { endsAt, totalS } = timer.value;
     timer.value = { endsAt: endsAt + seconds * 1000, totalS: Math.max(1, totalS + seconds) };
+    schedule(timer.value);
     tick();
   }
 
   function skip() {
     timer.value = null;
     finished.value = false;
+    schedule(null);
   }
 
+  // Also clears the notification of the ended rest.
   function dismiss() {
     finished.value = false;
+    schedule(null);
   }
 
   return { running, finished, remainingS, progress, start, adjust, skip, dismiss };

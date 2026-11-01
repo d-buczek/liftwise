@@ -32,6 +32,7 @@ Node 24 (`.node-version`), pnpm 10 (`packageManager`). Toolchain is Vite+ (`vite
 - `pnpm --filter @liftwise/api db:seed` — after adding exercises to `packages/core/data/exercises.json`: writes a new seed-catalog migration. Migrated exercises keep their first version, so don't edit them in the JSON (a test fails); change them with a mutation.
 - `pnpm --filter @liftwise/api db:migrate:local` / `db:migrate:remote` — apply migrations with wrangler.
 - `pnpm --filter @liftwise/api device:create <name> [--remote]` — create a device and print its token once.
+- `pnpm android:build` / `pnpm android:install [ip:port]` — signed release APK of `apps/web/android/` (Capacitor), installed over ADB on Wi-Fi. Needs Android Studio, JDK 21, the keystore properties and `apps/web/.env.android.local`; setup in `docs/android.md`. Not part of CI. Native plugin calls go only through `apps/web/src/native/` (no-ops or web fallbacks in the browser). The Android icons are vector drawables from `public/icon.svg`.
 
 Tests import from `vite-plus/test`, not `vitest`. API tests run in workerd (`@cloudflare/vitest-plugin`, config in `apps/api/vite.config.ts`) on a local D1 that is reset and migrated before each test; bindings come from `cloudflare:test`. `apps/web` keeps TypeScript 6 because vue-tsc needs the TypeScript JS API, which TypeScript 7 does not ship.
 

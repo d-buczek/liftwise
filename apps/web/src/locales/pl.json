@@ -205,7 +205,8 @@
     "moreLabel": "Wydłuż przerwę o {value} s",
     "skip": "Pomiń",
     "finished": "Przerwa skończona",
-    "none": "bez timera"
+    "none": "bez timera",
+    "channel": "Koniec przerwy"
   },
   "record": {
     "toast": "Rekord: {records}",

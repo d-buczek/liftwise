@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The dumbbell of apps/web/public/icon.svg, scaled into the 66 dp safe zone of an adaptive icon. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="640"
+    android:viewportHeight="640">
+    <group
+        android:translateX="64"
+        android:translateY="64">
+        <path
+            android:fillColor="#D9DBD6"
+            android:pathData="M92,244h328a4,4 0,0 1,4,4v16a4,4 0,0 1,-4,4h-328a4,4 0,0 1,-4,-4v-16a4,4 0,0 1,4,-4z" />
+        <path
+            android:fillColor="#F1F2EE"
+            android:pathData="M158,156h20a8,8 0,0 1,8,8v184a8,8 0,0 1,-8,8h-20a8,8 0,0 1,-8,-8v-184a8,8 0,0 1,8,-8zM334,156h20a8,8 0,0 1,8,8v184a8,8 0,0 1,-8,8h-20a8,8 0,0 1,-8,-8v-184a8,8 0,0 1,8,-8zM126,186h16a8,8 0,0 1,8,8v124a8,8 0,0 1,-8,8h-16a8,8 0,0 1,-8,-8v-124a8,8 0,0 1,8,-8zM370,186h16a8,8 0,0 1,8,8v124a8,8 0,0 1,-8,8h-16a8,8 0,0 1,-8,-8v-124a8,8 0,0 1,8,-8z" />
+        <path
+            android:fillColor="#6FBFB1"
+            android:pathData="M104,232h10a4,4 0,0 1,4,4v40a4,4 0,0 1,-4,4h-10a4,4 0,0 1,-4,-4v-40a4,4 0,0 1,4,-4zM398,232h10a4,4 0,0 1,4,4v40a4,4 0,0 1,-4,4h-10a4,4 0,0 1,-4,-4v-40a4,4 0,0 1,4,-4z" />
+    </group>
+</vector>

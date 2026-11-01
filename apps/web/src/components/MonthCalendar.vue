@@ -114,7 +114,7 @@ function label(date: string): string {
 
 .lw-month__row {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 4px;
 }
 
@@ -129,6 +129,9 @@ function label(date: string): string {
   position: relative;
   display: grid;
   place-items: center;
+  /* Square where the width allows; on a narrow phone at least 48 px high, never wider than its
+     column (the aspect ratio would turn the min-height into a min-width). */
+  min-width: 0;
   min-height: 48px;
   aspect-ratio: 1;
   max-height: 72px;

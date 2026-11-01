@@ -17,6 +17,8 @@ import {
   IonLabel,
   IonList,
   IonModal,
+  onIonViewDidEnter,
+  onIonViewWillLeave,
   toastController,
 } from '@ionic/vue';
 import { checkmark, chevronBack, chevronForward, createOutline, listOutline } from 'ionicons/icons';
@@ -31,6 +33,8 @@ import SetLogger from '../components/SetLogger.vue';
 import { useFormat } from '../composables/format';
 import { useLiveQuery, useLiveQueryState } from '../composables/liveQuery';
 import { showUndo } from '../composables/undo';
+import { tap } from '../native/haptics';
+import { allowSleep, keepAwake } from '../native/keepAwake';
 import { useRestStore } from '../stores/rest';
 import { deleteSets, logSet, restoreSets, saveExercise, saveSets } from '../workout/actions';
 import { today } from '../workout/calendar';
@@ -59,6 +63,10 @@ const props = defineProps<{ date: string; exerciseId: string | null; dayHref: st
 const { t } = useI18n();
 const format = useFormat();
 const rest = useRestStore();
+
+// The phone lies on the bench between sets: the screen stays on while this page is shown.
+onIonViewDidEnter(keepAwake);
+onIonViewWillLeave(allowSleep);
 
 // The shown exercise; until chosen, the first with a planned set left. `extra` is one picked
 // from outside the day's plan, so its history loads too.
@@ -174,6 +182,7 @@ async function done() {
     logging.value = false;
     throw error;
   }
+  tap();
   if (props.date === today())
     rest.start(exercise.value?.rest_seconds ?? training.value.rest_seconds);
   const logged = exercise.value;

@@ -1,7 +1,8 @@
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
 import { api } from '../api/client';
-import { db, type DeviceAuth } from '../db/database';
+import type { DeviceAuth } from '../db/database';
+import { forgetDevice, loadDevice, saveDevice } from '../native/deviceStorage';
 
 // This device's pairing (§6.8). Without a token the app shows only the pairing screen.
 export const useAuthStore = defineStore('auth', () => {
@@ -10,13 +11,13 @@ export const useAuthStore = defineStore('auth', () => {
   const token = computed(() => device.value?.token ?? null);
 
   async function load() {
-    device.value = (await db.device.get('device')) ?? null;
+    device.value = await loadDevice();
     loaded.value = true;
   }
 
   async function save(deviceId: string, newToken: string) {
     const auth: DeviceAuth = { id: 'device', deviceId, token: newToken };
-    await db.device.put(auth);
+    await saveDevice(auth);
     device.value = auth;
   }
 
@@ -36,7 +37,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   // The local mirror and outbox stay: pairing again pushes what is still queued.
   async function forget() {
-    await db.device.delete('device');
+    await forgetDevice();
     device.value = null;
   }
 

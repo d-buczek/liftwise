@@ -3,6 +3,11 @@ import type { SyncMutation, SyncPullResponse, SyncPushResponse } from '@liftwise
 // Empty for the PWA, which the Worker serves from the API's origin (§6.1).
 const BASE_URL = import.meta.env.VITE_API_URL ?? '';
 
+// Where the PWA lives: the Android app's own origin is https://localhost (pairing QR code).
+export function appOrigin(): string {
+  return BASE_URL ? new URL(BASE_URL).origin : window.location.origin;
+}
+
 // `fetch` itself failed: no network, or the server can't be reached.
 export const UNREACHABLE = 'unreachable';
 

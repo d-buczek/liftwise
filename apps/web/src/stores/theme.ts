@@ -1,3 +1,4 @@
+import { Capacitor, SystemBars, SystemBarsStyle } from '@capacitor/core';
 import { defineStore } from 'pinia';
 import { computed, ref, watch, watchEffect } from 'vue';
 
@@ -6,7 +7,7 @@ export type ThemePreference = 'system' | 'light' | 'dark';
 export const THEME_PREFERENCES: ThemePreference[] = ['system', 'light', 'dark'];
 
 const STORAGE_KEY = 'liftwise.theme';
-// The window title bar and the Android status bar take the page background.
+// The window title bar and the browser's Android status bar take the page background.
 const THEME_COLORS = { light: '#F1F2EE', dark: '#2A2F35' };
 
 function storedPreference(): ThemePreference {
@@ -30,6 +31,11 @@ export const useThemeStore = defineStore('theme', () => {
     document
       .querySelector('meta[name="theme-color"]')
       ?.setAttribute('content', dark.value ? THEME_COLORS.dark : THEME_COLORS.light);
+    // The Android app draws behind its system bars; their icons must stay readable.
+    if (Capacitor.isNativePlatform())
+      void SystemBars.setStyle({
+        style: dark.value ? SystemBarsStyle.Dark : SystemBarsStyle.Light,
+      });
   });
 
   return { preference, dark };
