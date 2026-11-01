@@ -7,6 +7,7 @@ import {
   SETTING_IDS,
   type ModelSettings,
   type Provider,
+  type ProvidersResponse,
 } from '@liftwise/core';
 import type { LanguageModel } from 'ai';
 import { and, eq, isNull } from 'drizzle-orm';
@@ -88,11 +89,6 @@ export function resolveModel(
     model: PROVIDERS[choice.provider].createModel(apiKey, choice.model),
   };
 }
-
-export type ProvidersResponse = {
-  providers: { id: Provider; configured: boolean; defaults: Record<Role, string> }[];
-  models: ModelSettings;
-};
 
 // Configured ✓/✗ per provider (never a key) and the models in use (§5.10).
 export const providerRoutes = new Hono<AppEnv>().get('/', async (c) => {

@@ -5,6 +5,7 @@ import { cors } from 'hono/cors';
 import { HTTPException } from 'hono/http-exception';
 import type { AppEnv } from './app-env';
 import { requireDevice } from './auth/middleware';
+import { proposalRoutes } from './agent/proposals';
 import { providerRoutes } from './agent/providers';
 import { pairingRoutes } from './auth/pairing';
 import { changeRoutes } from './changes';
@@ -34,6 +35,7 @@ app.route('/api/devices', deviceRoutes);
 app.route('/api/sync', syncRoutes);
 app.route('/api/changes', changeRoutes);
 app.route('/api/providers', providerRoutes);
+app.route('/api/agent/proposals', proposalRoutes);
 
 app.notFound((c) => apiError(c, 404, 'not_found'));
 app.onError((error, c) => {

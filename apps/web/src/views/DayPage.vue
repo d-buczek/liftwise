@@ -3,6 +3,7 @@ import {
   dayLabelId,
   dayWorkout,
   DEFAULT_TRAINING_SETTINGS,
+  maxDumbbellKg,
   nextPosition,
   weightStepKg,
   type Exercise,
@@ -60,7 +61,6 @@ import {
   dayData,
   equipment,
   historySets,
-  maxDumbbellKg,
   trainingSettings,
   workoutLabels,
 } from '../workout/queries';

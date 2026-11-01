@@ -105,19 +105,25 @@ export class InvalidWrite extends Error {
   }
 }
 
-// A server-side write (agent tools, proposals, chat threads): rows are checked with the core
-// schemas, then planned and logged like a push, in one D1 batch. Returns the changes made.
-export async function applyWrites(db: Db, meta: ChangeMeta, writes: Write[]): Promise<Change[]> {
+// The changes server-side writes (agent tools, proposals, chat threads) would make: rows are
+// checked with the core schemas, then planned like a push. Writes nothing.
+export async function prepareWrites(db: Db, writes: Write[], now: string): Promise<Change[]> {
   const checked = writes.map((write): Write => {
     if (write.op === 'delete') return write;
     const parsed = syncRowSchemas[write.entity].safeParse(write.row);
     if (!parsed.success) throw new InvalidWrite(write);
     return { ...write, row: parsed.data as Write['row'] };
   });
-  const now = new Date().toISOString();
   const rows = await loadRows(db, checked.flatMap(touchedRows));
   const planned = planChanges(checked, rows, now);
   if ('invalid' in planned) throw new InvalidWrite(checked[planned.invalid] as Write);
-  await runBatch(db, changeStatements(db, meta, planned.changes, now));
   return planned.changes;
+}
+
+// Server-side writes, logged like a push in one D1 batch. Returns the changes made.
+export async function applyWrites(db: Db, meta: ChangeMeta, writes: Write[]): Promise<Change[]> {
+  const now = new Date().toISOString();
+  const changes = await prepareWrites(db, writes, now);
+  await runBatch(db, changeStatements(db, meta, changes, now));
+  return changes;
 }

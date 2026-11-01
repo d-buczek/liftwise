@@ -1,7 +1,7 @@
-import { newId, SETTING_IDS } from '@liftwise/core';
+import { newId, SETTING_IDS, type ProvidersResponse } from '@liftwise/core';
 import { beforeEach, describe, expect, it } from 'vite-plus/test';
 import { call, createDevice, push, upsert } from '../../test/helpers';
-import { PROVIDERS, ProviderUnavailable, resolveModel, type ProvidersResponse } from './providers';
+import { PROVIDERS, ProviderUnavailable, resolveModel } from './providers';
 
 const NO_KEYS = {
   ANTHROPIC_API_KEY: undefined,

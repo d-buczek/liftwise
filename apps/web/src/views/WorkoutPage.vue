@@ -2,6 +2,7 @@
 import {
   DEFAULT_TRAINING_SETTINGS,
   exerciseSessions,
+  maxDumbbellKg,
   weightStepKg,
   type Exercise,
   type WorkoutSet,
@@ -47,14 +48,7 @@ import {
   startExercise,
   type Draft,
 } from '../workout/logging';
-import {
-  catalog,
-  dayData,
-  equipment,
-  historySets,
-  maxDumbbellKg,
-  trainingSettings,
-} from '../workout/queries';
+import { catalog, dayData, equipment, historySets, trainingSettings } from '../workout/queries';
 
 // The active workout (§5.2, §5.3): one exercise at a time with the draft of its next set,
 // logged with "Zrobione" without a keyboard; the rest timer runs at the bottom.

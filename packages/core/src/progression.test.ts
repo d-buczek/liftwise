@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vite-plus/test';
 import { newId } from './ids';
 import {
   applyProgressionHint,
+  maxDumbbellKg,
   progressionHint,
   type ProgressionHint,
   type ProgressionHintInput,
@@ -245,5 +246,21 @@ describe('applyProgressionHint', () => {
     const sets = [planned({ reps: null, duration_s: 40 })];
     const hold = { ...up, weight: 20, reps: null, duration_s: [45], reason: 'time_up' as const };
     expect(applyProgressionHint(sets, hold)).toMatchObject([{ reps: null, duration_s: 45 }]);
+  });
+});
+
+describe('maxDumbbellKg', () => {
+  const dumbbells = (max_kg: number | null) => ({
+    id: newId(),
+    type: 'dumbbells' as const,
+    props: { max_kg },
+  });
+
+  it('is the heaviest dumbbell, null when a set has no limit or there are none', () => {
+    expect(maxDumbbellKg([dumbbells(24), dumbbells(32.5)])).toBe(32.5);
+    expect(maxDumbbellKg([dumbbells(24), dumbbells(null)])).toBeNull();
+    expect(
+      maxDumbbellKg([{ id: newId(), type: 'bench', props: { incline: true, decline: false } }]),
+    ).toBeNull();
   });
 });

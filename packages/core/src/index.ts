@@ -1,5 +1,6 @@
 export const APP_NAME = 'LiftWise';
 
+export * from './agent';
 export * from './balance';
 export * from './catalog';
 export * from './conventions';

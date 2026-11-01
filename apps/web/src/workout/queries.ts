@@ -89,10 +89,3 @@ export async function balanceSettings(): Promise<BalanceSettings> {
   const row = await db.settings.get(SETTING_IDS.balance);
   return alive(row) && row.key === 'balance' ? row.value : DEFAULT_BALANCE_SETTINGS;
 }
-
-// The heaviest dumbbell of the profile, for the progression hint (D37); null without a limit.
-export function maxDumbbellKg(items: EquipmentItem[]): number | null {
-  const limits = items.flatMap((item) => (item.type === 'dumbbells' ? [item.props.max_kg] : []));
-  if (limits.length === 0 || limits.includes(null)) return null;
-  return Math.max(...(limits as number[]));
-}

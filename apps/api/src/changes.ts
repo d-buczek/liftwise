@@ -30,8 +30,8 @@ const undoOf = (db: Db, groupId: string) =>
     .limit(1);
 
 export type UndoResult =
-  // The undo group, or null when nothing changed (nothing is written).
-  | { groupId: string | null }
+  // The undo group and its changes; null when nothing changed (nothing is written).
+  | { groupId: string | null; changes: Change[] }
   | { error: 'not_found' }
   // Carries the undo group, so a client whose undo response got lost can still redo.
   | { error: 'already_undone'; groupId: string }
@@ -93,7 +93,7 @@ export async function undoGroup(
       : [{ groupId: undoGroupId, entity, before: row, after }];
   });
   // Nothing to revert (e.g. the group created and deleted a row), so no group to redo.
-  if (changes.length === 0) return { groupId: null };
+  if (changes.length === 0) return { groupId: null, changes };
   try {
     await runBatch(db, changeStatements(db, { ...meta, undoOf: groupId }, changes, now));
   } catch (error) {
@@ -102,7 +102,7 @@ export async function undoGroup(
     if (!winner) throw error;
     return { error: 'already_undone', groupId: winner.groupId };
   }
-  return { groupId: undoGroupId };
+  return { groupId: undoGroupId, changes };
 }
 
 export const changeRoutes = new Hono<AppEnv>().post('/:groupId/undo', async (c) => {
@@ -112,6 +112,6 @@ export const changeRoutes = new Hono<AppEnv>().post('/:groupId/undo', async (c) 
     confirm: body.confirm,
     actor: 'user',
   });
-  if (!('error' in result)) return c.json(result);
+  if (!('error' in result)) return c.json({ groupId: result.groupId });
   return result.error === 'not_found' ? apiError(c, 404, 'not_found') : c.json(result, 409);
 });

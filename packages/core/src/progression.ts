@@ -2,6 +2,7 @@ import { weightStepKg } from './conventions';
 import { daysBetween } from './dates';
 import { exerciseSessions, type DatedSet, type ExerciseSession } from './history';
 import type { Range } from './schemas/common';
+import type { EquipmentItem } from './schemas/equipment';
 import type { Exercise } from './schemas/exercise';
 import { setValue, type WorkoutSet } from './schemas/set';
 import type { TrainingSettings } from './schemas/settings';
@@ -127,4 +128,11 @@ export function applyProgressionHint(sets: WorkoutSet[], hint: ProgressionHint):
         ? []
         : [next];
     });
+}
+
+// The heaviest dumbbell of the profile, for the progression hint (D37); null without a limit.
+export function maxDumbbellKg(items: EquipmentItem[]): number | null {
+  const limits = items.flatMap((item) => (item.type === 'dumbbells' ? [item.props.max_kg] : []));
+  if (limits.length === 0 || limits.includes(null)) return null;
+  return Math.max(...(limits as number[]));
 }

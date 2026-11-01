@@ -76,6 +76,7 @@ On top of that, an AI agent with tools over the app's data logs and edits from a
 | D47 | Android app | Capacitor 8; app id `io.github.d_buczek.liftwise`. The APK bundles the web build (no service worker) and gets its **API origin at build time** (`VITE_API_URL` in the gitignored `apps/web/.env.android.local`; plain HTTP allowed only for a LAN dev server). The rest end is a **scheduled notification** on a max-importance channel with **`USE_EXACT_ALARM`** and `allowWhileIdle`; the in-app vibration is only its fallback. The device token lives in **Keystore-backed secure storage**; Android backup is off. Native calls live in `apps/web/src/native/`, no-ops or web fallbacks in the browser | The page's own origin is `https://localhost`, so the API needs an absolute URL; `USE_EXACT_ALARM` is granted at install and only Play restricts it, while the APK is sideloaded; a single vibration source avoids a double buzz; a restored backup couldn't decrypt the token anyway, and the mirror syncs back from the server |
 | D48 | Workout labels | A workout has an optional **label** (`workout_labels`: a name of at most 6 characters, a color key from a fixed palette of 6, archived); a day's label is that of its oldest labelled workout, and picking one on the day writes every workout of the day. A copy gives the workout it writes to the source's label unless the target day has its own or the label is archived; the copy dialog offers **"Ostatni A / B…"**. Labels are set by hand, not derived from muscle groups. On the calendar a labelled day takes the label's color **and shows its name**; cobalt, the accent of unlabelled days, is the palette's last color. Clients built before labels stop syncing on the first label (unknown table) and drop labels from the workouts they write, so every device is updated before labels are used | Training sets such as A / B usually share muscle groups (full body), so groups wouldn't tell them apart and couldn't pick "the last A"; inheriting on copy means a label is set once; color keys let each theme pick its own values; the name keeps the label readable without color (color blindness, two similar colors) and fits a phone's calendar cell; a stopped sync keeps the pull cursor, so an updated client loses nothing |
 | D49 | Charts, balance and export UI | **Self-drawn SVG charts** (no chart library): one series per chart, the chosen point in plate numerals, a table twin for screen readers. The **balance guard** is a third segment of History, a muscle group opens its weekly sets; the **weekly summary** card under the calendar follows the shown month (this week, else the month's last) with its own ‹ ›. Export on Android goes through the **share sheet** (filesystem + share plugins), in the browser it downloads | Simple series need no 100 kB dependency and keep the type and colors of D42; the WebView can't download a blob, and the share sheet reaches Drive, Files and mail |
+| D50 | Risky tool confirmation | **Own proposals, not the AI SDK tool approval**: a risky call stores its input in `pending_proposals` and returns the diff; confirming runs the tool again on the current data as one change group, **without the model**, rejecting writes nothing; both record the status (and the written changes) in the tool result of the stored message | The built-in `needsApproval` pauses the model turn and needs another model call to continue; a stored proposal costs no tokens, survives a reload and the other device, and keeps the same semantics for MCP (§6.11) |
 
 ## 4. Scope
 
@@ -435,7 +436,7 @@ Client-only (Dexie): `outbox` (pending mutations), `prompt_queue`, `sync_state` 
 | `GET /api/devices`, `DELETE /api/devices/:id` | List / revoke devices |
 | `POST /api/sync/push`, `GET /api/sync/pull` | Sync (§6.4) |
 | `POST /api/agent/chat` | Streaming agent turn `{ threadId, message, role?, localTime }` |
-| `POST /api/agent/proposals/:id/confirm` / `reject` | Risky tool confirmation |
+| `POST /api/agent/proposals/:id/confirm` / `reject` | Risky tool confirmation (D50): `{ status, changes, groupId? }`; `409 not_pending` once resolved, `409 stale` when the call no longer fits the data (it stays pending) |
 | `POST /api/changes/:groupId/undo` | Undo a change group (`{ confirm? }` overrides conflicts) |
 | `GET /api/providers` | Provider status (configured ✓/✗) and model settings |
 
@@ -449,7 +450,10 @@ Client-only (Dexie): `outbox` (pending mutations), `prompt_queue`, `sync_state` 
   - Details are fetched via tools.
   - For Anthropic, the stable prefix (system prompt + catalog) is marked for prompt caching.
 - **Tool registry** (`apps/api/src/tools`): each tool is `{ name, description, input: zod schema, risk: read|write|risky, handler }`. The same registry backs the in-app agent and the MCP server (phase 2).
-- Risky tools don't execute. They store a `pending_proposal` and return a diff for the confirmation card. Confirmation executes the stored proposal as one change group.
+  - Handlers read D1 and compute with core; ids and dates are plain strings in the input schemas (providers differ in the string formats they accept) and are checked by the handlers.
+  - Writes go through the server mutation path (`applyWrites`: core schemas, references, `change_log` with `actor: agent` and the thread); each call is one change group. A write tool returns the change card `{ groupId, changes: [{ entity, id, op: create|update|delete, before, after }] }`.
+  - A call that can't run (unknown exercise, missing reps, a future day, a planned set where a done one is needed) returns `{ error: <code>, … }` to the model instead of failing the turn.
+- Risky tools don't execute (D50). They store a `pending_proposal` and return `{ proposalId, status: pending, changes }` for the confirmation card. Confirmation runs the tool again on the current data as one change group.
 - v1 tools:
   - **read:** `find_exercise`, `get_exercise_history`, `get_workouts` (date range, planned and done), `get_active_workout`, `get_records`, `get_balance`, `get_progression_hints`, `get_swap_options`, `get_weekly_summary`, `get_profile`, `get_equipment`
   - **write:** `log_sets` (done sets; completes matching planned sets first), `update_set` (single done set), `copy_workout` (optional `light`), `edit_planned_sets`, `start_workout`, `finish_workout`, `undo_change`
@@ -583,7 +587,7 @@ Each line is meant to be one `/ticket` task.
 | Item | Resolve in | Note |
 |---|---|---|
 | Workers Free limits under agent loops | LW-09 | 10 ms CPU per request; 50 subrequests per invocation, D1 calls count. Measure; switch to Workers Paid ($5/mo) if exceeded |
-| AI SDK current major | LW-09 | Check tool-approval support and `@ai-sdk/vue` API; use built-in approval if it fits §5.9.3 |
+| ~~AI SDK current major~~ | Resolved in LW-09 | `ai` 7 / `@ai-sdk/vue` 4; built-in tool approval doesn't fit §5.9.3 (D50) |
 | ~~Exact rest-timer notifications~~ | Resolved in LW-08 | `USE_EXACT_ALARM` (sideloaded APK, D47) + `allowWhileIdle`: on a real phone the notification came on time and vibrated with the screen locked. Some vendors also need a setting for ADB installs (`docs/android.md`) |
 | Speech-recognition plugin | LW-10 | Compatibility with current Capacitor/Android |
 | Default OpenAI/Gemini model ids | Picked in LW-09, verify with keys | §6.7: the cheapest current tier for `fast` (OpenAI's model list, Google's "use for new projects" note); not yet run without OpenAI/Gemini keys |
