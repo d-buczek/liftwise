@@ -23,16 +23,23 @@ describe('chatRequest', () => {
       role: 'user',
       parts: [{ type: 'text', text: 'wyciskanie 24 kg 4x10', state: 'done' }, { type: 'file' }],
     };
-    const now = new Date('2026-11-01T17:00:00Z');
-    expect(chatRequest(threadId, [earlier, answer, last], now)).toEqual({
+    const localTime = '2026-11-01T18:00:00+01:00';
+    expect(chatRequest(threadId, [earlier, answer, last], localTime)).toEqual({
       threadId,
       message: {
         id: last.id,
         role: 'user',
         parts: [{ type: 'text', text: 'wyciskanie 24 kg 4x10' }],
       },
-      localTime: localTimestamp(now),
+      localTime,
     });
+  });
+
+  it('is sent with the current local time by default', () => {
+    const message = { id: newId(), role: 'user', parts: [{ type: 'text', text: 'hej' }] };
+    const { localTime } = chatRequest(newId(), [message]);
+    expect(timestampSchema.safeParse(localTime).success).toBe(true);
+    expect(Math.abs(new Date(localTime).getTime() - Date.now())).toBeLessThan(5_000);
   });
 });
 

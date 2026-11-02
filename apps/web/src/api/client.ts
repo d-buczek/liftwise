@@ -22,6 +22,31 @@ export function apiUrl(path: string): string {
 // `fetch` itself failed: no network, or the server can't be reached.
 export const UNREACHABLE = 'unreachable';
 
+// How long a request waits for the server's response to start.
+const RESPONSE_TIMEOUT_MS = 20_000;
+
+// `fetch` that fails like a lost network when the server doesn't answer: a weak signal or a dead
+// address can hold a request open for minutes. Only the wait for the response is limited, since an
+// agent's answer streams for as long as it takes.
+export async function fetchWithTimeout(
+  input: RequestInfo | URL,
+  init: RequestInit = {},
+): Promise<Response> {
+  const timeout = new AbortController();
+  const timer = setTimeout(() => timeout.abort(), RESPONSE_TIMEOUT_MS);
+  try {
+    return await fetch(input, {
+      ...init,
+      signal: init.signal ? AbortSignal.any([init.signal, timeout.signal]) : timeout.signal,
+    });
+  } catch (error) {
+    if (timeout.signal.aborted) throw new TypeError('the server did not respond');
+    throw error;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 // The server's `{ error: '<code>' }` with the HTTP status; status 0 for UNREACHABLE.
 export class ApiError extends Error {
   constructor(
@@ -43,7 +68,7 @@ async function request<T>(
 
   let response: Response;
   try {
-    response = await fetch(apiUrl(path), {
+    response = await fetchWithTimeout(apiUrl(path), {
       method,
       headers,
       body: body === undefined ? undefined : JSON.stringify(body),

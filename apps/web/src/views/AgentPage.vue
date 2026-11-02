@@ -1,27 +1,41 @@
 <script setup lang="ts">
 import { newId } from '@liftwise/core';
-import { IonButton, IonFooter, IonIcon, IonTextarea, onIonViewDidEnter } from '@ionic/vue';
-import { arrowUp, stop, timeOutline } from 'ionicons/icons';
+import {
+  IonButton,
+  IonFooter,
+  IonIcon,
+  IonTextarea,
+  onIonViewDidEnter,
+  onIonViewWillLeave,
+} from '@ionic/vue';
+import { arrowUp, mic, micOutline, stop, timeOutline } from 'ionicons/icons';
 import { computed, nextTick, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { chatFailure, useAgentChat } from '../agent/chat';
+import { UNREACHABLE } from '../api/client';
 import { chatView } from '../agent/messages';
 import { threadMessages, threadsOn } from '../agent/queries';
 import AppPage from '../components/AppPage.vue';
 import ChatLog from '../components/ChatLog.vue';
+import PromptQueue from '../components/PromptQueue.vue';
+import { useChatFailureText } from '../composables/chatFailure';
 import { useLiveQuery } from '../composables/liveQuery';
 import { useToday } from '../composables/today';
-import { useErrorMessage } from '../i18n';
+import { useVoiceInput } from '../composables/voice';
+import { speechNeedsNetwork, speechSupported } from '../native/speech';
 import { useAuthStore } from '../stores/auth';
+import { usePromptQueueStore } from '../stores/promptQueue';
 import { useSyncStore } from '../stores/sync';
 
-// The agent (§5.9): today's conversation. Typed text goes to the server, which answers with
-// text and cards; the data and the stored messages come back with the sync after the turn.
+// The agent (§5.9): today's conversation. Typed or spoken text goes to the server, which answers
+// with text and cards; the data and the stored messages come back with the sync after the turn.
+// Without the network a prompt waits in the queue with the time it was said (§5.9.8).
 
-const { t, te } = useI18n();
-const errorMessage = useErrorMessage();
+const { t } = useI18n();
+const failureText = useChatFailureText();
 const auth = useAuthStore();
 const sync = useSyncStore();
+const queue = usePromptQueueStore();
 const today = useToday();
 
 // One thread per day (§5.9.5): the mirror's, or a new id the server creates the thread with on
@@ -45,13 +59,31 @@ watch(busy, (running, was) => {
 });
 
 const draft = ref('');
-const canSend = computed(() => sync.online && !busy.value && draft.value.trim().length > 0);
+const canSend = computed(() => !busy.value && draft.value.trim().length > 0);
 
+const voice = useVoiceInput(draft);
+const showMic = speechSupported();
+const micDisabled = computed(() => busy.value || (speechNeedsNetwork() && !sync.online));
+onIonViewWillLeave(() => voice.stop());
+
+// When the latest live request went out: the time a prompt that didn't get through keeps.
+let sentAt = new Date();
+
+const noServer = computed(() => sync.online && sync.error === UNREACHABLE);
+
+// Without the network or the server, or behind prompts still waiting (they run in order), a prompt
+// goes to the queue.
 async function send(text = draft.value) {
   const message = text.trim();
-  if (!message || busy.value || !sync.online) return;
+  if (!message || busy.value) return;
+  voice.stop();
   used.value = { date: today.value, id: threadId.value };
   draft.value = '';
+  if (!sync.online || noServer.value || queue.prompts.length > 0) {
+    await queue.enqueue(threadId.value, message);
+    return;
+  }
+  sentAt = new Date();
   await chat.sendMessage({ text: message });
 }
 
@@ -63,22 +95,30 @@ function onKeydown(event: KeyboardEvent) {
 }
 
 const failure = computed(() => (chat.error.value ? chatFailure(chat.error.value) : null));
-const failureText = computed(() => {
-  const value = failure.value;
-  if (!value) return '';
-  if (value.code === 'provider_unavailable') {
-    const provider = value.provider ? t(`models.providers.${value.provider}`) : '';
-    return t('agent.errors.provider_unavailable', { provider });
-  }
-  return te(`agent.errors.${value.code}`)
-    ? t(`agent.errors.${value.code}`)
-    : errorMessage(value.code);
-});
 
 // The user message is on the server (or was never stored): it goes again with the same id.
 function retry() {
+  sentAt = new Date();
   void chat.regenerate();
 }
+
+// The device looked online but the request didn't get through (a weak signal at the gym): the
+// prompt goes to the queue under its id, so a copy the server did get isn't sent twice; an answer
+// that broke off comes with the sync.
+watch(failure, (value) => {
+  if (value?.code !== UNREACHABLE) return;
+  const all = chat.messages.value;
+  const index = all.findLastIndex((message) => message.role === 'user');
+  const message = all[index];
+  if (!message) return;
+  const text = message.parts
+    .flatMap((part) => (part.type === 'text' ? [part.text] : []))
+    .join('\n')
+    .trim();
+  chat.messages.value = all.slice(0, index);
+  chat.clearError();
+  if (text) void queue.enqueue(threadId.value, text, { id: message.id, at: sentAt });
+});
 
 const EXAMPLES = ['log', 'edit', 'ask'] as const;
 
@@ -86,7 +126,7 @@ const end = ref<HTMLElement | null>(null);
 const scrollToEnd = () => end.value?.scrollIntoView({ block: 'end' });
 onIonViewDidEnter(scrollToEnd);
 watch(
-  () => [messages.value.length, messages.value.at(-1)],
+  () => [messages.value.length, messages.value.at(-1), queue.prompts.length],
   () => void nextTick(scrollToEnd),
 );
 </script>
@@ -99,7 +139,10 @@ watch(
       </ion-button>
     </template>
 
-    <div v-if="messages.length === 0 && !busy" class="lw-agent__empty">
+    <div
+      v-if="messages.length === 0 && !busy && queue.prompts.length === 0"
+      class="lw-agent__empty"
+    >
       <p class="lw-agent__lead">{{ t('agent.empty') }}</p>
       <div class="lw-agent__examples">
         <button
@@ -119,7 +162,7 @@ watch(
       {{ t('agent.thinking') }}
     </p>
     <div v-if="failure" class="lw-agent__error" role="alert">
-      <p>{{ failureText }}</p>
+      <p>{{ failureText(failure) }}</p>
       <ion-button
         v-if="failure.code === 'provider_unavailable'"
         fill="outline"
@@ -131,25 +174,47 @@ watch(
         {{ t('common.retry') }}
       </ion-button>
     </div>
+    <prompt-queue />
     <div ref="end" class="lw-agent__end" />
 
     <template #footer>
       <ion-footer class="lw-composer">
         <div class="lw-column">
-          <p v-if="!sync.online" class="lw-composer__offline">{{ t('agent.offline') }}</p>
+          <p v-if="voice.error.value" class="lw-composer__note" role="alert">
+            {{ t(`agent.voice.errors.${voice.error.value}`) }}
+          </p>
+          <p v-else-if="!sync.online" class="lw-composer__note">{{ t('agent.offline') }}</p>
+          <p v-else-if="noServer" class="lw-composer__note">{{ t('agent.noServer') }}</p>
           <div class="lw-composer__row">
             <ion-textarea
               v-model="draft"
               class="lw-composer__input"
               :aria-label="t('agent.input')"
-              :placeholder="t('agent.placeholder')"
+              :placeholder="
+                voice.listening.value ? t('agent.voice.listening') : t('agent.placeholder')
+              "
               :auto-grow="true"
               :rows="1"
               :maxlength="4000"
-              :disabled="!sync.online"
               enterkeyhint="send"
               @keydown="onKeydown"
             />
+            <ion-button
+              v-if="showMic"
+              :fill="voice.listening.value ? 'solid' : 'outline'"
+              class="lw-composer__button"
+              :class="{ 'is-listening': voice.listening.value }"
+              :disabled="micDisabled && !voice.listening.value"
+              :aria-label="voice.listening.value ? t('agent.voice.stop') : t('agent.voice.start')"
+              :aria-pressed="voice.listening.value"
+              @click="voice.toggle()"
+            >
+              <ion-icon
+                slot="icon-only"
+                :icon="voice.listening.value ? mic : micOutline"
+                aria-hidden="true"
+              />
+            </ion-button>
             <ion-button
               v-if="busy"
               fill="outline"
@@ -233,7 +298,7 @@ watch(
   border-top: 1px solid var(--lw-border);
 }
 
-.lw-composer__offline {
+.lw-composer__note {
   margin: 0 0 8px;
   font-size: 14px;
   color: var(--lw-muted);
@@ -261,5 +326,21 @@ watch(
   width: 48px;
   height: 48px;
   margin: 0;
+}
+
+.lw-composer__button.is-listening {
+  animation: lw-listening 1.4s ease-in-out infinite;
+}
+
+@keyframes lw-listening {
+  50% {
+    opacity: 0.6;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lw-composer__button.is-listening {
+    animation: none;
+  }
 }
 </style>

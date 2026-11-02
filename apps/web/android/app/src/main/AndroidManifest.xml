@@ -41,4 +41,13 @@
          allows it only for alarm apps, but this APK is sideloaded. Android 12 uses
          SCHEDULE_EXACT_ALARM from the local-notifications plugin, granted by default there. -->
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <!-- RECORD_AUDIO for voice input comes from the speech-recognition plugin (SPEC §5.9.7). -->
+
+    <!-- Android 11+ package visibility: without it SpeechRecognizer finds no recognition
+         service and voice input reports "unavailable". -->
+    <queries>
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
+        </intent>
+    </queries>
 </manifest>

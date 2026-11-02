@@ -27,7 +27,28 @@
     "stop": "Zatrzymaj",
     "thinking": "Agent myśli…",
     "working": "Sprawdzam dane…",
-    "offline": "Agent potrzebuje internetu. Serie zapiszesz w treningu także bez sieci.",
+    "offline": "Brak sieci. Polecenia trafią do kolejki „Do przetworzenia” i agent zajmie się nimi po powrocie sieci, z czasem wysłania.",
+    "noServer": "Nie mogę połączyć się z serwerem. Polecenia czekają w kolejce „Do przetworzenia”, z czasem wysłania.",
+    "queue": {
+      "title": "Do przetworzenia",
+      "waiting": "czeka na sieć",
+      "queued": "czeka na swoją kolej",
+      "noServer": "nie mogę połączyć się z serwerem, ponowię sam",
+      "sending": "wysyłam…",
+      "failed": "nie udało się"
+    },
+    "voice": {
+      "start": "Mów",
+      "stop": "Zakończ mówienie",
+      "listening": "Słucham…",
+      "errors": {
+        "denied": "Brak dostępu do mikrofonu. Zezwól na nagrywanie dźwięku w ustawieniach.",
+        "unavailable": "Rozpoznawanie mowy po polsku jest niedostępne. Na telefonie pobierz polski pakiet mowy offline.",
+        "network": "Rozpoznawanie mowy potrzebuje sieci. Na telefonie pobierz polski pakiet mowy offline, żeby działało bez niej.",
+        "no_speech": "Nic nie usłyszałem. Spróbuj jeszcze raz.",
+        "failed": "Rozpoznawanie mowy nie zadziałało. Spróbuj jeszcze raz albo wpisz tekst."
+      }
+    },
     "errors": {
       "provider_unavailable": "{provider} nie ma klucza API na serwerze. Wybierz innego dostawcę w ustawieniach modeli.",
       "model_error": "Model nie odpowiedział poprawnie. Spróbuj ponownie albo wybierz inny model.",

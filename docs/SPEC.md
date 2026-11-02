@@ -78,6 +78,7 @@ On top of that, an AI agent with tools over the app's data logs and edits from a
 | D49 | Charts, balance and export UI | **Self-drawn SVG charts** (no chart library): one series per chart, the chosen point in plate numerals, a table twin for screen readers. The **balance guard** is a third segment of History, a muscle group opens its weekly sets; the **weekly summary** card under the calendar follows the shown month (this week, else the month's last) with its own ‹ ›. Export on Android goes through the **share sheet** (filesystem + share plugins), in the browser it downloads | Simple series need no 100 kB dependency and keep the type and colors of D42; the WebView can't download a blob, and the share sheet reaches Drive, Files and mail |
 | D50 | Risky tool confirmation | **Own proposals, not the AI SDK tool approval**: a risky call stores its input in `pending_proposals` and returns the diff; confirming runs the tool again on the current data as one change group, **without the model**, rejecting writes nothing; both record the status (and the written changes) in the tool result of the stored message | The built-in `needsApproval` pauses the model turn and needs another model call to continue; a stored proposal costs no tokens, survives a reload and the other device, and keeps the same semantics for MCP (§6.11) |
 | D51 | Deployment | One Worker **`liftwise`** serves the API and the PWA on `liftwise.<account-subdomain>.workers.dev`; D1 `liftwise` in **WEUR**; Workers Logs on; `pnpm deploy:api` from the PC applies the D1 migrations, then deploys (`docs/deploy.md`). Stays on **Workers Free** although an agent turn takes 20–300 ms CPU against the 10 ms limit (§9); provider keys are set with `wrangler secret put` from the clipboard | Zero running cost is a goal; Cloudflare tolerated every measured turn (outcome `ok`) and sync, undo and pairing stay within 10 ms; LW-15 cut what the app controls and the rest is the AI SDK streaming the model (§9), so Workers Paid ($5/mo) only if chat turns start failing with 1102; a key typed as the secret's name shows in plain text in `wrangler secret list` |
+| D52 | Voice input and the prompt queue | **`@capgo/capacitor-speech-recognition`** on Android (the on-device recognizer when offline), the Web Speech API in the browser; the transcript goes **into the composer** and is sent by the user. The queue lives in Dexie, runs **after each successful sync**, in order, and a prompt waiting behind others is queued too even online; a prompt tried before without an answer is dropped when the pulled mirror already has its message | The community plugin has no Capacitor 8 release (7.0.1 is the latest); capgo maintains its fork with the major following Capacitor's. Reading the transcript before sending catches mis-transcriptions cheaply. Order matters ("zmień ostatnią serię" after the queued sets), and the server stores the message before it answers, so the mirror tells whether a lost response went through without an idempotency key on the server |
 
 ## 4. Scope
 
@@ -287,15 +288,18 @@ For unusual days; a normal day starts from a copied workout (§5.2, D7).
 
 #### 5.9.7 Voice input
 
-- Android: system SpeechRecognizer through a Capacitor plugin (pl-PL; works offline if the language pack is installed).
-- PC: Web Speech API (Edge/Chrome); typing is always available.
-- The transcript is sent like typed text; the agent resolves mis-transcriptions using catalog aliases or asks.
+- Android: system SpeechRecognizer through `@capgo/capacitor-speech-recognition` (pl-PL, D52): the default recognizer online, the on-device one offline (needs the Polish offline speech pack, `docs/android.md`).
+- PC: Web Speech API (Edge/Chrome, needs the network: the mic is disabled offline); no mic button where the API is missing (Firefox). Typing is always available.
+- A mic button in the composer: the transcript appears in the composer while speaking, after what is already typed; the user reads it and sends it like typed text (no auto-send). The agent resolves mis-transcriptions using catalog aliases or asks.
 
 #### 5.9.8 Offline prompt queue
 
-- Without connectivity, typed or spoken prompts go to a local **"Do przetworzenia"** queue with the time they were said.
-- When back online, the queue is processed in order; each request carries its original timestamp so sets get the right time.
-- Each result appears as a change card (undo) or a question.
+- Without connectivity, typed or spoken prompts go to a local **"Do przetworzenia"** queue (Dexie `prompt_queue`) with the time they were sent. While prompts wait, new ones queue behind them even online, so they run in order. A live prompt whose request doesn't get through (the device looks online, the signal is weak) moves to the queue with its id and send time.
+- The queue runs after each successful sync (network back, return to the app, every minute), one prompt at a time; each request carries its original `localTime`, so sets get that day and time and land in that day's thread.
+- A prompt sent before without an answer (the connection dropped) is dropped instead of sent again when the pulled mirror already has its message: the server stores the message before answering (D52).
+- A failure the user must act on (no provider key, model error) stops the queue at that prompt with the error, **Spróbuj ponownie** and **Usuń**; an unreachable server just waits for the next sync, and the list says so.
+- A request whose response doesn't start within 20 s counts as unreachable, so a weak signal doesn't hold "Agent myśli…" for minutes. While the last sync couldn't reach the server, new prompts go straight to the queue.
+- Each result appears in the thread as a change card (undo) or a question, with the sync after the turn.
 
 ### 5.10 Settings
 
@@ -334,7 +338,7 @@ A card on the calendar for the shown week (Monday–Sunday), computed in core fr
 - **Layout:** phones get one column and bottom tabs (Kalendarz, Historia, Agent, Ustawienia). From 992 px (Ionic `lg`) an `ion-split-pane` side menu (240 px: wordmark, sections, sync status) replaces the tabs, and content sits in a column of at most 720 px. Ionic runs in `md` mode on every platform.
 - **Visual direction "Grafit i kobalt"** (D42), taken from the materials of a home dumbbell setup:
   - Colors: graphite `#1B1E23` (dark background, light-mode text) with surfaces `#252931` and lines `#373C45`, chalk `#EDF0F4` (light background) and `#ECEEF2` (dark-mode text), lines `#D3D8E0` in light, cobalt `#2D5BC0` light / `#6E9BF5` dark (accent, actions, active section), signal amber `#E0A526` (records and warnings only), rust `#A33A2B` / `#E07A63` (danger). Text contrast at least 4.5:1. The icon keeps chalk plates with cobalt collars on graphite.
-  - Type: Archivo variable with its width axis, bundled for offline use. Numbers and headings are narrow (`font-stretch: 75%`), bold, with tabular figures; body text is 400 at normal width. Scale 13 / 14 / 16 / 20 / 26 / 40 / 64 px, sentence case, no all-caps labels.
+  - Type: Archivo variable with its width axis, bundled for offline use. The app paints only once the font is loaded (waiting at most 1 s), so text doesn't jump from the system font. Numbers and headings are narrow (`font-stretch: 75%`), bold, with tabular figures; body text is 400 at normal width. Scale 13 / 14 / 16 / 20 / 26 / 40 / 64 px, sentence case, no all-caps labels.
   - One loud element: large narrow numerals, like numerals cast into a plate (the pairing code now; weights and reps in LW-07). The rest stays quiet: flat headers with a hairline, a list is one bordered block, no decorative motion; Ionic animations are off under `prefers-reduced-motion`.
 - **Theme:** both palettes are Ionic variables (`ion-palette-dark` class on `<html>`). Settings → Wygląd: Systemowy / Jasny / Ciemny, stored on the device, not synced.
 - **Texts:** every UI string is in `apps/web/src/locales/pl.json` (vue-i18n with Polish plural forms). Errors say what happened and what to do; an empty screen offers the next action.
@@ -525,7 +529,7 @@ Client-only (Dexie): `outbox` (pending mutations), `prompt_queue`, `sync_state` 
     - haptics
     - keep-awake
     - filesystem + share (data export through the share sheet, §5.12)
-    - speech recognition (community plugin)
+    - speech recognition (`@capgo/capacitor-speech-recognition`, D52)
     - Keystore-backed secure storage
 - **Install via ADB over Wi-Fi** (Wireless debugging, Android 11+):
   - One-time setup: `adb pair <ip:port> <code>`.
@@ -596,7 +600,7 @@ Each line is meant to be one `/ticket` task.
 | Workers Free limits under agent loops | Measured in LW-09, CPU cut in LW-15 | Limits: 10 ms CPU per request (with tolerance for occasional overruns, error 1102 when consistently exceeded), 50 external subrequests, 1,000 to Cloudflare services (D1). Measured on 2026-11-01 (Anthropic `claude-haiku-5-5`, `wrangler tail`): a chat turn takes **54–265 ms CPU**, about 50–100 ms per model step (175–265 ms on a cold isolate), 1.6–5.2 s wall, 1–2 model steps (= external subrequests); sync 3–8 ms, undo 8 ms. Every turn finished with outcome `ok`. **LW-15** (`profile:chat`: workerd CPU profile of fixed turns, the model replayed; and `wrangler tail` before/after on production, ~60 turns): cut tool schemas converted in every step (now once per isolate), the balance context loading the whole history (now the window + the last working set per exercise), a per-comparison Polish collator and re-parsing the partial tool input on every stream chunk. Locally (PC) a cold turn went from 91 to 57 ms, warm turns 22–36 → 13–30 ms. On production the app's share is small: warm one-step turns 21–51 ms, two-step 94–184 ms, a cold two-step turn 305 ms, about the same as before (two-step 102–128 ms) — the rest, ~50–70 ms per step, is the AI SDK and the provider handling the stream (per chunk, ~25–30 text chunks per answer) and could not be attributed further (production profiling answered "No recent executions"). Each turn logs `{"chatTurn":{"isolateTurn","steps"}}` (1 = cold isolate) next to its CPU time. All turns `ok`, no 1102. Staying on Free (D51) |
 | ~~AI SDK current major~~ | Resolved in LW-09 | `ai` 7 / `@ai-sdk/vue` 4; built-in tool approval doesn't fit §5.9.3 (D50) |
 | ~~Exact rest-timer notifications~~ | Resolved in LW-08 | `USE_EXACT_ALARM` (sideloaded APK, D47) + `allowWhileIdle`: on a real phone the notification came on time and vibrated with the screen locked. Some vendors also need a setting for ADB installs (`docs/android.md`) |
-| Speech-recognition plugin | LW-10 | Compatibility with current Capacitor/Android |
+| Speech-recognition plugin | Picked in LW-10, one check left | `@capgo/capacitor-speech-recognition` 8.x (Capacitor 8 peer); the community plugin stops at 7.0.1 (D52). On 2026-11-02 on a real phone the APK builds and prompts from the phone get the model's answers on production. Still to confirm: a series spoken in airplane mode logged with the time it was sent |
 | Default OpenAI/Gemini model ids | Picked in LW-09, verify with keys | §6.7: the cheapest current tier for `fast` (OpenAI's model list, Google's "use for new projects" note); not yet run without OpenAI/Gemini keys. `gemini-3.8-flash` is on Gemini's free tier, which may use the content to improve Google's products |
 | ~~Capacitor app id~~ | Resolved in LW-08 | `io.github.d_buczek.liftwise`: a hyphen isn't allowed, so the GitHub login `d-buczek` becomes `d_buczek` (Java package convention) |
 | ~~D1 Time Travel retention~~ | Resolved in LW-04 | Always on; 7 days on Workers Free, 30 days on Workers Paid (§5.12) |

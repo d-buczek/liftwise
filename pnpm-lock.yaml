@@ -121,6 +121,9 @@ importers:
       '@capacitor/share':
         specifier: ^8.0.3
         version: 8.0.3(@capacitor/core@8.6.0)
+      '@capgo/capacitor-speech-recognition':
+        specifier: ^8.4.6
+        version: 8.4.6(@capacitor/core@8.6.0)
       '@fontsource-variable/archivo':
         specifier: ^5.3.0
         version: 5.3.0
@@ -839,6 +842,11 @@ packages:
 
   '@capacitor/synapse@1.0.4':
     resolution: {integrity: sha512-/C1FUo8/OkKuAT4nCIu/34ny9siNHr9qtFezu4kxm6GY1wNFxrCFWjfYx5C1tUhVGz3fxBABegupkpjXvjCHrw==}
+
+  '@capgo/capacitor-speech-recognition@8.4.6':
+    resolution: {integrity: sha512-GbRrjCipn/nNUwv9Vc+t15s6GMXDQvdociz7DgsEsVdO6YwDKrxNdOUD+zS8xJJVUZYpMUMB9BTZHA7YJx2CXw==}
+    peerDependencies:
+      '@capacitor/core': '>=8.0.0'
 
   '@cloudflare/kv-asset-handler@0.5.0':
     resolution: {integrity: sha512-jxQYkj8dSIzc0cD6cMMNdOc1UVjqSqu8BZdor5s8cGjW2I8BjODt/kWPVdY+u9zj3ms75Q5qaZgnxUad83+eAg==}
@@ -5278,6 +5286,10 @@ snapshots:
       '@capacitor/core': 8.6.0
 
   '@capacitor/synapse@1.0.4': {}
+
+  '@capgo/capacitor-speech-recognition@8.4.6(@capacitor/core@8.6.0)':
+    dependencies:
+      '@capacitor/core': 8.6.0
 
   '@cloudflare/kv-asset-handler@0.5.0': {}
 

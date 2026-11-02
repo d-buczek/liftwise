@@ -32,6 +32,12 @@ export const useSyncStore = defineStore('sync', () => {
     return syncedAt.value ? 'synced' : 'never';
   });
 
+  // Called after each sync the server answered: it is reachable and the mirror is current.
+  const syncedListeners: (() => void)[] = [];
+  function onSynced(listener: () => void) {
+    syncedListeners.push(listener);
+  }
+
   let again = false;
   async function sync() {
     if (!auth.token) return;
@@ -40,13 +46,17 @@ export const useSyncStore = defineStore('sync', () => {
       return;
     }
     running.value = true;
+    let answered = false;
     try {
       do {
         again = false;
         await syncOnce(db, auth.token);
         error.value = null;
       } while (again && auth.token);
+      answered = true;
     } catch (caught) {
+      // A rejected mutation stays in the outbox and is reported, but the pull went through.
+      answered = caught instanceof ApiError && caught.status === 400;
       if (caught instanceof ApiError && caught.status === 401) {
         // Revoked: back to pairing (the app watches the token).
         error.value = null;
@@ -58,6 +68,7 @@ export const useSyncStore = defineStore('sync', () => {
     } finally {
       running.value = false;
     }
+    if (answered) for (const listener of syncedListeners) listener();
   }
 
   let started = false;
@@ -90,5 +101,5 @@ export const useSyncStore = defineStore('sync', () => {
     );
   }
 
-  return { online, pending, syncedAt, error, status, sync, start };
+  return { online, pending, syncedAt, error, status, sync, onSynced, start };
 });

@@ -41,6 +41,13 @@ release keystore and installed over ADB on Wi-Fi. Commands run from the repo roo
    `pnpm --filter @liftwise/api dev --ip 0.0.0.0`; allow `workerd` in Windows Firewall for private
    networks. Plain HTTP is allowed only when the URL starts with `http://`.
 
+   **Changing the server:** clear the app's storage (Settings → Apps → LiftWise → Storage → Clear
+   data, or `adb shell pm clear io.github.d_buczek.liftwise`) and pair again. The local mirror, the
+   pull position, the outbox and the prompt queue belong to the old server: kept, the app would miss
+   the new server's older data and push the old server's pending changes to it. Clearing loses
+   whatever the app hasn't synced. If the agent's prompts only wait in "Do przetworzenia" while the
+   phone has a network, check this address first: the app can't reach the server.
+
 ## Pairing the phone with ADB (once per phone)
 
 1. Settings → About phone → tap "Build number" 7× to enable developer options.
@@ -75,3 +82,18 @@ Urządzenia, create a code and type it in.
   "Unrestricted"; some vendors delay alarms of optimized apps, and some also have an Autostart switch
   (with it on, pending alarms survive a reboot).
 - The notification channel "Koniec przerwy" can be tuned in the system settings (sound, vibration).
+
+## Voice input on the phone
+
+- The mic button in the agent's composer uses the system `SpeechRecognizer` through
+  `@capgo/capacitor-speech-recognition` (SPEC §5.9.7, D52). The first tap asks for the microphone
+  permission; if it was denied, allow it in Settings → Apps → LiftWise → Permissions.
+- Online it uses the default recognizer; offline (airplane mode at the gym) only the on-device one
+  can work, which needs the **Polish offline speech pack**: on Google's recognizer, Settings → Google →
+  Voice / "Speech recognition & synthesis" → Offline speech recognition → Polish (the path differs per
+  vendor, so search the settings for "offline speech"). Without it voice input says it needs the
+  network; typing still works and goes to the queue.
+- `AndroidManifest.xml` declares the `RecognitionService` query (Android 11+ package visibility);
+  without it the recognizer is reported as unavailable.
+- Prompts sent without the network wait in "Do przetworzenia" with the time they were sent and go to
+  the agent when the server is reachable again (SPEC §5.9.8).

@@ -4,6 +4,7 @@ import { createApp } from 'vue';
 import App from './App.vue';
 import { i18n } from './i18n';
 import { router } from './router';
+import { usePromptQueueStore } from './stores/promptQueue';
 import { useSyncStore } from './stores/sync';
 import { useThemeStore } from './stores/theme';
 
@@ -27,7 +28,16 @@ const app = createApp(App)
 // Applies the palette before the first paint.
 useThemeStore();
 
-void router.isReady().then(() => {
+// The first paint already has the app's font, so text doesn't jump from the system font (§5.13).
+// Polish text needs two of its subsets; a font that won't load holds the app back only briefly.
+const FONT_WAIT_MS = 1_000;
+const fontReady = Promise.race([
+  document.fonts.load('16px "Archivo Variable"', 'aąćęłńóśźż'),
+  new Promise((resolve) => setTimeout(resolve, FONT_WAIT_MS)),
+]).catch(() => undefined);
+
+void Promise.all([router.isReady(), fontReady]).then(() => {
   app.mount('#app');
+  usePromptQueueStore().start();
   useSyncStore().start();
 });

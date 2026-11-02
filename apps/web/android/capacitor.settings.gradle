@@ -22,3 +22,6 @@ project(':capacitor-local-notifications').projectDir = new File('../../../node_m
 
 include ':capacitor-share'
 project(':capacitor-share').projectDir = new File('../../../node_modules/.pnpm/@capacitor+share@8.0.3_@capacitor+core@8.6.0/node_modules/@capacitor/share/android')
+
+include ':capgo-capacitor-speech-recognition'
+project(':capgo-capacitor-speech-recognition').projectDir = new File('../../../node_modules/.pnpm/@capgo+capacitor-speech-rec_26b9c3af171cdcffb01106b1f6f718d8/node_modules/@capgo/capacitor-speech-recognition/android')

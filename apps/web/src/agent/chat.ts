@@ -2,7 +2,7 @@ import { useChat } from '@ai-sdk/vue';
 import { newId } from '@liftwise/core';
 import { DefaultChatTransport } from 'ai';
 import type { Ref } from 'vue';
-import { apiUrl, UNREACHABLE } from '../api/client';
+import { apiUrl, fetchWithTimeout, UNREACHABLE } from '../api/client';
 import type { ChatMessage } from './messages';
 
 // The agent turn on the client (§6.5, §6.6): the AI SDK chat streams the answer; the server
@@ -20,8 +20,13 @@ export function localTimestamp(now = new Date()): string {
   return `${local}${sign}${pad(Math.floor(minutes / 60))}:${pad(minutes % 60)}`;
 }
 
-// The body of `POST /api/agent/chat`: the last user message with its text parts only.
-export function chatRequest(threadId: string, messages: ChatMessage[], now = new Date()) {
+// The body of `POST /api/agent/chat`: the last user message with its text parts only, and when it
+// was said (now, or earlier for a queued prompt).
+export function chatRequest(
+  threadId: string,
+  messages: ChatMessage[],
+  localTime = localTimestamp(),
+) {
   const message = messages.findLast((candidate) => candidate.role === 'user');
   if (!message) throw new Error('the chat has no user message to send');
   const parts = message.parts.flatMap((part) =>
@@ -32,8 +37,20 @@ export function chatRequest(threadId: string, messages: ChatMessage[], now = new
   return {
     threadId,
     message: { id: message.id, role: 'user', parts },
-    localTime: localTimestamp(now),
+    localTime,
   };
+}
+
+// The transport of a turn; `localTime` is fixed for a queued prompt.
+export function chatTransport(token: () => string | null, localTime?: string) {
+  return new DefaultChatTransport({
+    api: apiUrl('/api/agent/chat'),
+    fetch: fetchWithTimeout,
+    headers: (): Record<string, string> => ({ Authorization: `Bearer ${token() ?? ''}` }),
+    prepareSendMessagesRequest: ({ id, messages }) => ({
+      body: chatRequest(id, messages, localTime),
+    }),
+  });
 }
 
 export type ChatFailure = { code: string; provider?: string };
@@ -64,10 +81,6 @@ export function useAgentChat(threadId: Ref<string>, token: () => string | null) 
   return useChat(() => ({
     id: threadId.value,
     generateId: newId,
-    transport: new DefaultChatTransport({
-      api: apiUrl('/api/agent/chat'),
-      headers: (): Record<string, string> => ({ Authorization: `Bearer ${token() ?? ''}` }),
-      prepareSendMessagesRequest: ({ id, messages }) => ({ body: chatRequest(id, messages) }),
-    }),
+    transport: chatTransport(token),
   }));
 }

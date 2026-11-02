@@ -19,6 +19,20 @@ export type SyncState = { id: 'pull'; seq: number; syncedAt: string };
 // (native/deviceStorage).
 export type DeviceAuth = { id: 'device'; deviceId: string; token: string };
 
+// A prompt to the agent waiting for the network (§5.9.8): `id` is the user message's id,
+// `localTime` when it was said. `tries` counts the requests sent; after one that got no answer the
+// server may already have the message. `failed` waits for the user (retry or delete).
+export type QueuedPrompt = {
+  seq: number;
+  id: string;
+  threadId: string;
+  text: string;
+  localTime: string;
+  status: 'pending' | 'failed';
+  error: { code: string; provider?: string } | null;
+  tries: number;
+};
+
 export class LiftWiseDb extends Dexie {
   exercises!: Table<SyncRow<'exercises'>, string>;
   equipment_items!: Table<SyncRow<'equipment_items'>, string>;
@@ -32,6 +46,7 @@ export class LiftWiseDb extends Dexie {
   outbox!: EntityTable<OutboxEntry, 'id'>;
   sync_state!: Table<SyncState, string>;
   device!: Table<DeviceAuth, string>;
+  prompt_queue!: EntityTable<QueuedPrompt, 'seq'>;
 
   constructor(name = 'liftwise') {
     super(name);
@@ -64,6 +79,8 @@ export class LiftWiseDb extends Dexie {
       );
     // Agent threads by day and their messages (§5.9.5), pulled only.
     this.version(4).stores({ threads: 'id, date', messages: 'id, thread_id' });
+    // The offline prompt queue (§5.9.8), client only, in the order the prompts were said.
+    this.version(5).stores({ prompt_queue: '++seq' });
   }
 
   mirror(entity: SyncEntity): Table<SyncRow, string> {

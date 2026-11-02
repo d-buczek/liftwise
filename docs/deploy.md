@@ -39,7 +39,8 @@ One Worker, `liftwise`, serves the API and the PWA from the same origin (SPEC §
    once. Open the app URL, expand "To pierwsze urządzenie" on the pairing screen and paste the token.
    Every next device pairs with a QR code from Settings → Urządzenia.
 7. Android: set `VITE_API_URL=https://liftwise.<account-subdomain>.workers.dev` in
-   `apps/web/.env.android.local`, then `pnpm android:install` (`docs/android.md`).
+   `apps/web/.env.android.local`, then `pnpm android:install` (`docs/android.md`). If the app was
+   used with another server before, clear its storage first (see "API origin" there).
 
 ## Updates
 
