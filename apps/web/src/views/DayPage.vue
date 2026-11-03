@@ -26,7 +26,9 @@ import { add, ellipsisVertical } from 'ionicons/icons';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
+import { agentPrompt, checkinMessage, type CheckinAnswers } from '../agent/checkin';
 import AppPage from '../components/AppPage.vue';
+import CheckinSheet from '../components/CheckinSheet.vue';
 import CopyWorkout from '../components/CopyWorkout.vue';
 import ExerciseBlock from '../components/ExerciseBlock.vue';
 import ExercisePicker from '../components/ExercisePicker.vue';
@@ -67,7 +69,8 @@ import {
 
 // A day (§5.2): its exercises with planned and done sets; copy a workout onto it, add, swap,
 // remove and reorder exercises, edit sets with ± and apply progression hints. Today and past
-// days open the workout screen to log sets; a future day is planning only.
+// days open the workout screen to log sets; a future day is planning only. Today and future days
+// can ask the agent for a workout proposal (§5.9.6).
 const props = defineProps<{ date: string; backHref: string; workoutHref: string }>();
 
 const { t } = useI18n();
@@ -75,6 +78,16 @@ const format = useFormat();
 const router = useRouter();
 const now = useToday();
 const loggable = computed(() => props.date <= now.value);
+const plannable = computed(() => props.date >= now.value);
+
+const checkingIn = ref(false);
+
+// The agent's page sends it and shows the plan card.
+function proposeWorkout(answers: CheckinAnswers) {
+  checkingIn.value = false;
+  agentPrompt.value = checkinMessage(props.date, answers);
+  void router.push('/agent');
+}
 
 function openWorkout(exerciseId?: string) {
   void router.push({
@@ -105,6 +118,10 @@ const maxKg = useLiveQuery(async () => maxDumbbellKg(await equipment()), null);
 
 const blocks = computed(() => exerciseBlocks(view.value.sets));
 const started = computed(() => view.value.sets.some((set) => set.status === 'done'));
+// Why the accepted proposal looks like this.
+const rationale = computed(
+  () => view.value.workouts.find((workout) => workout.rationale)?.rationale ?? null,
+);
 
 // The hint per exercise and the planned sets it would change; no chip when nothing changes.
 const hints = computed(() => {
@@ -225,6 +242,9 @@ async function dayActions() {
       ...(blocks.value.length > 1
         ? [{ text: t('day.reorder'), handler: () => startReorder() }]
         : []),
+      ...(plannable.value
+        ? [{ text: t('agent.plan.action'), handler: () => void (checkingIn.value = true) }]
+        : []),
       { text: t('common.cancel'), role: 'cancel' },
     ],
   });
@@ -291,6 +311,7 @@ async function reorderEnd(event: ReorderEndCustomEvent) {
         <ion-button v-if="loggable" expand="block" class="lw-day__start" @click="openWorkout()">
           {{ started ? t('day.resume') : t('day.start') }}
         </ion-button>
+        <p v-if="rationale" class="lw-day__rationale">{{ rationale }}</p>
         <div class="lw-day__blocks">
           <exercise-block
             v-for="block in blocks"
@@ -323,6 +344,9 @@ async function reorderEnd(event: ReorderEndCustomEvent) {
           }}</ion-button>
           <ion-button fill="outline" @click="picker = { swap: null }">
             {{ t('day.addExercise') }}
+          </ion-button>
+          <ion-button v-if="plannable" fill="outline" @click="checkingIn = true">
+            {{ t('agent.plan.action') }}
           </ion-button>
         </div>
       </div>
@@ -379,6 +403,15 @@ async function reorderEnd(event: ReorderEndCustomEvent) {
         @close="labelPicker = false"
       />
     </ion-modal>
+    <ion-modal
+      :is-open="checkingIn"
+      :initial-breakpoint="1"
+      :breakpoints="[0, 1]"
+      class="lw-sheet"
+      @did-dismiss="checkingIn = false"
+    >
+      <checkin-sheet v-if="checkingIn" @submit="proposeWorkout" @close="checkingIn = false" />
+    </ion-modal>
 
     <template #footer>
       <rest-timer />
@@ -413,6 +446,14 @@ async function reorderEnd(event: ReorderEndCustomEvent) {
   font-size: 20px;
   font-stretch: var(--lw-narrow);
   font-weight: 700;
+}
+
+.lw-day__rationale {
+  margin: 12px 0 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--lw-muted);
+  overflow-wrap: anywhere;
 }
 
 .lw-day__blocks {

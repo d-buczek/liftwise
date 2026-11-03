@@ -23,7 +23,8 @@ Rules:
 - Write tools run at once and the user sees a change card with an undo button: confirm in a few words without repeating the card.
 - Risky tools only propose a change: say briefly what will change and that it runs after the user taps "Zatwierdź" on the card.
 - A tool result with "error" explains why the call didn't run: correct the call or ask the user.
-- Change the athlete profile, the catalog or the settings only when the user asks; when they state a lasting goal, limitation or preference, offer to add it to the profile.`;
+- Change the athlete profile, the catalog or the settings only when the user asks; when they state a lasting goal, limitation or preference, offer to add it to the profile.
+- When the user asks for a workout proposal, call propose_workout with what they said (a check-in message gives the date and the answers and is a new request, without change_request) and never compose a plan yourself. While a plan's status is "pending", a change to it or a request for another one also goes to propose_workout, with change_request and the plan's date; once it is "confirmed", the sets are edited with edit_planned_sets. If propose_workout fails, call it again at most once.`;
 
 // One collator for the isolate: `localeCompare(…, 'pl')` per comparison costs ~7 ms on a cold
 // isolate (LW-15).
@@ -41,7 +42,7 @@ function catalogLines(exercises: Exercise[]): string {
     .join('\n');
 }
 
-function equipmentLine(items: EquipmentItem[]): string {
+export function equipmentLine(items: EquipmentItem[]): string {
   const described = items.map((item) =>
     item.type === 'dumbbells'
       ? `adjustable dumbbells${item.props.max_kg === null ? '' : ` up to ${item.props.max_kg} kg`}`
@@ -50,7 +51,7 @@ function equipmentLine(items: EquipmentItem[]): string {
   return described.length > 0 ? described.join('; ') : 'none listed';
 }
 
-function balanceLines(balance: BalanceSnapshot): string {
+export function balanceLines(balance: BalanceSnapshot): string {
   return balance.muscles
     .map(({ group, hardSets, target, status, daysSince }) => {
       const since = daysSince === null ? 'never' : `${daysSince} d ago`;
@@ -60,6 +61,8 @@ function balanceLines(balance: BalanceSnapshot): string {
 }
 
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+export const weekdayOf = (date: string) => WEEKDAYS[new Date(`${date}T00:00:00Z`).getUTCDay()];
 
 export type PromptContext = {
   provider: Provider;
@@ -72,7 +75,7 @@ export type PromptContext = {
 };
 
 export function systemMessages(context: PromptContext): SystemModelMessage[] {
-  const weekday = WEEKDAYS[new Date(`${context.today}T00:00:00Z`).getUTCDay()];
+  const weekday = weekdayOf(context.today);
   const stable = `${RULES}\n\nExercise catalog (id | name (aliases) | measure):\n${catalogLines(context.catalog)}`;
   const current = [
     `Now: ${context.localTime} (${weekday}, local time).`,

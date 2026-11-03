@@ -5,9 +5,11 @@ import {
   type ToolErrorOutput,
   type WriteToolOutput,
 } from '@liftwise/core';
+import type { LanguageModel } from 'ai';
+import { and, eq, isNull } from 'drizzle-orm';
 import type { z } from 'zod';
 import type { Db } from '../db';
-import { pendingProposals } from '../db/schema';
+import { messages, pendingProposals } from '../db/schema';
 import { domainFields, type Change, type Row } from '../sync/apply';
 import { applyWrites, InvalidWrite, prepareWrites, type Write } from '../sync/write';
 
@@ -20,6 +22,9 @@ export type ToolContext = {
   // The user's local date and time (with offset) when they wrote the message.
   today: string;
   now: string;
+  // The `planner` role's model (§5.9.6); resolved when needed, it may have no API key. Only a chat
+  // turn has it: confirming a proposal never calls a model.
+  planner?: () => LanguageModel;
 };
 
 // A write without its group: each tool call is one change group (§5.9.4).
@@ -30,7 +35,14 @@ type Handlers<I> =
   // Most write tools return `commit(ctx, writes)`; `undo_change` builds its own result.
   | { risk: 'write'; run: (ctx: ToolContext, input: I) => Promise<WriteToolOutput> }
   // Risky tools never write on the call: their plan is stored and run again on confirmation.
-  | { risk: 'risky'; plan: (ctx: ToolContext, input: I) => Promise<PlannedWrite[]> };
+  // An `internal` one isn't offered to the model: another tool stores the proposal.
+  | {
+      risk: 'risky';
+      plan: (ctx: ToolContext, input: I) => Promise<PlannedWrite[]>;
+      internal?: boolean;
+    }
+  // Works out the proposal first, so what is stored isn't the model's call (`propose_workout`).
+  | { risk: 'risky'; propose: (ctx: ToolContext, input: I) => Promise<ProposalToolOutput> };
 
 export type AgentTool<I = unknown> = {
   name: string;
@@ -79,13 +91,13 @@ export async function commit(ctx: ToolContext, writes: PlannedWrite[]): Promise<
 }
 
 // Stores a risky call as a pending proposal and returns its diff for the confirmation card.
-async function propose(
+export async function propose(
   ctx: ToolContext,
   tool: AgentTool,
   input: unknown,
 ): Promise<ProposalToolOutput> {
   const now = new Date().toISOString();
-  const writes = await (tool as Extract<AgentTool, { risk: 'risky' }>).plan(ctx, input);
+  const writes = await (tool as Extract<AgentTool, { plan: unknown }>).plan(ctx, input);
   const changes = await prepareWrites(
     ctx.db,
     writes.map((write) => ({ ...write, groupId: '' })),
@@ -104,10 +116,42 @@ async function propose(
   return { proposalId, status: 'pending', changes: changes.map(changeView) };
 }
 
+export type ProposalResolution = Pick<ProposalToolOutput, 'status' | 'groupId' | 'changes'>;
+
+// The tool result carrying the proposal gets its status (and the written changes), so every device
+// shows it. A plan card keeps its `changes` empty (`PlanToolOutput`).
+export async function recordResolution(
+  db: Db,
+  threadId: string,
+  proposalId: string,
+  resolution: ProposalResolution,
+) {
+  const rows = await db
+    .select()
+    .from(messages)
+    .where(and(eq(messages.thread_id, threadId), isNull(messages.deleted_at)));
+  for (const row of rows) {
+    let found = false;
+    const parts = row.parts.map((part) => {
+      const output = (part as { output?: Partial<ProposalToolOutput> }).output;
+      if (output?.proposalId !== proposalId) return part;
+      found = true;
+      const changes = 'plan' in output ? [] : resolution.changes;
+      return { ...(part as object), output: { ...output, ...resolution, changes } };
+    });
+    if (!found) continue;
+    await applyWrites(db, { actor: 'agent', threadId }, [
+      { groupId: newId(), entity: 'messages', op: 'upsert', row: { ...row, parts } },
+    ]);
+  }
+}
+
 // Runs a validated call by its risk level; reasons a call can't run go back to the model.
 export async function runTool(ctx: ToolContext, tool: AgentTool, input: unknown): Promise<unknown> {
   try {
-    if (tool.risk === 'risky') return await propose(ctx, tool, input);
+    if (tool.risk === 'risky') {
+      return await ('propose' in tool ? tool.propose(ctx, input) : propose(ctx, tool, input));
+    }
     return await tool.run(ctx, input);
   } catch (error) {
     if (error instanceof ToolError) return { error: error.code, ...error.details };

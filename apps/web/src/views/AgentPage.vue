@@ -9,9 +9,10 @@ import {
   onIonViewWillLeave,
 } from '@ionic/vue';
 import { arrowUp, mic, micOutline, stop, timeOutline } from 'ionicons/icons';
-import { computed, nextTick, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { chatFailure, useAgentChat } from '../agent/chat';
+import { agentPrompt } from '../agent/checkin';
 import { UNREACHABLE } from '../api/client';
 import { chatView } from '../agent/messages';
 import { threadMessages, threadsOn } from '../agent/queries';
@@ -19,7 +20,7 @@ import AppPage from '../components/AppPage.vue';
 import ChatLog from '../components/ChatLog.vue';
 import PromptQueue from '../components/PromptQueue.vue';
 import { useChatFailureText } from '../composables/chatFailure';
-import { useLiveQuery } from '../composables/liveQuery';
+import { useLiveQuery, useLiveQueryState } from '../composables/liveQuery';
 import { useToday } from '../composables/today';
 import { useVoiceInput } from '../composables/voice';
 import { speechNeedsNetwork, speechSupported } from '../native/speech';
@@ -40,7 +41,11 @@ const today = useToday();
 
 // One thread per day (§5.9.5): the mirror's, or a new id the server creates the thread with on
 // the first message. The thread this page wrote to stays until the day ends.
-const todays = useLiveQuery(() => threadsOn(today.value), [], today);
+const { data: todays, loaded: threadKnown } = useLiveQueryState(
+  () => threadsOn(today.value),
+  [],
+  today,
+);
 const fresh = ref({ date: today.value, id: newId() });
 const used = ref<{ date: string; id: string } | null>(null);
 watch(today, (date) => (fresh.value = { date, id: newId() }));
@@ -53,10 +58,12 @@ const chat = useAgentChat(threadId, () => auth.token);
 const messages = computed(() => chatView(stored.value, chat.messages.value));
 const busy = computed(() => chat.status.value === 'submitted' || chat.status.value === 'streaming');
 
-// The turn's writes and its stored messages.
+// The turn's writes and its stored messages; a prompt queued during the turn goes after them.
 watch(busy, (running, was) => {
+  queue.liveTurn = running;
   if (was && !running) void sync.sync();
 });
+onBeforeUnmount(() => (queue.liveTurn = false));
 
 const draft = ref('');
 const canSend = computed(() => !busy.value && draft.value.trim().length > 0);
@@ -72,19 +79,39 @@ let sentAt = new Date();
 const noServer = computed(() => sync.online && sync.error === UNREACHABLE);
 
 // Without the network or the server, or behind prompts still waiting (they run in order), a prompt
-// goes to the queue.
-async function send(text = draft.value) {
-  const message = text.trim();
-  if (!message || busy.value) return;
-  voice.stop();
+// goes to the queue; so does one from a card or another page while a turn runs, until it ends.
+async function deliver(message: string) {
   used.value = { date: today.value, id: threadId.value };
-  draft.value = '';
-  if (!sync.online || noServer.value || queue.prompts.length > 0) {
+  if (!sync.online || noServer.value || queue.prompts.length > 0 || busy.value) {
     await queue.enqueue(threadId.value, message);
     return;
   }
   sentAt = new Date();
   await chat.sendMessage({ text: message });
+}
+
+async function send() {
+  const message = draft.value.trim();
+  if (!message || busy.value) return;
+  voice.stop();
+  draft.value = '';
+  await deliver(message);
+}
+
+// A check-in from a day (§5.9.6), once today's thread is known.
+watch(
+  [agentPrompt, threadKnown],
+  () => {
+    const message = agentPrompt.value;
+    if (!message || !threadKnown.value) return;
+    agentPrompt.value = null;
+    void deliver(message);
+  },
+  { immediate: true },
+);
+
+function regenerate(date: string) {
+  void deliver(t('agent.plan.message.regenerate', { date }));
 }
 
 // Enter sends, Shift+Enter breaks the line.
@@ -157,7 +184,7 @@ watch(
       </div>
     </div>
 
-    <chat-log :messages="messages" :busy="busy" />
+    <chat-log :messages="messages" :busy="busy" :regenerate="regenerate" />
     <p v-if="chat.status.value === 'submitted'" class="lw-agent__thinking" aria-live="polite">
       {{ t('agent.thinking') }}
     </p>

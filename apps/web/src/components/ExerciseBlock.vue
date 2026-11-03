@@ -2,13 +2,14 @@
 import type { Exercise, WorkoutSet } from '@liftwise/core';
 import { IonButton, IonIcon } from '@ionic/vue';
 import { add, checkmark, ellipsisHorizontal } from 'ionicons/icons';
+import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useFormat } from '../composables/format';
 
 // One exercise of a day: its sets as tiles (planned outlined, done solid, like the calendar),
-// the setup note and the progression hint chip (§5.2). With `openable` the name opens the
-// workout on this exercise.
-defineProps<{
+// the setup note, the target RIR of an accepted proposal and the progression hint chip (§5.2).
+// With `openable` the name opens the workout on this exercise.
+const props = defineProps<{
   exercise: Exercise | undefined;
   sets: WorkoutSet[];
   hint: string | null;
@@ -24,6 +25,10 @@ const emit = defineEmits<{
 
 const { t } = useI18n();
 const format = useFormat();
+
+const targetRir = computed(
+  () => props.sets.find((set) => set.status === 'planned' && set.rir !== null)?.rir ?? null,
+);
 
 function setLabel(set: WorkoutSet, index: number): string {
   const state = [t(`day.${set.status}`), ...(set.warmup ? [t('day.warmup')] : [])].join(', ');
@@ -56,6 +61,9 @@ function setLabel(set: WorkoutSet, index: number): string {
       </ion-button>
     </header>
     <p v-if="exercise?.note" class="lw-block__note">{{ exercise.note }}</p>
+    <p v-if="targetRir !== null" class="lw-block__note lw-num">
+      {{ t('day.targetRir', { value: format.rir(targetRir) }) }}
+    </p>
     <button
       v-if="hint"
       type="button"

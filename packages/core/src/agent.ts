@@ -1,3 +1,4 @@
+import type { WorkoutPlan } from './plan';
 import type { ModelSettings, Provider } from './schemas/settings';
 import type { SyncEntity } from './sync';
 
@@ -26,6 +27,15 @@ export type ProposalToolOutput = {
   status: ProposalStatus;
   changes: ChangeView[];
   groupId?: string;
+};
+
+// A proposed workout (§5.9.6): the plan card. `changes` stay empty, also once confirmed: the plan
+// tells what the card shows, and a list of every set would go to the model on each later turn.
+// `replaces` is how many planned sets of the day accepting it removes.
+export type PlanToolOutput = ProposalToolOutput & {
+  date: string;
+  plan: WorkoutPlan;
+  replaces: number;
 };
 
 // A tool that couldn't run, with the reason for the model (e.g. `exercise_not_found`).

@@ -69,7 +69,7 @@ One Worker, `liftwise`, serves the API and the PWA from the same origin (SPEC §
 seeded with a year of training), points Anthropic at a local server that replays fixed model
 streams (`ANTHROPIC_BASE_URL`, no key, no cost) and samples the CPU of each turn through the
 DevTools protocol. It prints the CPU per scenario (a cold isolate's first turn, a write, a history
-question, a plain reply), where it goes (tool handlers, message writes, provider stream, packages)
+question, a plain reply, a workout proposal), where it goes (tool handlers, message writes, provider stream, packages)
 and the hottest functions; the `.cpuprofile` files open in Chrome DevTools → Performance. The
 numbers are the PC's — compare runs before and after a change, not against the 10 ms limit;
 production is ~2–5× slower (SPEC §9). Production profiling (`cf workers versions profile`, API)

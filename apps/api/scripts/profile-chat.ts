@@ -67,13 +67,52 @@ const SCENARIOS: Scenario[] = [
     prompt: 'dzięki, to wszystko na dziś',
     answer: 'Proszę bardzo, udanej regeneracji!',
   },
+  {
+    name: 'propose_workout',
+    prompt: 'zaproponuj trening, mam 30 minut',
+    tool: { name: 'propose_workout', input: { time_min: 30 } },
+    // The plan card ends the turn.
+    answer: '',
+  },
 ];
+
+const plannedSets = (weight_kg: number) =>
+  Array(3).fill({ weight_kg, reps: 10, duration_s: null, warmup: false });
+
+// What the `planner` model answers for `propose_workout`, in one piece.
+const PLAN = {
+  exercises: [
+    { exercise_id: BENCH, sets: plannedSets(24), target_rir: 1 },
+    { exercise_id: ROW, sets: plannedSets(30), target_rir: 1 },
+  ],
+  rationale: 'Trzydzieści minut wystarczy na dwa główne ćwiczenia, bez zmian ciężaru.',
+};
 
 // --- Replay of the Anthropic Messages stream -------------------------------------------------
 
 type AnthropicRequest = {
   messages: { role: string; content: string | { type: string; text?: string }[] }[];
+  stream?: boolean;
+  tools?: { name: string }[];
 };
+
+// A call without streaming is the `planner`'s. The SDK asks for structured output natively, or
+// through a forced `json` tool for a model it doesn't know that of.
+function plannerMessage(request: AnthropicRequest) {
+  const forcedTool = request.tools?.find((tool) => tool.name === 'json');
+  return {
+    id: `msg_${v7()}`,
+    type: 'message',
+    role: 'assistant',
+    model: 'replay',
+    content: forcedTool
+      ? [{ type: 'tool_use', id: `toolu_${v7()}`, name: forcedTool.name, input: PLAN }]
+      : [{ type: 'text', text: JSON.stringify(PLAN) }],
+    stop_reason: forcedTool ? 'tool_use' : 'end_turn',
+    stop_sequence: null,
+    usage: { input_tokens: 4000, output_tokens: 300 },
+  };
+}
 
 const chunks = (text: string, size: number) =>
   Array.from({ length: Math.ceil(text.length / size) }, (_, i) =>
@@ -144,7 +183,13 @@ const replay = createServer((req, res) => {
   req.on('data', (data) => (body += data));
   req.on('end', async () => {
     modelCalls += 1;
-    const { events } = replayEvents(JSON.parse(body) as AnthropicRequest);
+    const request = JSON.parse(body) as AnthropicRequest;
+    if (!request.stream) {
+      res.writeHead(200, { 'content-type': 'application/json' });
+      res.end(JSON.stringify(plannerMessage(request)));
+      return;
+    }
+    const { events } = replayEvents(request);
     res.writeHead(200, { 'content-type': 'text/event-stream' });
     // One network chunk per event, as from the API.
     for (const event of events) {
@@ -274,6 +319,20 @@ async function prepareDatabase(): Promise<string> {
     ...inserts('devices', [
       { id: v7(), name: 'profile', token_hash: await sha256Hex(token), created_at: now },
     ]),
+    ...inserts(
+      'equipment_items',
+      [
+        { type: 'dumbbells', props: '{"max_kg":40}' },
+        { type: 'bench', props: '{"incline":true,"decline":false}' },
+      ].map((item) => ({
+        id: v7(),
+        ...item,
+        created_at: now,
+        updated_at: now,
+        deleted_at: null,
+        seq: 0,
+      })),
+    ),
     ...inserts('workouts', workouts),
     ...inserts('sets', sets),
   ].join('\n');

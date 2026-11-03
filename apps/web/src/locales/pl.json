@@ -103,7 +103,44 @@
       },
       "confirm": "Zatwierdź",
       "reject": "Odrzuć",
-      "stale": "Dane zmieniły się od tej propozycji. Odrzuć ją i poproś agenta jeszcze raz."
+      "stale": "Dane zmieniły się od tej propozycji. Poproś agenta o nową."
+    },
+    "plan": {
+      "action": "Zaproponuj trening",
+      "submit": "Zaproponuj",
+      "time": "Czas",
+      "timeChip": "{time} min",
+      "wellbeing": "Samopoczucie (1 słabo, 5 świetnie)",
+      "pain": "Ból lub ograniczenia",
+      "painAreas": {
+        "shoulder": "bark",
+        "elbow": "łokieć",
+        "wrist": "nadgarstek",
+        "lowerBack": "dół pleców",
+        "hip": "biodro",
+        "knee": "kolano"
+      },
+      "note": "Coś jeszcze?",
+      "message": {
+        "request": "Zaproponuj trening na {date}.",
+        "time": "Czas: {time} min.",
+        "wellbeing": "Samopoczucie: {value}/5.",
+        "pain": "Ból lub ograniczenia: {pain}.",
+        "regenerate": "Wygeneruj inną propozycję na {date}."
+      },
+      "working": "Układam trening…",
+      "status": {
+        "pending": "Propozycja treningu",
+        "confirmed": "Zaakceptowana",
+        "rejected": "Zastąpiona nowszą"
+      },
+      "warmup": "Rozgrzewka: {load}",
+      "targetRir": "cel RIR {value}",
+      "replaces": "Zastąpi {n} zaplanowaną serię | Zastąpi {n} zaplanowane serie | Zastąpi {n} zaplanowanych serii",
+      "changeHint": "Chcesz coś zmienić? Napisz to poniżej.",
+      "accept": "Akceptuj",
+      "regenerate": "Wygeneruj ponownie",
+      "openDay": "Otwórz dzień"
     },
     "undo": {
       "action": "Cofnij",
@@ -268,6 +305,7 @@
   "day": {
     "empty": "Na ten dzień nie ma treningu.",
     "emptyHint": "Skopiuj wcześniejszy trening albo dodaj ćwiczenia po kolei.",
+    "targetRir": "Cel: RIR {value}",
     "copy": "Kopiuj trening",
     "copyLight": "Kopiuj jako lżejszy",
     "addExercise": "Dodaj ćwiczenie",

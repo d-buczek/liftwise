@@ -5,6 +5,8 @@ import {
   stepCountIs,
   streamText,
   toUIMessageStream,
+  type StopCondition,
+  type ToolSet,
   type UIMessage,
 } from 'ai';
 import { and, asc, eq, isNull } from 'drizzle-orm';
@@ -27,6 +29,17 @@ import { modelSettings, ProviderUnavailable, resolveModel } from './providers';
 
 // Model calls per turn: a lookup, a write and the answer leave room for a question or a retry.
 const MAX_STEPS = 8;
+
+// A proposed workout ends the turn: the plan card is the answer, another step would only cost CPU
+// and tokens. A failed call goes on, so the model can explain it.
+const planProposed: StopCondition<ToolSet> = ({ steps }) =>
+  steps
+    .at(-1)
+    ?.toolResults.some(
+      ({ toolName, output }) =>
+        toolName === 'propose_workout' &&
+        (output as { error?: string } | null)?.error === undefined,
+    ) ?? false;
 
 // Turns this isolate has served: 1 is a cold isolate. Logged with the steps, next to the CPU time
 // of the invocation in Workers Logs (§9).
@@ -73,9 +86,10 @@ export function createChatRoutes(resolve = resolveModel) {
     const today = localTime.slice(0, 10);
     const isolateTurn = ++isolateTurns;
 
+    const models = await modelSettings(db, c.env);
     let resolved: ReturnType<typeof resolveModel>;
     try {
-      resolved = resolve(c.env, (await modelSettings(db, c.env))[body.role]);
+      resolved = resolve(c.env, models[body.role]);
     } catch (error) {
       if (!(error instanceof ProviderUnavailable)) throw error;
       return c.json({ error: 'provider_unavailable', provider: error.provider }, 409);
@@ -109,7 +123,13 @@ export function createChatRoutes(resolve = resolveModel) {
       balanceSettings(db),
       balanceSets(db, today),
     ]);
-    const ctx: ToolContext = { db, threadId, today, now: localTime };
+    const ctx: ToolContext = {
+      db,
+      threadId,
+      today,
+      now: localTime,
+      planner: () => resolve(c.env, models.planner).model,
+    };
     const tools = agentTools(ctx);
     const result = streamText({
       model: resolved.model,
@@ -127,7 +147,7 @@ export function createChatRoutes(resolve = resolveModel) {
         ignoreIncompleteToolCalls: true,
       }),
       tools,
-      stopWhen: stepCountIs(MAX_STEPS),
+      stopWhen: [stepCountIs(MAX_STEPS), planProposed],
     });
 
     // The Worker stays alive until the answer is stored, even if the client went away.

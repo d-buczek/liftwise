@@ -1,8 +1,18 @@
 <script setup lang="ts" generic="T">
 // One of a few values as a row of chips, like the RIR chips; no keyboard. Compact chips (a
-// chart's filters) keep the label for screen readers only.
-defineProps<{ label: string; options: { value: T; label: string }[]; compact?: boolean }>();
+// chart's filters) keep the label for screen readers only. With `clearTo` the answer is optional:
+// tapping the chosen chip again gives that value.
+const props = defineProps<{
+  label: string;
+  options: { value: T; label: string }[];
+  compact?: boolean;
+  clearTo?: T;
+}>();
 const model = defineModel<T>({ required: true });
+
+function choose(value: T) {
+  model.value = model.value === value && props.clearTo !== undefined ? props.clearTo : value;
+}
 </script>
 
 <template>
@@ -16,7 +26,7 @@ const model = defineModel<T>({ required: true });
         role="radio"
         class="lw-choice__chip lw-num"
         :aria-checked="model === option.value"
-        @click="model = option.value"
+        @click="choose(option.value)"
       >
         {{ option.label }}
       </button>

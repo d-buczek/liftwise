@@ -3,8 +3,8 @@ import { MockLanguageModelV4, convertArrayToReadableStream } from 'ai/test';
 import { createExecutionContext, env, waitOnExecutionContext } from 'cloudflare:test';
 import { asc, eq } from 'drizzle-orm';
 import { Hono } from 'hono';
-import { beforeEach, describe, expect, it } from 'vite-plus/test';
-import { call, createDevice, db, repsExercise } from '../../test/helpers';
+import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
+import { call, createDevice, db, repsExercise, timedExercise } from '../../test/helpers';
 import type { AppEnv } from '../app-env';
 import { messages, sets, threads } from '../db/schema';
 import { createChatRoutes } from './chat';
@@ -131,6 +131,83 @@ describe('agent chat', () => {
         expect.objectContaining({ type: 'text', text: 'Zapisane: 2 serie.' }),
       ]),
     );
+  });
+
+  it('ends the turn on a proposed workout, whose card is the answer', async () => {
+    const plan = {
+      exercises: [
+        {
+          // Needs no equipment.
+          exercise_id: timedExercise.id,
+          sets: [{ weight_kg: 0, reps: null, duration_s: 45, warmup: false }],
+          target_rir: null,
+        },
+      ],
+      rationale: 'Mało czasu.',
+    };
+    const model = new MockLanguageModelV4({
+      doStream: step('tool-calls', {
+        type: 'tool-call',
+        toolCallId: 'call-1',
+        toolName: 'propose_workout',
+        input: JSON.stringify({ time_min: 20 }),
+      }),
+      doGenerate: {
+        content: [{ type: 'text', text: JSON.stringify(plan) }],
+        finishReason: { unified: 'stop', raw: 'stop' },
+        usage,
+        warnings: [],
+      },
+    });
+    const threadId = newId();
+    const { status } = await chat(model, {
+      threadId,
+      message: userMessage('Zaproponuj trening, mam 20 minut'),
+      localTime: NOW,
+    });
+
+    expect(status).toBe(200);
+    expect(model.doStreamCalls).toHaveLength(1);
+    expect(model.doGenerateCalls).toHaveLength(1);
+    const stored = await threadMessages(threadId);
+    expect(stored[1]?.parts).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: 'tool-propose_workout',
+          state: 'output-available',
+          output: expect.objectContaining({ status: 'pending', plan }),
+        }),
+      ]),
+    );
+    expect(await db().select().from(sets)).toEqual([]);
+  });
+
+  it('lets the model explain a workout that could not be proposed', async () => {
+    const failing = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const model = new MockLanguageModelV4({
+      doStream: [
+        step('tool-calls', {
+          type: 'tool-call',
+          toolCallId: 'call-1',
+          toolName: 'propose_workout',
+          input: JSON.stringify({}),
+        }),
+        step('stop', ...text('t1', 'Nie udało się ułożyć planu.')),
+      ],
+      doGenerate: async () => {
+        throw new Error('model down');
+      },
+    });
+    const { stream } = await chat(model, {
+      threadId: newId(),
+      message: userMessage('Zaproponuj trening'),
+      localTime: NOW,
+    });
+
+    expect(model.doStreamCalls).toHaveLength(2);
+    expect(JSON.stringify(model.doStreamCalls[1]?.prompt)).toContain('planner_failed');
+    expect(stream).toContain('Nie udało się ułożyć planu.');
+    failing.mockRestore();
   });
 
   it('sends the rules, catalog and context, cached for Anthropic', async () => {

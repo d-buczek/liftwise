@@ -1,4 +1,10 @@
-import type { Message, ProposalToolOutput, SyncRow, WriteToolOutput } from '@liftwise/core';
+import type {
+  Message,
+  PlanToolOutput,
+  ProposalToolOutput,
+  SyncRow,
+  WriteToolOutput,
+} from '@liftwise/core';
 
 // The chat as shown (§5.9): stored messages from the mirror and the turn streaming now, as text
 // and cards. Read tools and failed calls show nothing; the model's answer says what it found.
@@ -10,8 +16,9 @@ export type MessageItem =
   | { kind: 'text'; key: string; text: string }
   | { kind: 'change'; key: string; output: WriteToolOutput }
   | { kind: 'proposal'; key: string; output: ProposalToolOutput }
-  // A tool still running.
-  | { kind: 'working'; key: string };
+  | { kind: 'plan'; key: string; output: PlanToolOutput }
+  // A tool still running; `planning` while the workout proposal is worked out, which takes longer.
+  | { kind: 'working'; key: string; planning: boolean };
 
 export type MessageView = {
   id: string;
@@ -35,6 +42,10 @@ function isProposalOutput(output: unknown): output is ProposalToolOutput {
   return typeof output === 'object' && output !== null && 'proposalId' in output;
 }
 
+function isPlanOutput(output: unknown): output is PlanToolOutput {
+  return isProposalOutput(output) && 'plan' in output;
+}
+
 function itemOf(part: Part, index: number): MessageItem | null {
   const key = typeof part.toolCallId === 'string' ? part.toolCallId : String(index);
   if (part.type === 'text') {
@@ -43,9 +54,10 @@ function itemOf(part: Part, index: number): MessageItem | null {
   }
   if (!isTool(part)) return null;
   if (part.state === 'input-streaming' || part.state === 'input-available') {
-    return { kind: 'working', key };
+    return { kind: 'working', key, planning: part.type === 'tool-propose_workout' };
   }
   if (part.state !== 'output-available') return null;
+  if (isPlanOutput(part.output)) return { kind: 'plan', key, output: part.output };
   if (isProposalOutput(part.output)) return { kind: 'proposal', key, output: part.output };
   // A write that changed nothing has no card.
   if (isWriteOutput(part.output) && part.output.changes.length > 0) {

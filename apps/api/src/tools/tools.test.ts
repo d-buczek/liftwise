@@ -23,7 +23,7 @@ import {
 } from '../../test/helpers';
 import { changeLog, messages, sets, workouts } from '../db/schema';
 import { applyWrites } from '../sync/write';
-import { TOOLS, toolByName } from '.';
+import { agentTools, TOOLS, toolByName } from '.';
 import { balanceSets, catalog, history } from './data';
 import { runTool, type ToolContext } from './registry';
 
@@ -82,7 +82,16 @@ describe('tool registry', () => {
       'update_exercise',
       'update_profile',
       'update_settings',
+      'propose_workout',
+      'propose_plan',
     ]);
+  });
+
+  it('offers the model every tool but the internal ones', () => {
+    const offered = Object.keys(agentTools(ctx()));
+    expect(offered).toHaveLength(TOOLS.length - 1);
+    expect(offered).toContain('propose_workout');
+    expect(offered).not.toContain('propose_plan');
   });
 });
 

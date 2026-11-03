@@ -62,8 +62,40 @@ describe('messageView', () => {
     expect(view.items).toEqual([
       { kind: 'change', key: 'b', output: write },
       { kind: 'proposal', key: 'd', output: proposal },
-      { kind: 'working', key: 'e' },
+      { kind: 'working', key: 'e', planning: false },
       { kind: 'text', key: '7', text: 'Zapisane.' },
+    ]);
+  });
+
+  it('shows a proposed workout as a plan card, and that it is being worked out', () => {
+    const output = {
+      proposalId: newId(),
+      status: 'pending',
+      changes: [],
+      date: '2026-11-05',
+      replaces: 0,
+      plan: { exercises: [], rationale: 'Krótko.' },
+    };
+    const view = messageView(
+      {
+        id: newId(),
+        role: 'assistant',
+        parts: [
+          { type: 'tool-propose_workout', toolCallId: 'a', state: 'input-available', input: {} },
+          { type: 'tool-propose_workout', toolCallId: 'b', state: 'output-available', output },
+          {
+            type: 'tool-propose_workout',
+            toolCallId: 'c',
+            state: 'output-available',
+            output: { error: 'planner_failed' },
+          },
+        ],
+      },
+      true,
+    );
+    expect(view.items).toEqual([
+      { kind: 'working', key: 'a', planning: true },
+      { kind: 'plan', key: 'b', output },
     ]);
   });
 });
