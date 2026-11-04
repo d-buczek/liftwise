@@ -1,7 +1,14 @@
 import { newId } from '@liftwise/core';
 import { describe, expect, it } from 'vite-plus/test';
 import { makeSet } from '../testing';
-import { exerciseBlocks, extraSet, reorderBlocks, stepValue, stepWeight } from './day';
+import {
+  exerciseBlocks,
+  extraSet,
+  parseWeightKg,
+  reorderBlocks,
+  stepValue,
+  stepWeight,
+} from './day';
 
 const [a, b, c] = [newId(), newId(), newId()];
 
@@ -70,5 +77,20 @@ describe('day helpers', () => {
     expect(stepValue('reps', 9, 1)).toBe(10);
     expect(stepValue('time', 45, 1)).toBe(50);
     expect(stepValue('time', 7, -1)).toBe(5);
+  });
+
+  it('reads a typed weight with a comma or a dot', () => {
+    expect(parseWeightKg('30')).toBe(30);
+    expect(parseWeightKg('22,75')).toBe(22.75);
+    expect(parseWeightKg('22.75')).toBe(22.75);
+    expect(parseWeightKg(' 13,50 ')).toBe(13.5);
+    expect(parseWeightKg('12,')).toBe(12);
+    expect(parseWeightKg(',5')).toBe(0.5);
+    expect(parseWeightKg('0')).toBe(0);
+  });
+
+  it('rejects a typed weight the schema or the format does not allow', () => {
+    for (const text of ['', ' ', '12,3', '-5', '1e2', '0x10', '1,2,5', '1.2,5', ',', 'kg', '1 000'])
+      expect(parseWeightKg(text)).toBeNull();
   });
 });

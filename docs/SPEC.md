@@ -8,7 +8,7 @@ This file is the source of truth. When a decision changes, update the decision l
 ## 1. Summary
 
 LiftWise is a personal strength-training log for Android and Windows, a richer successor to FitNotes for a single user.
-The core flow is FitNotes-style and works offline: pick a day in the calendar, copy a past workout onto it, adjust, and confirm sets on a fast, keyboard-free workout screen. Progression is suggested as one-tap hints, never applied automatically.
+The core flow is FitNotes-style and works offline: pick a day in the calendar, copy a past workout onto it, adjust, and confirm sets on a fast workout screen of big controls. Progression is suggested as one-tap hints, never applied automatically.
 On top of that, an AI agent with tools over the app's data logs and edits from a sentence or voice, copies and plans workouts, answers questions about history, and can propose a workout for an unusual day (little time, pain).
 
 ## 2. Context and constraints
@@ -27,7 +27,7 @@ On top of that, an AI agent with tools over the app's data logs and edits from a
 
 | # | Topic | Decision | Rationale |
 |---|---|---|---|
-| D1 | Logging mode | **Hybrid**: keyboard-free workout screen (confirm planned set, ±rep, ±weight, RIR chips) + agent for everything expressible as a sentence | Agent round-trip is 2–5 s and costs money; most sets match the plan; screen works offline |
+| D1 | Logging mode | **Hybrid**: workout screen of big controls (confirm planned set, ±rep, ±weight or a typed weight, RIR chips; the keyboard only when a weight is typed, LW-17) + agent for everything expressible as a sentence | Agent round-trip is 2–5 s and costs money; most sets match the plan; screen works offline; the ± step can't reach every weight (one logged at a gym may never land on the home dumbbells' limit), and snapping to a grid would change real weights |
 | D2 | Earlier history | **One-time import of the recent sessions (LW-16), through the sync push; no import feature in the app** | The recent sessions feed the hints and records; older data isn't needed |
 | D3 | Equipment | Adjustable dumbbells + bench; **extensible equipment profile** in settings | Exercise availability and agent context depend on it |
 | D4 | Effort tracking | **Optional RIR** (0–4+) per set | Key signal for progression; never mandatory |
@@ -153,9 +153,10 @@ Active workout (hybrid logging):
 - The workout screen (D45) opens from a day dated today or earlier: "Rozpocznij trening" / "Wróć do treningu" on the first exercise with a planned set left, or the exercise's name on the day. A future day is planning only. While it is shown the screen stays on (keep-awake on Android, Screen Wake Lock in the browser where supported); logging a set gives a short haptic tap on Android.
 - Confirming the first set of a workout starts it (`started_at`). A workout can also start empty, or implicitly when the agent logs the first set. An accepted AI proposal (§5.9.6) only plans the sets (D53).
 - The current exercise card shows the progression hint, the last session's done sets ("Poprzednio, 27 października: 22,5 kg × 10, 10, 9"), the exercise's sets of the day and its **setup note** ("ławka na 3", "chwyt neutralny"). The note belongs to the exercise, is editable from the card together with the exercise's weight step and rest, and shows in every workout.
-- Big controls, no keyboard. The **draft** of the next set is the next planned set; without one, the previous done set of the day, else the first working set of the last session, else the bottom of the range at 0 kg. It starts over after every set (RIR clears):
+- Big controls; the keyboard opens only to type a weight. The **draft** of the next set is the next planned set; without one, the previous done set of the day, else the first working set of the last session, else the bottom of the range at 0 kg. It starts over after every set (RIR clears):
   - **"Zrobione"**: mark the next planned set as done with the draft's values, or add a done set when none is planned.
   - Before confirming: reps −/+ (timed exercises: duration −/+ 5 s), weight −/+ (fixed step, default 1.25 kg, overridable per exercise; D31), RIR chips (optional), warm-up toggle.
+  - **Typing a weight** (LW-17, here and in the set editor; reps and time stay −/+ only): tapping the weight opens a field with the numeric keyboard, with a comma or a dot. Enter or leaving the field applies it, so "Zrobione" with the field open logs the typed weight; Esc or an empty field keeps the old one. Anything but a non-negative multiple of 0.25 kg is never rounded: the field stays open with a message and "Zrobione" / "Zapisz" wait, while −/+ drops the text and steps from the last good weight. There is no upper limit, since history can be above `max_kg`.
   - **"Jak poprzednio"**: the same button while no planned set is left and the draft still matches the previous set: adds a done set identical to it.
   - Next/previous exercise (after the last planned set, "Dalej: <name>"), pick exercise (the day's exercises or any other from the picker).
   - Mic button and chat drawer for the agent (LW-09/10).

@@ -51,7 +51,7 @@ import {
 import { catalog, dayData, equipment, historySets, trainingSettings } from '../workout/queries';
 
 // The active workout (§5.2, §5.3): one exercise at a time with the draft of its next set,
-// logged with "Zrobione" without a keyboard; the rest timer runs at the bottom.
+// logged with "Zrobione"; the rest timer runs at the bottom.
 const props = defineProps<{ date: string; exerciseId: string | null; dayHref: string }>();
 
 const { t } = useI18n();
@@ -328,6 +328,7 @@ function details(set: WorkoutSet): string {
 
         <div class="lw-workout__card">
           <set-logger
+            :key="current ?? undefined"
             v-model="draft"
             :title="title"
             :step-kg="stepKg"

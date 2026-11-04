@@ -418,6 +418,8 @@
     "rirMax": "4+",
     "less": "Mniej: {label}",
     "more": "Więcej: {label}",
+    "typeValue": "Wpisz inną wartość",
+    "weightInvalid": "Wpisz nieujemną wielokrotność {step} kg",
     "kg": "kg",
     "repsUnit": "powt.",
     "seconds": "s",

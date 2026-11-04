@@ -4,6 +4,7 @@ import {
   progressionHint,
   roundWeightKg,
   TIME_STEP_S,
+  weightKgSchema,
   type Measure,
   type ProgressionHint,
   type ProgressionHintInput,
@@ -90,4 +91,13 @@ export function stepWeight(weightKg: number, stepKg: number, direction: 1 | -1):
 export function stepValue(measure: Measure, value: number, direction: 1 | -1): number {
   const step = measure === 'time' ? TIME_STEP_S : 1;
   return Math.max(step, value + direction * step);
+}
+
+// A weight typed by hand (§5.2): a plain decimal with a comma or a dot, null unless the schema
+// takes it. The pattern comes first because Number() also reads '', '1e2' and '0x10'.
+export function parseWeightKg(text: string): number | null {
+  const typed = text.trim().replace(',', '.');
+  if (!/^(\d+\.?\d*|\.\d+)$/.test(typed)) return null;
+  const parsed = weightKgSchema.safeParse(Number(typed));
+  return parsed.success ? parsed.data : null;
 }

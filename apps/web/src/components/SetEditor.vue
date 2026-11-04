@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import type { Exercise, WorkoutSet } from '@liftwise/core';
+import { WEIGHT_PRECISION_KG, type Exercise, type WorkoutSet } from '@liftwise/core';
 import { IonButton, IonButtons, IonHeader, IonTitle, IonToggle, IonToolbar } from '@ionic/vue';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useFormat } from '../composables/format';
-import { stepValue, stepWeight } from '../workout/day';
+import { parseWeightKg, stepValue, stepWeight } from '../workout/day';
 import NumberStepper from './NumberStepper.vue';
 import RirChips from './RirChips.vue';
 
-// One set with the ± controls (§5.2); a done set also gets its RIR.
+// One set with the ± controls and a typed weight (§5.2); a done set also gets its RIR.
 const props = defineProps<{ set: WorkoutSet; exercise: Exercise | undefined; stepKg: number }>();
 const emit = defineEmits<{ save: [set: WorkoutSet]; remove: [set: WorkoutSet]; close: [] }>();
 
@@ -16,6 +16,13 @@ const { t } = useI18n();
 const format = useFormat();
 const draft = ref<WorkoutSet>({ ...props.set });
 const timed = props.set.duration_s !== null;
+const weightInvalid = ref(false);
+
+// A disabled ion-button stops clicks only from its next render, and a tap right after the last
+// keystroke would save the old weight.
+function save() {
+  if (!weightInvalid.value) emit('save', draft.value);
+}
 
 function stepAmount(direction: 1 | -1) {
   const set = draft.value;
@@ -36,10 +43,14 @@ function stepAmount(direction: 1 | -1) {
   <div class="lw-sheet__body">
     <div class="lw-column lw-set-editor">
       <number-stepper
+        v-model:invalid="weightInvalid"
         :label="t('set.weight')"
         :value="format.kg(draft.weight_kg)"
         :unit="t('set.kg')"
+        :parse="parseWeightKg"
+        :invalid-text="t('set.weightInvalid', { step: format.kg(WEIGHT_PRECISION_KG) })"
         @step="(direction) => (draft.weight_kg = stepWeight(draft.weight_kg, stepKg, direction))"
+        @enter="(weight) => (draft.weight_kg = weight)"
       />
       <number-stepper
         :label="timed ? t('set.duration') : t('set.reps')"
@@ -55,7 +66,7 @@ function stepAmount(direction: 1 | -1) {
         <ion-button fill="clear" color="danger" @click="emit('remove', set)">
           {{ t('common.delete') }}
         </ion-button>
-        <ion-button class="lw-set-editor__save" @click="emit('save', draft)">
+        <ion-button class="lw-set-editor__save" :disabled="weightInvalid" @click="save">
           {{ t('common.save') }}
         </ion-button>
       </div>
