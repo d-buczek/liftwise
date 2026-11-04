@@ -8,6 +8,7 @@ import {
 import { MockLanguageModelV4 } from 'ai/test';
 import { and, eq, isNull } from 'drizzle-orm';
 import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
+import { weekdayOf } from '../agent/prompt';
 import {
   call,
   createDevice,
@@ -182,7 +183,10 @@ describe('propose_workout', () => {
 
     expect(output).toMatchObject({ status: 'pending', changes: [], date: LATER, replaces: 1 });
     const sent = promptOf(model);
-    expect(sent).toContain(`Workout for ${LATER}`);
+    expect(sent).toContain(`Workout for ${LATER} (${weekdayOf(LATER)})`);
+    expect(sent).toContain(`today is ${TODAY} (${weekdayOf(TODAY)})`);
+    expect(sent).toContain(`${LATER} (${weekdayOf(LATER)}) done:`);
+    expect(sent).toContain(`${LATER} (${weekdayOf(LATER)}) planned:`);
     expect(sent).toContain('time available: 30 min');
     expect(sent).toContain('wellbeing (1-5): 3');
     expect(sent).toContain('pain or limitations: bark');

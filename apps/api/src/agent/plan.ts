@@ -129,12 +129,13 @@ function hintLines(hints: PlanContext['hints']): string {
     .join('\n');
 }
 
-// Per day and exercise: "22.5 kg x 10, 10, 9". Warm-ups don't tell the load.
+// Per day and exercise: "22.5 kg x 10, 10, 9". Warm-ups don't tell the load. The weekday is spelled
+// out: a model naming a session's day from its date alone got it wrong in the rationale.
 function setLines(sets: DatedSet[], exercises: Exercise[]): string {
   const names = new Map(exercises.map((exercise) => [exercise.id, exercise.name_pl]));
   const byDay = Map.groupBy(
     sets.filter((set) => !set.warmup),
-    (set) => `${set.date} ${isDoneSet(set) ? 'done' : 'planned'}`,
+    (set) => `${set.date} (${weekdayOf(set.date)}) ${isDoneSet(set) ? 'done' : 'planned'}`,
   );
   return [...byDay]
     .map(([day, rows]) => {
@@ -160,7 +161,7 @@ export type PlanRequest = {
 export function plannerPrompt(context: PlanContext, { checkin, change }: PlanRequest): string {
   const { time_min, wellbeing, pain } = checkin;
   const sections = [
-    `Workout for ${context.date} (${weekdayOf(context.date)}); today is ${context.today}.`,
+    `Workout for ${context.date} (${weekdayOf(context.date)}); today is ${context.today} (${weekdayOf(context.today)}).`,
     [
       'Check-in:',
       `- time available: ${time_min === null ? 'not given' : `${time_min} min`}`,
