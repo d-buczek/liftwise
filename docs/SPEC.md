@@ -64,7 +64,7 @@ On top of that, an AI agent with tools over the app's data logs and edits from a
 | D35 | Export & backup | **JSON + CSV export** generated on the device from the local mirror; server-side restore via D1 Time Travel | The user owns the data; no extra infrastructure (R2, cron) |
 | D36 | Bodyweight progression | At 0 kg the progression hint never adds weight, for reps and timed exercises alike; it stops at the range max (`hold`) | Loading a bodyweight exercise (vest, dumbbell) is the user's call, not a step |
 | D37 | Dumbbell limit | No `weight_up` beyond the heaviest dumbbell of the equipment profile (`max_kg`); the hint holds instead | A hint the user can't load is noise |
-| D38 | Records baseline | The first workout of an exercise is the baseline and sets **no records** | Without a FitNotes import (D2) the first weeks would be all records and toasts |
+| D38 | Records baseline | The first workout of an exercise is the baseline and sets **no records** | Otherwise the first weeks of a new exercise, which has no imported history (D2), would be all records and toasts |
 | D39 | DB migrations | **Drizzle schema → `drizzle-kit generate` (SQL) → `wrangler d1 migrations apply`**; not `drizzle-kit migrate`/`push` over `d1-http`. Drizzle stays on the stable 0.x line until v1 is released | Works locally without a Cloudflare account; the same SQL files feed the integration tests (`readD1Migrations`); wrangler records applied migrations in D1 |
 | D40 | Seed catalog in D1 | A **generated custom migration** (`pnpm --filter @liftwise/api db:seed` → `drizzle-kit generate --custom` filled from `exercises.json`): `INSERT … ON CONFLICT DO NOTHING`, each new row with the next `seq` (existing ones take none), no `change_log`. A migrated seed exercise keeps its first version; changing it takes a mutation | Ships with the migrations to local, remote and test D1 without an extra step; keeps the user's edits of seed exercises; a test fails when exercises were added without a new seed migration or a migrated one was edited in the JSON |
 | D41 | Change groups & singletons | The **client assigns `groupId`**, one per user action, on every pushed mutation; the athlete profile and each settings key have **fixed ids in core** | One undo reverts a whole action (e.g. a copied workout) even across pushes; two offline devices creating the profile or a setting write the same row instead of duplicates |
@@ -113,7 +113,7 @@ On top of that, an AI agent with tools over the app's data logs and edits from a
 
 - Multi-user, social features, Play Store distribution.
 - Rigid periodized programs.
-- FitNotes import.
+- An import feature for other apps' backups (the one import was a one-off, D2).
 - Imperial units (kg only).
 
 ## 5. Functional specification
@@ -592,6 +592,8 @@ Each line is meant to be one `/ticket` task.
 | LW-13 | Agent eval suite |
 | LW-14 | Workout labels (training sets such as A / B) with colors: synced entity, shown on the calendar, day and history; a copy keeps the label and the copy dialog offers "the last A / B" |
 | LW-15 | Agent CPU on Workers Free: profile a chat turn in workerd, cut the CPU per model step (tool schemas, context, message persistence), measure again on the deployed Worker (§9) |
+| LW-16 | One-time import of the earlier training history (D2) |
+| LW-17 | A field to type a weight, next to the ± step (changes D1) |
 | LW-20 | Phase 2: MCP endpoint with token auth |
 | LW-21 | Phase 2: OAuth for claude.ai connectors |
 
