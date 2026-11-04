@@ -15,9 +15,28 @@ export const usePromptQueueStore = defineStore('promptQueue', () => {
   const prompts = useLiveQuery(() => db.prompt_queue.orderBy('seq').toArray(), []);
   // The prompt being sent now.
   const sending = ref<number | null>(null);
-  // A turn is running on the agent page: a prompt sent now would run next to it and see its message
-  // without an answer. The sync after that turn runs the queue.
+  // A turn is running from the agent page: a prompt sent now would run next to it and see its message
+  // without an answer. It lives here because it outlives the page: leaving through the menu unmounts
+  // the page while the request goes on.
   const liveTurn = ref(false);
+  let stopLiveTurn: (() => unknown) | null = null;
+
+  async function runTurn(turn: () => Promise<void>, stop: () => unknown) {
+    liveTurn.value = true;
+    stopLiveTurn = stop;
+    try {
+      await turn();
+    } finally {
+      liveTurn.value = false;
+      stopLiveTurn = null;
+      // The turn's writes and its stored messages; a prompt queued during the turn goes after them.
+      void sync.sync();
+    }
+  }
+
+  function stopTurn() {
+    stopLiveTurn?.();
+  }
 
   let running = false;
   let again = false;
@@ -73,5 +92,5 @@ export const usePromptQueueStore = defineStore('promptQueue', () => {
     sync.onSynced(() => void process());
   }
 
-  return { prompts, sending, liveTurn, enqueue, retry, remove, start };
+  return { prompts, sending, liveTurn, runTurn, stopTurn, enqueue, retry, remove, start };
 });

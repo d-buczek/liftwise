@@ -9,7 +9,7 @@ import {
   onIonViewWillLeave,
 } from '@ionic/vue';
 import { arrowUp, mic, micOutline, stop, timeOutline } from 'ionicons/icons';
-import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { chatFailure, useAgentChat } from '../agent/chat';
 import { agentPrompt } from '../agent/checkin';
@@ -56,14 +56,10 @@ const threadId = computed(() =>
 const stored = useLiveQuery(() => threadMessages(threadId.value), [], threadId);
 const chat = useAgentChat(threadId, () => auth.token);
 const messages = computed(() => chatView(stored.value, chat.messages.value));
-const busy = computed(() => chat.status.value === 'submitted' || chat.status.value === 'streaming');
-
-// The turn's writes and its stored messages; a prompt queued during the turn goes after them.
-watch(busy, (running, was) => {
-  queue.liveTurn = running;
-  if (was && !running) void sync.sync();
-});
-onBeforeUnmount(() => (queue.liveTurn = false));
+// A turn started before leaving this page is still running when it opens again, without a stream to
+// show here: its answer comes with the sync at its end.
+const busy = computed(() => queue.liveTurn);
+const thinking = computed(() => busy.value && chat.status.value !== 'streaming');
 
 const draft = ref('');
 const canSend = computed(() => !busy.value && draft.value.trim().length > 0);
@@ -87,7 +83,10 @@ async function deliver(message: string) {
     return;
   }
   sentAt = new Date();
-  await chat.sendMessage({ text: message });
+  await queue.runTurn(
+    () => chat.sendMessage({ text: message }),
+    () => chat.stop(),
+  );
 }
 
 async function send() {
@@ -126,7 +125,10 @@ const failure = computed(() => (chat.error.value ? chatFailure(chat.error.value)
 // The user message is on the server (or was never stored): it goes again with the same id.
 function retry() {
   sentAt = new Date();
-  void chat.regenerate();
+  void queue.runTurn(
+    () => chat.regenerate(),
+    () => chat.stop(),
+  );
 }
 
 // The device looked online but the request didn't get through (a weak signal at the gym): the
@@ -185,7 +187,7 @@ watch(
     </div>
 
     <chat-log :messages="messages" :busy="busy" :regenerate="regenerate" />
-    <p v-if="chat.status.value === 'submitted'" class="lw-agent__thinking" aria-live="polite">
+    <p v-if="thinking" class="lw-agent__thinking" aria-live="polite">
       {{ t('agent.thinking') }}
     </p>
     <div v-if="failure" class="lw-agent__error" role="alert">
@@ -247,7 +249,7 @@ watch(
               fill="outline"
               class="lw-composer__button"
               :aria-label="t('agent.stop')"
-              @click="chat.stop()"
+              @click="queue.stopTurn()"
             >
               <ion-icon slot="icon-only" :icon="stop" aria-hidden="true" />
             </ion-button>

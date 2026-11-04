@@ -5,7 +5,6 @@ import { db } from '../db/database';
 import { resetDb } from '../testing';
 import { useAuthStore } from './auth';
 import { usePromptQueueStore } from './promptQueue';
-import { useSyncStore } from './sync';
 
 const pulled = { changes: [], seq: 0, hasMore: false };
 
@@ -39,22 +38,69 @@ const queueEmptied = () => vi.waitFor(async () => expect(await db.prompt_queue.c
 // Long enough for the sync to finish and the queue to send what it would send.
 const settled = () => new Promise((resolve) => setTimeout(resolve, 50));
 
-it('a prompt queued during a live turn waits for the end of that turn', async () => {
+function deferred() {
+  let resolve!: () => void;
+  let reject!: (error: Error) => void;
+  const promise = new Promise<void>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  return { promise, resolve, reject };
+}
+
+it('a prompt queued during a live turn runs by itself after that turn ends', async () => {
   const turns = mockServer();
   const queue = usePromptQueueStore();
-  const sync = useSyncStore();
   queue.start();
 
-  queue.liveTurn = true;
+  const live = deferred();
+  const running = queue.runTurn(() => live.promise, vi.fn());
+  expect(queue.liveTurn).toBe(true);
+
   await queue.enqueue(newId(), 'Zaproponuj trening');
   await settled();
   expect(turns).toHaveLength(0);
   expect(await db.prompt_queue.count()).toBe(1);
 
-  queue.liveTurn = false;
-  await sync.sync();
+  live.resolve();
+  await running;
+  expect(queue.liveTurn).toBe(false);
   await queueEmptied();
   expect(turns).toHaveLength(1);
+});
+
+it('a failed live turn releases the queue too', async () => {
+  const turns = mockServer();
+  const queue = usePromptQueueStore();
+  queue.start();
+
+  const live = deferred();
+  const running = queue.runTurn(() => live.promise, vi.fn());
+  await queue.enqueue(newId(), 'Zaproponuj trening');
+  await settled();
+  expect(turns).toHaveLength(0);
+
+  live.reject(new Error('broken stream'));
+  await expect(running).rejects.toThrow('broken stream');
+  expect(queue.liveTurn).toBe(false);
+  await queueEmptied();
+  expect(turns).toHaveLength(1);
+});
+
+it('stops the live turn, and nothing once it ended', async () => {
+  mockServer();
+  const queue = usePromptQueueStore();
+  const stop = vi.fn();
+
+  const live = deferred();
+  const running = queue.runTurn(() => live.promise, stop);
+  queue.stopTurn();
+  expect(stop).toHaveBeenCalledOnce();
+
+  live.resolve();
+  await running;
+  queue.stopTurn();
+  expect(stop).toHaveBeenCalledOnce();
 });
 
 it('runs a queued prompt after a sync when no turn is live', async () => {
