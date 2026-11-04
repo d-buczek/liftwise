@@ -193,6 +193,7 @@ describe('propose_workout', () => {
     expect(sent).toContain(repsExercise.id);
     expect(sent).toContain(`${repsExercise.name_pl} 18 kg x 10`);
     expect(sent).toContain('step 1.25 kg');
+    expect(sent).toContain("whole multiple of the exercise's step");
 
     // Weights fit the equipment.
     expect(output.plan.exercises[0]?.sets.map((set) => set.weight_kg)).toEqual([

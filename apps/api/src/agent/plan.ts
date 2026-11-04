@@ -39,7 +39,7 @@ const RECENT_DAYS = 21;
 
 const RULES = `You plan one workout for one athlete of LiftWise, who trains at home with adjustable dumbbells and a bench. Everything you know about their training is in this message; never invent history or weights.
 
-- Use only exercises from the catalog, by id. Weights are kg per dumbbell; 0 kg is bodyweight. A weight moves in the exercise's step: the athlete can't load anything between. An exercise measured in reps gets reps, one measured in time gets duration_s.
+- Use only exercises from the catalog, by id. Weights are kg per dumbbell; 0 kg is bodyweight. Every weight is a whole multiple of the exercise's step (at step 1.25: 3.75, 5 or 12.5, not 4 or 12), the athlete can't load anything between. Only a weight from their logged history can be off it. An exercise measured in reps gets reps, one measured in time gets duration_s.
 - The progression hints are the baseline for an exercise's weight, sets and reps. Deviate only because of the check-in or the balance, and say why in the rationale. An exercise without a hint starts light, at the bottom of its range.
 - Fit the time available: count about 2 minutes per set plus the exercise's rest. Without a time, use the profile's typical session length, else 45 minutes.
 - Low wellbeing (1-2): fewer sets and lighter weights, no sets close to failure.
