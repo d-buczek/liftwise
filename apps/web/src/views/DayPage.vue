@@ -26,7 +26,7 @@ import { add, ellipsisVertical } from 'ionicons/icons';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
-import { agentPrompt, checkinMessage, type CheckinAnswers } from '../agent/checkin';
+import { agentPrompt, checkinMessage, checkinRequest, type CheckinAnswers } from '../agent/checkin';
 import AppPage from '../components/AppPage.vue';
 import CheckinSheet from '../components/CheckinSheet.vue';
 import CopyWorkout from '../components/CopyWorkout.vue';
@@ -85,7 +85,10 @@ const checkingIn = ref(false);
 // The agent's page sends it and shows the plan card.
 function proposeWorkout(answers: CheckinAnswers) {
   checkingIn.value = false;
-  agentPrompt.value = checkinMessage(props.date, answers);
+  agentPrompt.value = {
+    text: checkinMessage(props.date, answers),
+    workout: checkinRequest(props.date, answers),
+  };
   void router.push('/agent');
 }
 

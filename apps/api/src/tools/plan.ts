@@ -3,16 +3,16 @@ import {
   checkPlan,
   isDoneSet,
   planProposalSchema,
+  workoutRequestSchema,
   type PlanProposal,
   type PlanToolOutput,
   type PlannerOutput,
 } from '@liftwise/core';
 import { and, desc, eq, ne, or } from 'drizzle-orm';
-import { z } from 'zod';
 import { generatePlan, loadPlanContext, type PlanContext, type PlanRequest } from '../agent/plan';
 import { ProviderUnavailable } from '../agent/providers';
 import { pendingProposals, threads } from '../db/schema';
-import { dateInput, dateOf } from './common';
+import { dateOf } from './common';
 import { catalog, days, equipment } from './data';
 import {
   defineTool,
@@ -23,9 +23,10 @@ import {
   type ToolContext,
 } from './registry';
 
-// The optional workout proposal (§5.9.6). `propose_workout` is what the model calls: the `planner`
-// model works out the plan, which is stored as a proposal of `propose_plan`. Confirming runs that
-// one on the current data, without a model.
+// The optional workout proposal (§5.9.6). `propose_workout` is what the `fast` model calls, or the
+// chat route for a check-in or a regeneration (D53): the `planner` model works out the plan, which
+// is stored as a proposal of `propose_plan`. Confirming runs that one on the current data, without
+// a model.
 
 async function checked(ctx: ToolContext, output: PlannerOutput, context?: PlanContext) {
   const result = checkPlan({
@@ -149,16 +150,7 @@ const proposeWorkout = defineTool({
     'Propose a workout for today or a later day, from a check-in: a stronger model plans it and ' +
     'the user gets a plan card to accept. Nothing changes until they accept. Also for changing ' +
     'the last plan or asking for another one (change_request). Pass only what the user said.',
-  input: z.object({
-    date: dateInput.optional().describe('Local date, YYYY-MM-DD; default today'),
-    time_min: z.number().int().positive().optional().describe('Time available, minutes'),
-    wellbeing: z.number().int().min(1).max(5).optional().describe('How they feel, 1-5'),
-    pain: z.string().optional().describe('Pain or limitations, in their words'),
-    change_request: z
-      .string()
-      .optional()
-      .describe('What to change in the last plan, or that they want another one'),
-  }),
+  input: workoutRequestSchema.partial({ date: true }),
   risk: 'risky',
   propose: async (ctx, input) => {
     const date = dateOf(ctx, input.date);

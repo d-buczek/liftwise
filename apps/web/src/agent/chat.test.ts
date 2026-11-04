@@ -35,6 +35,12 @@ describe('chatRequest', () => {
     });
   });
 
+  it('says what to plan for a check-in', () => {
+    const message = { id: newId(), role: 'user', parts: [{ type: 'text', text: 'Plan' }] };
+    const workout = { date: '2026-11-05', time_min: 45 };
+    expect(chatRequest(newId(), [message], undefined, workout).workout).toEqual(workout);
+  });
+
   it('is sent with the current local time by default', () => {
     const message = { id: newId(), role: 'user', parts: [{ type: 'text', text: 'hej' }] };
     const { localTime } = chatRequest(newId(), [message]);

@@ -1,5 +1,5 @@
 import { useChat } from '@ai-sdk/vue';
-import { newId } from '@liftwise/core';
+import { newId, type WorkoutRequest } from '@liftwise/core';
 import { DefaultChatTransport } from 'ai';
 import type { Ref } from 'vue';
 import { apiUrl, fetchWithTimeout, UNREACHABLE } from '../api/client';
@@ -20,12 +20,14 @@ export function localTimestamp(now = new Date()): string {
   return `${local}${sign}${pad(Math.floor(minutes / 60))}:${pad(minutes % 60)}`;
 }
 
-// The body of `POST /api/agent/chat`: the last user message with its text parts only, and when it
-// was said (now, or earlier for a queued prompt).
+// The body of `POST /api/agent/chat`: the last user message with its text parts only, when it was
+// said (now, or earlier for a queued prompt), and what to plan for a check-in or "Wygeneruj
+// ponownie".
 export function chatRequest(
   threadId: string,
   messages: ChatMessage[],
   localTime = localTimestamp(),
+  workout?: WorkoutRequest,
 ) {
   const message = messages.findLast((candidate) => candidate.role === 'user');
   if (!message) throw new Error('the chat has no user message to send');
@@ -38,6 +40,7 @@ export function chatRequest(
     threadId,
     message: { id: message.id, role: 'user', parts },
     localTime,
+    workout,
   };
 }
 
@@ -47,8 +50,8 @@ export function chatTransport(token: () => string | null, localTime?: string) {
     api: apiUrl('/api/agent/chat'),
     fetch: fetchWithTimeout,
     headers: (): Record<string, string> => ({ Authorization: `Bearer ${token() ?? ''}` }),
-    prepareSendMessagesRequest: ({ id, messages }) => ({
-      body: chatRequest(id, messages, localTime),
+    prepareSendMessagesRequest: ({ id, messages, body }) => ({
+      body: chatRequest(id, messages, localTime, body?.workout as WorkoutRequest | undefined),
     }),
   });
 }

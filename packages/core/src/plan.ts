@@ -74,6 +74,20 @@ export const planProposalSchema = z.object({
 });
 export type PlanProposal = z.infer<typeof planProposalSchema>;
 
+// What to plan: the input of `propose_workout`, from the model or, for a check-in and "Wygeneruj
+// ponownie", straight from the app (D53).
+export const workoutRequestSchema = z.object({
+  date: z.string().describe('Local date, YYYY-MM-DD; default today'),
+  time_min: z.number().int().positive().optional().describe('Time available, minutes'),
+  wellbeing: z.number().int().min(1).max(5).optional().describe('How they feel, 1-5'),
+  pain: z.string().optional().describe('Pain or limitations, in their words'),
+  change_request: z
+    .string()
+    .optional()
+    .describe('What to change in the last plan, or that they want another one'),
+});
+export type WorkoutRequest = z.infer<typeof workoutRequestSchema>;
+
 export type PlanError =
   // Unknown, archived, or needing equipment the athlete doesn't have.
   | { code: 'plan_exercise_unavailable'; exercise_id: string }

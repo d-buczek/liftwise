@@ -1,4 +1,4 @@
-import type { SyncEntity, SyncMutation, SyncRow } from '@liftwise/core';
+import type { SyncEntity, SyncMutation, SyncRow, WorkoutRequest } from '@liftwise/core';
 import { Dexie, type EntityTable, type Table } from 'dexie';
 
 // Local mirror of the synced tables plus client-only state (SPEC §6.3). Mirror rows keep the
@@ -31,6 +31,8 @@ export type QueuedPrompt = {
   status: 'pending' | 'failed';
   error: { code: string; provider?: string } | null;
   tries: number;
+  // A check-in or "Wygeneruj ponownie": what to plan (§5.9.6).
+  workout?: WorkoutRequest;
 };
 
 export class LiftWiseDb extends Dexie {

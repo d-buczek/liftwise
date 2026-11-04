@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { newId } from '@liftwise/core';
+import { newId, type WorkoutRequest } from '@liftwise/core';
 import {
   IonButton,
   IonFooter,
@@ -71,20 +71,23 @@ onIonViewWillLeave(() => voice.stop());
 
 // When the latest live request went out: the time a prompt that didn't get through keeps.
 let sentAt = new Date();
+// What it asked to plan, which a retry and the queue need too.
+let sentWorkout: WorkoutRequest | undefined;
 
 const noServer = computed(() => sync.online && sync.error === UNREACHABLE);
 
 // Without the network or the server, or behind prompts still waiting (they run in order), a prompt
 // goes to the queue; so does one from a card or another page while a turn runs, until it ends.
-async function deliver(message: string) {
+async function deliver(message: string, workout?: WorkoutRequest) {
   used.value = { date: today.value, id: threadId.value };
   if (!sync.online || noServer.value || queue.prompts.length > 0 || busy.value) {
-    await queue.enqueue(threadId.value, message);
+    await queue.enqueue(threadId.value, message, { workout });
     return;
   }
   sentAt = new Date();
+  sentWorkout = workout;
   await queue.runTurn(
-    () => chat.sendMessage({ text: message }),
+    () => chat.sendMessage({ text: message }, { body: { workout } }),
     () => chat.stop(),
   );
 }
@@ -101,16 +104,17 @@ async function send() {
 watch(
   [agentPrompt, threadKnown],
   () => {
-    const message = agentPrompt.value;
-    if (!message || !threadKnown.value) return;
+    const prompt = agentPrompt.value;
+    if (!prompt || !threadKnown.value) return;
     agentPrompt.value = null;
-    void deliver(message);
+    void deliver(prompt.text, prompt.workout);
   },
   { immediate: true },
 );
 
 function regenerate(date: string) {
-  void deliver(t('agent.plan.message.regenerate', { date }));
+  const message = t('agent.plan.message.regenerate', { date });
+  void deliver(message, { date, change_request: message });
 }
 
 // Enter sends, Shift+Enter breaks the line.
@@ -126,7 +130,7 @@ const failure = computed(() => (chat.error.value ? chatFailure(chat.error.value)
 function retry() {
   sentAt = new Date();
   void queue.runTurn(
-    () => chat.regenerate(),
+    () => chat.regenerate({ body: { workout: sentWorkout } }),
     () => chat.stop(),
   );
 }
@@ -146,7 +150,12 @@ watch(failure, (value) => {
     .trim();
   chat.messages.value = all.slice(0, index);
   chat.clearError();
-  if (text) void queue.enqueue(threadId.value, text, { id: message.id, at: sentAt });
+  if (text) {
+    void queue.enqueue(threadId.value, text, {
+      sent: { id: message.id, at: sentAt },
+      workout: sentWorkout,
+    });
+  }
 });
 
 const EXAMPLES = ['log', 'edit', 'ask'] as const;

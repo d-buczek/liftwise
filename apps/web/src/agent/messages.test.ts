@@ -100,6 +100,19 @@ describe('messageView', () => {
   });
 });
 
+describe('a failed call', () => {
+  it('no longer shows as running', () => {
+    const part = {
+      type: 'tool-propose_workout',
+      toolCallId: 'call-1',
+      state: 'output-error',
+      input: { date: '2026-11-05' },
+      errorText: 'plan_failed',
+    };
+    expect(chatView([], [{ id: newId(), role: 'assistant', parts: [part] }])).toEqual([]);
+  });
+});
+
 describe('chatView', () => {
   it('orders stored messages as the server, then adds the live ones it lacks', () => {
     const first = text('user', 'wyciskanie 24 kg 4x10');

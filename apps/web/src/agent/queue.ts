@@ -1,4 +1,4 @@
-import { newId } from '@liftwise/core';
+import { newId, type WorkoutRequest } from '@liftwise/core';
 import { UNREACHABLE } from '../api/client';
 import type { LiftWiseDb, QueuedPrompt } from '../db/database';
 import { chatFailure, chatTransport, localTimestamp, type ChatFailure } from './chat';
@@ -13,7 +13,11 @@ export async function enqueuePrompt(
   db: LiftWiseDb,
   threadId: string,
   text: string,
-  { now = new Date(), sentId }: { now?: Date; sentId?: string } = {},
+  {
+    now = new Date(),
+    sentId,
+    workout,
+  }: { now?: Date; sentId?: string; workout?: WorkoutRequest } = {},
 ): Promise<QueuedPrompt> {
   const prompt = {
     id: sentId ?? newId(),
@@ -23,6 +27,7 @@ export async function enqueuePrompt(
     status: 'pending' as const,
     error: null,
     tries: sentId ? 1 : 0,
+    workout,
   };
   const seq = await db.prompt_queue.add(prompt);
   return { ...prompt, seq };
@@ -46,6 +51,7 @@ export async function sendPrompt(
       messageId: undefined,
       messages: [{ id: prompt.id, role: 'user', parts: [{ type: 'text', text: prompt.text }] }],
       abortSignal: undefined,
+      body: { workout: prompt.workout },
     });
   } catch (error) {
     return { sent: false, failure: chatFailure(error as Error) };

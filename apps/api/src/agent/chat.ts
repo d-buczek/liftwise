@@ -1,6 +1,17 @@
-import { balanceSnapshot, idSchema, newId, timestampSchema, type Message } from '@liftwise/core';
+import {
+  balanceSnapshot,
+  idSchema,
+  localDateSchema,
+  newId,
+  timestampSchema,
+  workoutRequestSchema,
+  type Message,
+  type ToolErrorOutput,
+  type WorkoutRequest,
+} from '@liftwise/core';
 import {
   convertToModelMessages,
+  createUIMessageStream,
   createUIMessageStreamResponse,
   stepCountIs,
   streamText,
@@ -17,9 +28,9 @@ import type { Db } from '../db';
 import { messages, threads } from '../db/schema';
 import { apiError, readJson } from '../http';
 import { applyWrites, type Write } from '../sync/write';
-import { agentTools } from '../tools';
+import { agentTools, toolByName } from '../tools';
 import { balanceSets, balanceSettings, catalog, equipment, profile } from '../tools/data';
-import type { ToolContext } from '../tools/registry';
+import { runTool, type ToolContext } from '../tools/registry';
 import { systemMessages } from './prompt';
 import { modelSettings, ProviderUnavailable, resolveModel } from './providers';
 
@@ -58,6 +69,8 @@ const chatSchema = z.object({
   role: z.enum(['fast', 'planner']).default('fast'),
   // When the user wrote it, in their time zone: the day and the time sets are logged with.
   localTime: timestampSchema,
+  // A check-in or "Wygeneruj ponownie" says what to plan: no model decides it (D53).
+  workout: workoutRequestSchema.extend({ date: localDateSchema }).optional(),
 });
 
 async function threadMessages(db: Db, threadId: string): Promise<UIMessage[]> {
@@ -76,6 +89,55 @@ const messageWrite = (threadId: string, message: Omit<Message, 'thread_id'>): Wr
   row: { ...message, thread_id: threadId },
 });
 
+// A turn that is one `propose_workout` call, stored like the model's own, so the card and later
+// turns don't differ. A plan that can't be made fails the turn: without a model nobody explains it.
+function workoutTurn(
+  ctx: ToolContext,
+  input: WorkoutRequest,
+  waitUntil: (promise: Promise<unknown>) => void,
+) {
+  const id = newId();
+  const toolCallId = newId();
+  const toolName = 'propose_workout';
+  // Stored before the card goes out, so the sync after the turn has it; the Worker finishes this
+  // even if the client went away.
+  const turn = (async () => {
+    const output = await runTool(ctx, toolByName(toolName)!, input);
+    if ((output as ToolErrorOutput).error) throw new Error(JSON.stringify(output));
+    const parts = [
+      { type: 'step-start' },
+      { type: `tool-${toolName}`, toolCallId, state: 'output-available', input, output },
+    ];
+    await applyWrites(ctx.db, { actor: 'agent', threadId: ctx.threadId }, [
+      messageWrite(ctx.threadId, { id, role: 'assistant', parts: parts as Message['parts'] }),
+    ]);
+    return output;
+  })();
+  waitUntil(turn.catch(() => undefined));
+  return createUIMessageStreamResponse({
+    stream: createUIMessageStream({
+      execute: async ({ writer }) => {
+        writer.write({ type: 'start', messageId: id });
+        writer.write({ type: 'start-step' });
+        writer.write({ type: 'tool-input-available', toolCallId, toolName, input });
+        try {
+          writer.write({ type: 'tool-output-available', toolCallId, output: await turn });
+        } catch (error) {
+          // The call is over: the client stops showing it as running.
+          writer.write({ type: 'tool-output-error', toolCallId, errorText: 'plan_failed' });
+          throw error;
+        }
+        writer.write({ type: 'finish-step' });
+        writer.write({ type: 'finish' });
+      },
+      onError: (error) => {
+        console.error(error);
+        return 'model_error';
+      },
+    }),
+  });
+}
+
 // Tests pass a mock model; the app resolves the provider of the role's setting.
 export function createChatRoutes(resolve = resolveModel) {
   return new Hono<AppEnv>().post('/', async (c) => {
@@ -89,7 +151,7 @@ export function createChatRoutes(resolve = resolveModel) {
     const models = await modelSettings(db, c.env);
     let resolved: ReturnType<typeof resolveModel>;
     try {
-      resolved = resolve(c.env, models[body.role]);
+      resolved = resolve(c.env, models[body.workout ? 'planner' : body.role]);
     } catch (error) {
       if (!(error instanceof ProviderUnavailable)) throw error;
       return c.json({ error: 'provider_unavailable', provider: error.provider }, 409);
@@ -115,6 +177,18 @@ export function createChatRoutes(resolve = resolveModel) {
       userMessage,
     ]);
 
+    const ctx: ToolContext = {
+      db,
+      threadId,
+      today,
+      now: localTime,
+      planner: () => (body.workout ? resolved.model : resolve(c.env, models.planner).model),
+    };
+    if (body.workout) {
+      console.log(JSON.stringify({ chatTurn: { isolateTurn, steps: 0 } }));
+      return workoutTurn(ctx, body.workout, (promise) => c.executionCtx.waitUntil(promise));
+    }
+
     const [conversation, exercises, items, profileText, balance, sets] = await Promise.all([
       threadMessages(db, threadId),
       catalog(db),
@@ -123,13 +197,6 @@ export function createChatRoutes(resolve = resolveModel) {
       balanceSettings(db),
       balanceSets(db, today),
     ]);
-    const ctx: ToolContext = {
-      db,
-      threadId,
-      today,
-      now: localTime,
-      planner: () => resolve(c.env, models.planner).model,
-    };
     const tools = agentTools(ctx);
     const result = streamText({
       model: resolved.model,

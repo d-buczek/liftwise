@@ -176,6 +176,16 @@ describe('sendPrompt', () => {
     return mock;
   }
 
+  it('keeps what a check-in asked to plan and posts it', async () => {
+    const workout = { date: '2026-11-05', time_min: 45 };
+    const stored = await enqueuePrompt(db, threadId, 'Zaproponuj trening', { workout });
+    expect((await db.prompt_queue.get(stored.seq))?.workout).toEqual(workout);
+
+    const fetch = stubFetch(async () => sse(events({ type: 'start' }, { type: 'finish' })));
+    expect(await sendPrompt(stored, () => 'token')).toEqual({ sent: true });
+    expect(JSON.parse(fetch.mock.calls[0]![1]?.body as string).workout).toEqual(workout);
+  });
+
   it('posts the message with the time it was said and reads the answer to the end', async () => {
     const fetch = stubFetch(async () =>
       sse(events({ type: 'start' }, { type: 'text-start', id: 't' }, { type: 'finish' })),

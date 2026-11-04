@@ -1,3 +1,4 @@
+import type { WorkoutRequest } from '@liftwise/core';
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import { enqueuePrompt, processQueue, removePrompt, retryPrompt, sendPrompt } from '../agent/queue';
@@ -69,8 +70,13 @@ export const usePromptQueueStore = defineStore('promptQueue', () => {
     }
   }
 
-  async function enqueue(threadId: string, text: string, sent?: { id: string; at: Date }) {
-    await enqueuePrompt(db, threadId, text, { now: sent?.at, sentId: sent?.id });
+  // `sent`: a live message whose request failed.
+  async function enqueue(
+    threadId: string,
+    text: string,
+    { sent, workout }: { sent?: { id: string; at: Date }; workout?: WorkoutRequest } = {},
+  ) {
+    await enqueuePrompt(db, threadId, text, { now: sent?.at, sentId: sent?.id, workout });
     void sync.sync();
   }
 

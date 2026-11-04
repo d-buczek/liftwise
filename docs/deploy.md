@@ -60,7 +60,8 @@ One Worker, `liftwise`, serves the API and the PWA from the same origin (SPEC §
   exceeding it gets error 1102 (`outcome: exceededCpu`). An agent turn uses far more (SPEC §9, LW-15),
   so watch the chat for 1102 errors.
 - Each chat turn logs `{"chatTurn":{"isolateTurn":N,"steps":S}}`: `isolateTurn` 1 is a cold isolate
-  (the most expensive turn), `steps` the model calls. Read it next to the invocation's `cpuTime`.
+  (the most expensive turn), `steps` the `fast` model calls (0 for a check-in or "Wygeneruj
+  ponownie", where only `planner` runs). Read it next to the invocation's `cpuTime`.
 
 ## CPU profile of a chat turn
 

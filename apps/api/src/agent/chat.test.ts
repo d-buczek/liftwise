@@ -4,10 +4,19 @@ import { createExecutionContext, env, waitOnExecutionContext } from 'cloudflare:
 import { asc, eq } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { beforeEach, describe, expect, it, vi } from 'vite-plus/test';
-import { call, createDevice, db, repsExercise, timedExercise } from '../../test/helpers';
+import {
+  call,
+  createDevice,
+  db,
+  push,
+  repsExercise,
+  timedExercise,
+  upsert,
+} from '../../test/helpers';
 import type { AppEnv } from '../app-env';
-import { messages, sets, threads } from '../db/schema';
+import { messages, pendingProposals, sets, threads } from '../db/schema';
 import { createChatRoutes } from './chat';
+import { ProviderUnavailable } from './providers';
 
 const NOW = '2026-10-31T18:00:00+01:00';
 
@@ -75,6 +84,188 @@ const threadMessages = (threadId: string) =>
 let token: string;
 beforeEach(async () => {
   ({ token } = await createDevice());
+});
+
+describe('a check-in or a regeneration', () => {
+  const DATE = '2026-11-05';
+  const LOCAL_TIME = '2026-11-04T07:00:00+01:00';
+
+  const planOutput = (rationale: string) => ({
+    exercises: [
+      {
+        exercise_id: repsExercise.id,
+        sets: [{ weight_kg: 20, reps: 10, duration_s: null, warmup: false }],
+        target_rir: 1,
+      },
+    ],
+    rationale,
+  });
+
+  // No `doStream`: a call of the `fast` model fails the test.
+  const planner = (...answers: unknown[]) =>
+    new MockLanguageModelV4({
+      doGenerate: answers.map((answer) => ({
+        content: [{ type: 'text' as const, text: JSON.stringify(answer) }],
+        finishReason: { unified: 'stop' as const, raw: 'stop' },
+        usage,
+        warnings: [],
+      })),
+    });
+
+  const request = (threadId: string, value: string, workout: Record<string, unknown>) => ({
+    threadId,
+    message: userMessage(value),
+    localTime: LOCAL_TIME,
+    workout,
+  });
+
+  const planProposals = () =>
+    db()
+      .select({ status: pendingProposals.status, input: pendingProposals.input })
+      .from(pendingProposals)
+      .orderBy(asc(pendingProposals.id));
+
+  beforeEach(async () => {
+    await push(token, [
+      upsert('equipment_items', { id: newId(), type: 'dumbbells', props: { max_kg: 40 } }),
+      upsert('equipment_items', {
+        id: newId(),
+        type: 'bench',
+        props: { incline: true, decline: false },
+      }),
+    ]);
+  });
+
+  it('plans without the fast model and stores the card like a tool call', async () => {
+    const model = planner(planOutput('Pierwszy plan.'));
+    const threadId = newId();
+    const { status, stream } = await chat(
+      model,
+      request(threadId, 'Zaproponuj trening', { date: DATE, time_min: 45, wellbeing: 4 }),
+    );
+
+    expect(status).toBe(200);
+    expect(model.doStreamCalls).toHaveLength(0);
+    expect(model.doGenerateCalls).toHaveLength(1);
+    expect(stream).toContain('Pierwszy plan.');
+    expect(JSON.stringify(model.doGenerateCalls[0]?.prompt)).toContain('time available: 45 min');
+
+    const [said, answer] = await threadMessages(threadId);
+    expect(said?.role).toBe('user');
+    expect(answer?.role).toBe('assistant');
+    expect(answer?.parts).toMatchObject([
+      { type: 'step-start' },
+      {
+        type: 'tool-propose_workout',
+        state: 'output-available',
+        input: { date: DATE, time_min: 45, wellbeing: 4 },
+        output: { status: 'pending', date: DATE, changes: [] },
+      },
+    ]);
+    expect(await planProposals()).toMatchObject([
+      { status: 'pending', input: { date: DATE, checkin: { time_min: 45, wellbeing: 4 } } },
+    ]);
+  });
+
+  it('makes a new plan for the same answers, which the fast model once declined', async () => {
+    const model = planner(planOutput('Pierwszy plan.'), planOutput('Drugi plan.'));
+    const threadId = newId();
+    const workout = { date: DATE, time_min: 45, wellbeing: 4 };
+    await chat(model, request(threadId, 'Zaproponuj trening', workout));
+    const { stream } = await chat(model, request(threadId, 'Zaproponuj trening', workout));
+
+    expect(stream).toContain('Drugi plan.');
+    expect(model.doGenerateCalls).toHaveLength(2);
+    expect((await planProposals()).map((row) => row.status)).toEqual(['rejected', 'pending']);
+  });
+
+  it('keeps the check-in and starts from the last plan on a regeneration', async () => {
+    const model = planner(planOutput('Pierwszy plan.'), planOutput('Drugi plan.'));
+    const threadId = newId();
+    await chat(model, request(threadId, 'Zaproponuj', { date: DATE, time_min: 45 }));
+    await chat(model, request(threadId, 'Inny', { date: DATE, change_request: 'Inny' }));
+
+    const sent = JSON.stringify(model.doGenerateCalls[1]?.prompt);
+    expect(sent).toContain('time available: 45 min');
+    expect(sent).toContain('Pierwszy plan.');
+    expect(sent).toContain('The athlete asks for this change: Inny');
+  });
+
+  it('shows the fast model the card as its own call in a later turn', async () => {
+    const threadId = newId();
+    await chat(
+      planner(planOutput('Pierwszy plan.')),
+      request(threadId, 'Zaproponuj', { date: DATE }),
+    );
+
+    const model = new MockLanguageModelV4({ doStream: [step('stop', ...text('t1', 'Dobrze.'))] });
+    const { stream } = await chat(model, {
+      threadId,
+      message: userMessage('dzięki'),
+      localTime: LOCAL_TIME,
+    });
+
+    expect(stream).toContain('Dobrze.');
+    const prompt = JSON.stringify(model.doStreamCalls[0]?.prompt);
+    expect(prompt).toContain('"toolName":"propose_workout"');
+    expect(prompt).toContain('tool-result');
+    expect(prompt).toContain('Pierwszy plan.');
+  });
+
+  it('fails the turn when the plan can not be made, and stores no card', async () => {
+    const model = planner({ exercises: [], rationale: '' });
+    const threadId = newId();
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { status, stream } = await chat(model, request(threadId, 'Plan', { date: DATE }));
+    consoleError.mockRestore();
+
+    expect(status).toBe(200);
+    // The client stops showing the call as running before it shows the error.
+    expect(stream.indexOf('tool-output-error')).toBeGreaterThan(-1);
+    expect(stream.indexOf('tool-output-error')).toBeLessThan(stream.indexOf('model_error'));
+    expect((await threadMessages(threadId)).map((row) => row.role)).toEqual(['user']);
+    expect(await planProposals()).toEqual([]);
+  });
+
+  it('rejects a malformed date before storing anything', async () => {
+    const model = planner();
+    const threadId = newId();
+    const { status } = await chat(model, request(threadId, 'Plan', { date: 'jutro' }));
+
+    expect(status).toBe(400);
+    expect(model.doGenerateCalls).toHaveLength(0);
+    expect(await threadMessages(threadId)).toEqual([]);
+  });
+
+  it('asks for the planner, not the fast model, to have a key', async () => {
+    const asked: string[] = [];
+    const app = new Hono<AppEnv>()
+      .use(async (c, next) => {
+        c.set('db', db());
+        await next();
+      })
+      .route(
+        '/',
+        createChatRoutes((_env, setting) => {
+          asked.push(setting.model);
+          throw new ProviderUnavailable(setting.provider);
+        }),
+      );
+    const threadId = newId();
+    const response = await app.request(
+      '/',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(request(threadId, 'Plan', { date: DATE })),
+      },
+      env,
+    );
+
+    expect(response.status).toBe(409);
+    expect(asked).toEqual(['claude-sonnet-5-5']);
+    expect(await threadMessages(threadId)).toEqual([]);
+  });
 });
 
 describe('agent chat', () => {
