@@ -90,7 +90,7 @@ it('a failed live turn releases the queue too', async () => {
 it('stops the live turn, and nothing once it ended', async () => {
   mockServer();
   const queue = usePromptQueueStore();
-  const stop = vi.fn();
+  const stop = vi.fn<() => void>();
 
   const live = deferred();
   const running = queue.runTurn(() => live.promise, stop);
