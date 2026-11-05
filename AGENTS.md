@@ -14,7 +14,7 @@
 
 ## Never
 
-- Commit secrets (`.dev.vars`, keystores, tokens) or personal training data — the repo becomes public.
+- Commit secrets (`.dev.vars`, keystores, tokens) or personal data (real weights and gear limits, health, the phone, accounts and plans, local paths), in docs and test fixtures too — the repo becomes public.
 - Hardcode model ids in code paths; they are settings with defaults.
 
 ## Commands

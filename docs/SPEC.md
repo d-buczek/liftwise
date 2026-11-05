@@ -21,7 +21,7 @@ On top of that, an AI agent with tools over the app's data logs and edits from a
 - **Devices:** Android phone (primary during workouts), Windows PC (history, analysis, chat).
 - **Distribution:** own use only, sideloaded APK (not Play Store). Must not be blocked by Android developer verification (global from 2027), see §6.10.
 - **LLM budget:** small and prepaid, without auto-reload: an empty balance stops the API without a charge. The architecture must not depend on Anthropic.
-- **Public portfolio:** the repo will be public on GitHub. No secrets and no personal training data in the repo.
+- **Public portfolio:** the repo will be public on GitHub. No secrets and no personal data in the repo.
 
 ## 3. Decision log
 
@@ -610,6 +610,7 @@ Each line is meant to be one `/ticket` task.
 | LW-18 | Motion: the month's slide and swipe, a quick transition between tabs |
 | LW-19 | Fix the bugs the test pass found: mic left on, silent failed undo, double taps, dropped agent edits, a blank start on unreadable storage, the proposal's UTC date |
 | LW-22 | Redesign: the themes Nalot, Połysk and Żeliwo beside the standard light and dark, new type, the line under the toolbar, the straw label color (changes D42) |
+| LW-23 | Remove personal details from the docs and test data ahead of publishing |
 | LW-20 | Phase 2: MCP endpoint with token auth |
 | LW-21 | Phase 2: OAuth for claude.ai connectors |
 
@@ -621,7 +622,7 @@ Each line is meant to be one `/ticket` task.
 | ~~AI SDK current major~~ | Resolved in LW-09 | `ai` 7 / `@ai-sdk/vue` 4; built-in tool approval doesn't fit §5.9.3 (D50) |
 | ~~Exact rest-timer notifications~~ | Resolved in LW-08 | `USE_EXACT_ALARM` (sideloaded APK, D47) + `allowWhileIdle`: on a real phone the notification came on time and vibrated with the screen locked. Some vendors also need a setting for ADB installs (`docs/android.md`) |
 | Speech-recognition plugin | Picked in LW-10, one check left | `@capgo/capacitor-speech-recognition` 8.x (Capacitor 8 peer); the community plugin stops at 7.0.1 (D52). On 2026-11-02 on a real phone the APK builds and prompts from the phone get the model's answers on production. Still to confirm: a series spoken in airplane mode logged with the time it was sent |
-| Agent evals per provider | LW-13, one provider so far | `pnpm eval`, §7. **Anthropic, 2026-11-05** (`claude-haiku-5-5`, planner `claude-sonnet-5-5`): **42/43**, 99 model calls, 1.39 M input tokens (1.27 M cached), 17 k output, about $0.10 by the list prices, median turn 2.4 s, longest 16 s (the planner). The one mismatch, `risky-create-exercise`, asked for the range and muscles instead of proposing; it passed the run before. The first run gave 37/41 and led to D55 and to the rule on alternating sets. Replies are in Polish, with slips now and then ("Dumbbity", "serií"). OpenAI and Gemini not run yet |
+| Agent evals per provider | LW-13, one provider so far | `pnpm eval`, §7. **Anthropic, 2026-11-05** (`claude-haiku-5-5`, planner `claude-sonnet-5-5`): **42/43**, 99 model calls, 1.39 M input tokens (1.27 M cached), 17 k output, about $0.10 by the list prices, median turn 2.4 s, longest 16 s (the planner). The one mismatch, `risky-create-exercise`, asked for the range and muscles instead of proposing; it passed the run before. The first run gave 37/41 and led to D55 and to the rule on alternating sets. After LW-23 changed the fixtures (a 40 kg limit, the profile case, hip thrust at 30 kg), a run on 2026-11-05 gave 41/43: `risky-create-exercise` again, and `history-planned-day` took "sobota" for the Saturday a week later. Replies are in Polish, with slips now and then ("Dumbbity", "serií"). OpenAI and Gemini not run yet |
 | Default OpenAI/Gemini model ids | Picked in LW-09, verify with keys | §6.7: the cheapest current tier for `fast` (OpenAI's model list, Google's "use for new projects" note); not yet run without OpenAI/Gemini keys. `gemini-3.8-flash` is on Gemini's free tier, which may use the content to improve Google's products |
 | ~~Capacitor app id~~ | Resolved in LW-08 | `io.github.d_buczek.liftwise`: a hyphen isn't allowed, so the GitHub login `d-buczek` becomes `d_buczek` (Java package convention) |
 | ~~D1 Time Travel retention~~ | Resolved in LW-04 | Always on; 7 days on Workers Free, 30 days on Workers Paid (§5.12) |
