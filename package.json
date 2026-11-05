@@ -8,7 +8,8 @@
     "ci:build": "vp run -r build",
     "deploy:api": "pnpm --filter @liftwise/api run deploy",
     "android:build": "pnpm --filter @liftwise/web android:build",
-    "android:install": "pnpm --filter @liftwise/web android:install"
+    "android:install": "pnpm --filter @liftwise/web android:install",
+    "e2e": "pnpm --filter @liftwise/e2e test"
   },
   "devDependencies": {
     "vite-plus": "catalog:"

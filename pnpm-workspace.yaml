@@ -1,6 +1,7 @@
 packages:
   - apps/*
   - packages/*
+  - e2e
 
 catalog:
   vite: npm:@voidzero-dev/vite-plus-core@1.4.0

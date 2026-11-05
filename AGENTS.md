@@ -27,6 +27,7 @@ Node 24 (`.node-version`), pnpm 10 (`packageManager`). Toolchain is Vite+ (`vite
 - `pnpm format` — `vp check --fix` (format + lint autofix; `docs/` is excluded on purpose).
 - `pnpm exec vp check` / `pnpm exec vp test` — the parts of `ci:check` separately; `pnpm exec vp test --project @liftwise/core` for one workspace.
 - `pnpm --filter @liftwise/web dev` / `pnpm --filter @liftwise/api dev` — local dev servers (API on a local D1, no Cloudflare account needed). The API one builds the web app first and serves the PWA on http://localhost:8787; the Vite dev server proxies `/api` there.
+- `pnpm e2e` — Playwright in the installed Chrome (`e2e/`): builds the PWA and serves it with the API on port 8788 and a throwaway local D1, then runs the phone and desktop profiles. Not part of `ci:check`; run it before a release or after a change across screens. Tests are `*.e2e.ts`. Keep Playwright out of `apps/web`: it would install a second copy of Vitest and break the core tests.
 - `pnpm --filter @liftwise/web icons` — PWA icons from `apps/web/public/icon.svg`; commit the generated files.
 - `pnpm --filter @liftwise/api db:generate` — SQL migration from `apps/api/src/db/schema.ts` (drizzle-kit); never edit generated migrations by hand.
 - `pnpm --filter @liftwise/api db:seed` — after adding exercises to `packages/core/data/exercises.json`: writes a new seed-catalog migration. Migrated exercises keep their first version, so don't edit them in the JSON (a test fails); change them with a mutation.
