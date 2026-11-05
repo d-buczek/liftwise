@@ -128,8 +128,7 @@ it('a swap names the exercise, puts similar ones first and keeps to its measure'
   ]);
 });
 
-// Bug: ExercisePicker.vue:88 shows the no-match message before the first read has come back.
-it.fails('does not claim that nothing matches before the catalog has been read', async () => {
+it('does not claim that nothing matches before the catalog has been read', async () => {
   await seed([makeExercise()]);
   const { wrapper } = picker();
   expect(wrapper.find('.lw-picker__empty').exists()).toBe(false);

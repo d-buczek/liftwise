@@ -110,8 +110,17 @@ it('saving works again once the text is corrected', async () => {
   expect(wrapper.emitted('done')).toHaveLength(1);
 });
 
-// Bug: EquipmentEditor.vue:52 takes a new id per save with no guard: a double tap adds two items.
-it.fails('a double tap on "Zapisz" adds one item', async () => {
+it('a tap while the sheet closes adds nothing either', async () => {
+  const { tapSave, save } = editor(null);
+  await tapSave();
+  await save();
+  await flushPromises();
+  await tapSave();
+  await flushPromises();
+  expect(await db.equipment_items.count()).toBe(1);
+});
+
+it('a double tap on "Zapisz" adds one item', async () => {
   const { tapSave } = editor(null);
   vi.mocked(applyLocal).mockClear();
 

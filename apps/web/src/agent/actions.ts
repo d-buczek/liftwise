@@ -4,6 +4,7 @@ import { api, ApiError } from '../api/client';
 import { i18n } from '../i18n';
 import { useAuthStore } from '../stores/auth';
 import { useSyncStore } from '../stores/sync';
+import { localTimestamp } from './chat';
 
 // What the agent's cards do (§5.9.3, §5.9.4): undo a change group, confirm or reject a proposal.
 // The server writes; a sync then brings the data and the card's new state.
@@ -84,7 +85,7 @@ export async function resolveProposal(id: string, action: 'confirm' | 'reject'):
   const { t } = i18n.global;
   if (!auth.token) return;
   try {
-    await api.resolveProposal(auth.token, id, action);
+    await api.resolveProposal(auth.token, id, action, localTimestamp());
   } catch (error) {
     // Already resolved on another device: the sync shows how.
     if (error instanceof ApiError && error.code === 'not_pending') {

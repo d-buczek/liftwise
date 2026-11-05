@@ -217,7 +217,8 @@
     "firstDevice": "To pierwsze urządzenie",
     "tokenIntro": "Wklej token wypisany przez {command} przy konfiguracji serwera.",
     "token": "Token urządzenia",
-    "submitToken": "Połącz tokenem"
+    "submitToken": "Połącz tokenem",
+    "storageFailed": "Nie można odczytać danych aplikacji na tym urządzeniu. Zamknij ją i otwórz ponownie, a jeśli to nie pomoże, sprawdź wolne miejsce."
   },
   "errors": {
     "invalid_code": "Kod jest błędny, wygasł albo został już użyty. Wygeneruj nowy na sparowanym urządzeniu.",
@@ -320,6 +321,7 @@
     "removed": "Usunięto „{name}”.",
     "setRemoved": "Usunięto serię.",
     "undo": "Cofnij",
+    "undoFailed": "Nie udało się cofnąć tej zmiany.",
     "unknownExercise": "Ćwiczenie usunięte z katalogu",
     "sets": "{n} seria | {n} serie | {n} serii",
     "setLabel": "Seria {n}: {value}",

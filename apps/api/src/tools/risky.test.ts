@@ -260,9 +260,7 @@ describe('update_sets', () => {
     expect(row).toMatchObject({ weight_kg: 22.5, reps: 8 });
   });
 
-  // Bug: each update starts from the stored set, so the last one of a set drops the others'
-  // fields (edit_planned_sets combines them).
-  it.fails('combines two updates of one set', async () => {
+  it('combines two updates of one set', async () => {
     const {
       sets: [set],
     } = await pushDay(token, TODAY, [done()]);
@@ -409,14 +407,20 @@ describe('update_exercise', () => {
     expect(await archived()).toBe(false);
   });
 
-  // Bug: create_exercise and update_settings round the step to the weight precision, this call
-  // fails with `invalid_write` for the same value.
-  it.fails('brings the step to the weight precision, like create_exercise', async () => {
+  it('brings the step to the weight precision, like create_exercise', async () => {
     const output = await propose('update_exercise', {
       exercise_id: repsExercise.id,
       weight_step_kg: 2.6,
     });
     expect(output).toMatchObject({ changes: [{ after: { weight_step_kg: 2.5 } }] });
+  });
+
+  it('keeps a tiny step at the smallest one instead of rounding it away', async () => {
+    const output = await propose('update_exercise', {
+      exercise_id: repsExercise.id,
+      weight_step_kg: 0.1,
+    });
+    expect(output).toMatchObject({ changes: [{ after: { weight_step_kg: 0.25 } }] });
   });
 });
 

@@ -249,8 +249,19 @@ it('an archived label on the source day still shows on the calendar, but is not 
   expect(copy.created?.label_id).toBeNull();
 });
 
-// Bug: CopyWorkout.vue:98 has no `busy` guard, so a tap before the disabled render copies again.
-it.fails('a second tap before the button renders disabled does not copy again', async () => {
+it('a tap while the sheet closes does not copy again', async () => {
+  await seedDay('2026-10-28', [{}]);
+  const { submit, ready } = picker();
+  await ready();
+  await submit().trigger('click');
+  await flushPromises();
+  await vi.waitFor(async () => expect((await dayData(TARGET)).sets).toHaveLength(1));
+  await submit().trigger('click');
+  await flushPromises();
+  expect((await dayData(TARGET)).sets).toHaveLength(1);
+});
+
+it('a second tap before the button renders disabled does not copy again', async () => {
   await seedDay('2026-10-28', [{}]);
   const { submit, ready } = picker();
   await ready();

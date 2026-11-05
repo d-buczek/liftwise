@@ -120,9 +120,9 @@ export const api = {
       token,
       body: { confirm },
     }),
-  resolveProposal: (token: string, id: string, action: 'confirm' | 'reject') =>
+  resolveProposal: (token: string, id: string, action: 'confirm' | 'reject', localTime: string) =>
     request<Pick<ProposalToolOutput, 'status' | 'groupId' | 'changes'>>(
       `/api/agent/proposals/${encodeURIComponent(id)}/${action}`,
-      { method: 'POST', token },
+      { method: 'POST', token, body: { localTime } },
     ),
 };

@@ -15,7 +15,7 @@ import {
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useFormat } from '../composables/format';
-import { useLiveQuery } from '../composables/liveQuery';
+import { useLiveQueryState } from '../composables/liveQuery';
 import { catalog, equipment, historySets } from '../workout/queries';
 import { pickerSections } from '../workout/search';
 
@@ -28,7 +28,7 @@ const { t } = useI18n();
 const format = useFormat();
 const query = ref('');
 
-const data = useLiveQuery(
+const { data, loaded } = useLiveQueryState(
   async () => ({
     catalog: await catalog(),
     equipment: await equipment(),
@@ -85,7 +85,7 @@ const sections = computed(() =>
           </ion-item>
         </ion-list>
       </template>
-      <p v-if="sections.length === 0" class="lw-muted lw-picker__empty">
+      <p v-if="loaded && sections.length === 0" class="lw-muted lw-picker__empty">
         {{ t('picker.empty', { query }) }}
       </p>
     </div>

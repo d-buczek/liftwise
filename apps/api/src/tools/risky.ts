@@ -7,6 +7,7 @@ import {
   newId,
   roundWeightKg,
   SETTING_IDS,
+  WEIGHT_PRECISION_KG,
   type Exercise,
 } from '@liftwise/core';
 import { z } from 'zod';
@@ -59,6 +60,10 @@ const upsertExercise = (row: PlannedWrite['row']): PlannedWrite => ({
   row,
 });
 
+// The ± step on the weight precision: never rounded away to nothing, which the schema refuses.
+const stepKg = <T extends number | null | undefined>(kg: T) =>
+  kg ? Math.max(WEIGHT_PRECISION_KG, roundWeightKg(kg)) : kg;
+
 export const riskyTools = [
   defineTool({
     name: 'delete_sets',
@@ -102,12 +107,14 @@ export const riskyTools = [
         ),
         catalog(ctx.db),
       ]);
-      return updates.map(({ set_id, ...fields }) => {
-        const set = found.find((row) => row.id === set_id);
+      // Two updates of one set add up, like in edit_planned_sets.
+      const edited = new Map<string, ReturnType<typeof editedSet>>();
+      for (const { set_id, ...fields } of updates) {
+        const set = edited.get(set_id) ?? found.find((row) => row.id === set_id);
         if (set?.status !== 'done') throw new ToolError('not_done', { set_id });
-        const exercise = exerciseOf(exercises, set.exercise_id);
-        return { entity: 'sets', op: 'upsert', row: editedSet(set, exercise, fields) };
-      });
+        edited.set(set_id, editedSet(set, exerciseOf(exercises, set.exercise_id), fields));
+      }
+      return [...edited.values()].map((row) => ({ entity: 'sets', op: 'upsert', row }));
     },
   }),
   defineTool({
@@ -125,7 +132,7 @@ export const riskyTools = [
           ...fields,
           id: newId(),
           rest_seconds: fields.rest_seconds ?? training.rest_seconds,
-          weight_step_kg: fields.weight_step_kg && roundWeightKg(fields.weight_step_kg),
+          weight_step_kg: stepKg(fields.weight_step_kg),
         },
         measure,
         range_min,
@@ -145,8 +152,9 @@ export const riskyTools = [
       archived: z.boolean().optional(),
     }),
     risk: 'risky',
-    plan: async (ctx, { exercise_id, range_min, range_max, ...fields }) => {
+    plan: async (ctx, { exercise_id, range_min, range_max, weight_step_kg, ...rest }) => {
       const exercise = exerciseOf(await catalog(ctx.db), exercise_id);
+      const fields = { ...rest, weight_step_kg: stepKg(weight_step_kg) };
       const range = exercise.measure === 'reps' ? exercise.rep_range : exercise.time_range_s;
       const changed = Object.fromEntries(
         Object.entries(fields).filter(([, value]) => value !== undefined),

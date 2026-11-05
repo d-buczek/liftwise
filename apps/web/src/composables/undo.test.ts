@@ -58,8 +58,7 @@ describe('showUndo', () => {
     expect(shown().options?.positionAnchor).toBeUndefined();
   });
 
-  // Bug: the toast's handler drops the promise, so a failed undo is an unhandled rejection and the user is told nothing.
-  it.fails('tells the user when the undo fails to write', async () => {
+  it('tells the user when the undo fails to write', async () => {
     const failed = Promise.reject(new Error('QuotaExceededError'));
     failed.catch(() => undefined);
     await showUndo('Usunięto serię', () => failed);

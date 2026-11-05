@@ -7,11 +7,14 @@ export function useVoiceInput(draft: Ref<string>) {
   const listening = ref(false);
   const error = ref<SpeechError | null>(null);
   let session: SpeechSession | null = null;
+  // Stopped while the mic was still starting (a permission prompt, say): there was no session yet.
+  let stopRequested = false;
 
   async function start() {
     if (listening.value) return;
     error.value = null;
     listening.value = true;
+    stopRequested = false;
     const typed = draft.value.trim();
     try {
       const started = await listen({
@@ -22,7 +25,8 @@ export function useVoiceInput(draft: Ref<string>) {
           error.value = code;
         },
       });
-      if (listening.value) session = started;
+      if (stopRequested) started.stop();
+      else if (listening.value) session = started;
     } catch (caught) {
       listening.value = false;
       error.value = caught instanceof SpeechFailure ? caught.code : 'failed';
@@ -31,7 +35,8 @@ export function useVoiceInput(draft: Ref<string>) {
   }
 
   function stop() {
-    session?.stop();
+    if (session) session.stop();
+    else if (listening.value) stopRequested = true;
   }
 
   return {

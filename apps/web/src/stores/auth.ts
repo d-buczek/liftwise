@@ -8,17 +8,29 @@ import { forgetDevice, loadDevice, saveDevice } from '../native/deviceStorage';
 export const useAuthStore = defineStore('auth', () => {
   const device = ref<DeviceAuth | null>(null);
   const loaded = ref(false);
+  const storageFailed = ref(false);
   const token = computed(() => device.value?.token ?? null);
 
+  // Unreadable storage must not stop the app from mounting: the pairing screen explains it, and
+  // the next navigation reads again, as `loaded` stays false.
   async function load() {
-    device.value = await loadDevice();
-    loaded.value = true;
+    try {
+      device.value = await loadDevice();
+      storageFailed.value = false;
+      loaded.value = true;
+    } catch (error) {
+      console.error(error);
+      device.value = null;
+      storageFailed.value = true;
+    }
   }
 
   async function save(deviceId: string, newToken: string) {
     const auth: DeviceAuth = { id: 'device', deviceId, token: newToken };
     await saveDevice(auth);
     device.value = auth;
+    storageFailed.value = false;
+    loaded.value = true;
   }
 
   // Another paired device showed the code (QR or text).
@@ -39,7 +51,8 @@ export const useAuthStore = defineStore('auth', () => {
   async function forget() {
     await forgetDevice();
     device.value = null;
+    storageFailed.value = false;
   }
 
-  return { device, loaded, token, load, pairWithCode, pairWithToken, forget };
+  return { device, loaded, storageFailed, token, load, pairWithCode, pairWithToken, forget };
 });

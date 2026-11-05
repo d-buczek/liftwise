@@ -54,8 +54,12 @@ export async function pushDay(
   return { workout, sets };
 }
 
-export const confirmProposal = (token: string, id: string) =>
-  call(`/api/agent/proposals/${id}/confirm`, { method: 'POST', token });
+export const confirmProposal = (token: string, id: string, localTime?: string) =>
+  call(`/api/agent/proposals/${id}/confirm`, {
+    method: 'POST',
+    token,
+    ...(localTime ? { json: { localTime } } : {}),
+  });
 
 export const rejectProposal = (token: string, id: string) =>
   call(`/api/agent/proposals/${id}/reject`, { method: 'POST', token });

@@ -1,6 +1,7 @@
-import type { ProposalStatus } from '@liftwise/core';
+import { timestampSchema, type ProposalStatus } from '@liftwise/core';
 import { and, eq } from 'drizzle-orm';
 import { Hono, type Context } from 'hono';
+import { z } from 'zod';
 import type { AppEnv } from '../app-env';
 import { pendingProposals } from '../db/schema';
 import { apiError } from '../http';
@@ -17,6 +18,8 @@ import {
 // Confirmation of risky tool calls (§5.9.3, D50): confirming runs the stored call again on the
 // current data and writes it as one change group, without the model; rejecting writes nothing.
 // Both record the outcome in the tool result of the stored message, so every device shows it.
+
+const resolveBody = z.object({ localTime: timestampSchema });
 
 async function resolve(c: Context<AppEnv>, status: Exclude<ProposalStatus, 'pending'>) {
   const db = c.var.db;
@@ -35,7 +38,16 @@ async function resolve(c: Context<AppEnv>, status: Exclude<ProposalStatus, 'pend
 
   let resolution: ProposalResolution = { status, changes: [] };
   if (status === 'confirmed') {
-    const ctx: ToolContext = { db, threadId: proposal.thread_id, today: now.slice(0, 10), now };
+    // The day is the user's, not UTC's: just after local midnight a plan for yesterday is past
+    // (§5.9.6). An older app sends no time.
+    const sent = resolveBody.safeParse(await c.req.json().catch(() => null));
+    const localNow = sent.success ? sent.data.localTime : now;
+    const ctx: ToolContext = {
+      db,
+      threadId: proposal.thread_id,
+      today: localNow.slice(0, 10),
+      now: localNow,
+    };
     try {
       const tool = toolByName(proposal.tool);
       if (!tool || !('plan' in tool)) throw new ToolError('unknown_tool');

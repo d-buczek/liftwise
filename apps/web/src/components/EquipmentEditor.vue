@@ -48,14 +48,24 @@ const hint = (key: string) => {
   return te(path) ? t(path) : undefined;
 };
 
+// Stays set after a save: a tap while the sheet closes must not add the item again.
+let saving = false;
+
 async function save() {
+  if (saving) return;
   const result = itemFromDraft(props.item?.id ?? newId(), type.value, draft.value);
   if ('invalid' in result) {
     invalid.value = result.invalid;
     return;
   }
-  await applyLocal([{ op: 'upsert', entity: 'equipment_items', row: result.item }]);
-  emit('done');
+  saving = true;
+  try {
+    await applyLocal([{ op: 'upsert', entity: 'equipment_items', row: result.item }]);
+    emit('done');
+  } catch (error) {
+    saving = false;
+    throw error;
+  }
 }
 
 async function remove() {

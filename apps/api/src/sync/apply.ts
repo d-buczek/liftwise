@@ -74,6 +74,9 @@ export function withoutSeq({ seq: _seq, ...row }: StoredRow): Row {
   return row;
 }
 
+// A D1 statement takes at most 100 bound values.
+const MAX_BOUND_VALUES = 100;
+
 // Rows by `rowKey`, tombstones included, in one round trip.
 export async function loadRows(
   db: Db,
@@ -81,16 +84,20 @@ export async function loadRows(
 ): Promise<Map<string, StoredRow>> {
   const ids = new Map<SyncEntity, Set<string>>();
   for (const [entity, id] of wanted) ids.set(entity, (ids.get(entity) ?? new Set()).add(id));
-  const queries = [...ids].map(([entity, entityIds]) => {
+  const parts = [...ids].flatMap(([entity, entityIds]) => {
+    const list = [...entityIds];
+    return Array.from({ length: Math.ceil(list.length / MAX_BOUND_VALUES) }, (_, i) => ({
+      entity,
+      ids: list.slice(i * MAX_BOUND_VALUES, (i + 1) * MAX_BOUND_VALUES),
+    }));
+  });
+  const queries = parts.map(({ entity, ids: part }) => {
     const table = tableOf(entity);
-    return db
-      .select()
-      .from(table)
-      .where(inArray(table.id, [...entityIds]));
+    return db.select().from(table).where(inArray(table.id, part));
   });
   const results = await runBatch(db, queries);
   const rows = new Map<string, StoredRow>();
-  [...ids.keys()].forEach((entity, i) => {
+  parts.forEach(({ entity }, i) => {
     for (const row of (results[i] ?? []) as StoredRow[]) rows.set(rowKey(entity, row.id), row);
   });
   return rows;

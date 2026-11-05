@@ -250,8 +250,7 @@ describe('the numbers of a week', () => {
     expect(view.group('Bez serii w tym tygodniu')).toBeUndefined();
   });
 
-  // liveQuery.ts offers `loaded` for this, the card reads the plain `useLiveQuery`.
-  it.fails('does not claim an empty week before the first read of the mirror', async () => {
+  it('does not claim an empty week before the first read of the mirror', async () => {
     const press = await catalogued();
     await trained('2026-11-03', press, [{}]);
     const view = summary();

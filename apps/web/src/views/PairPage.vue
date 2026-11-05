@@ -46,6 +46,9 @@ const submitToken = () => run(() => auth.pairWithToken(token.value.trim()));
       <main class="lw-pair">
         <p class="lw-pair__brand">{{ APP_NAME }}</p>
         <h1 class="lw-pair__title">{{ t('pair.title') }}</h1>
+        <p v-if="auth.storageFailed" class="lw-pair__error" role="alert">
+          {{ t('pair.storageFailed') }}
+        </p>
         <p class="lw-muted">{{ t('pair.intro') }}</p>
 
         <div class="lw-pair__form">

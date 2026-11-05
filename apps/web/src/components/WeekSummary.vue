@@ -22,7 +22,7 @@ import { chevronBack, chevronForward } from 'ionicons/icons';
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useFormat } from '../composables/format';
-import { useLiveQuery } from '../composables/liveQuery';
+import { useLiveQueryState } from '../composables/liveQuery';
 import { useToday } from '../composables/today';
 import { dateValue, summaryWeek } from '../workout/calendar';
 import { standingRecords } from '../workout/history';
@@ -46,7 +46,7 @@ watch(
 const latest = computed(() => weekOf(today.value).start);
 const step = (weeks: number) => (start.value = addDays(start.value, 7 * weeks));
 
-const data = useLiveQuery(
+const { data, loaded } = useLiveQueryState(
   async () => ({
     sets: await historySets(),
     catalog: await catalog(),
@@ -119,8 +119,8 @@ const scale = computed(
       </ion-button>
     </header>
 
-    <p v-if="summary.workouts === 0" class="lw-week__empty">{{ t('week.empty') }}</p>
-    <template v-else>
+    <p v-if="loaded && summary.workouts === 0" class="lw-week__empty">{{ t('week.empty') }}</p>
+    <template v-else-if="loaded">
       <dl class="lw-week__stats">
         <div>
           <dt>{{ t('week.workouts') }}</dt>

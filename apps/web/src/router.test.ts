@@ -60,12 +60,18 @@ describe('pairing guard', () => {
   });
 
   it('lets nobody in when the stored pairing cannot be read', async () => {
-    vi.spyOn(db.device, 'get').mockRejectedValue(new Error('IndexedDB failed'));
+    const read = vi.spyOn(db.device, 'get').mockRejectedValue(new Error('IndexedDB failed'));
     vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
-    await expect(router.push('/settings')).rejects.toThrow('IndexedDB failed');
+    await router.push('/settings');
     expect(path()).toBe('/pair');
+    expect(useAuthStore().storageFailed).toBe(true);
+
+    // The next navigation reads again: a passing failure doesn't lock a paired device out.
+    read.mockRestore();
+    await router.push('/settings');
+    expect(useAuthStore().storageFailed).toBe(false);
   });
 });
 

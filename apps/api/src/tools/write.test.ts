@@ -221,8 +221,7 @@ describe('update_set', () => {
     expect(await logCount()).toBe(logged);
   });
 
-  // Bug: the value of the other measure is dropped silently; §6.6 wants an `error` for the model.
-  it.fails('refuses reps for a set measured in time', async () => {
+  it('refuses reps for a set measured in time', async () => {
     const {
       sets: [set],
     } = await pushDay(token, TODAY, [done(timed())]);
@@ -423,9 +422,7 @@ describe('edit_planned_sets', () => {
     });
   });
 
-  // Bug: `add` has no cap, loadRows binds every set id and D1 takes 100, so the call throws
-  // `too many SQL variables` instead of returning an `error` (§6.6).
-  it.fails('answers a call of more than 100 sets without throwing', async () => {
+  it('answers a call of more than 100 sets without throwing', async () => {
     const sets = Array.from({ length: 20 }, () => ({ weight_kg: 0, duration_s: 45 }));
     const add = Array.from({ length: 6 }, () => ({ exercise_id: timedExercise.id, sets }));
     await expect(edit({ add })).resolves.toBeDefined();

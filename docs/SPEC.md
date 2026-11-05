@@ -286,7 +286,7 @@ For unusual days; a normal day starts from a copied workout (§5.2, D7).
 3. The server builds context: progression hints of every available exercise with history, each exercise's weight step, balance snapshot, last 21 days of sessions, the day's planned and done sets, profile, equipment, the check-in.
 4. The `planner` model returns a structured plan: exercises, sets × target reps × per-dumbbell weight, target RIR, short rationale. The server rejects an exercise that is unknown, archived or needs missing equipment, and brings weights within the heaviest dumbbell; a plan that can't be made goes back to the `fast` model as a tool error, which explains it, or for a check-in and a regeneration fails the turn with the error and a retry. Nothing is written yet.
 5. Plan card (the turn ends on it): accept / change by chat / regenerate. A change or a regeneration gets the day's last plan and keeps its check-in; a new check-in takes nothing from it. The new card replaces the day's earlier one, in any thread, which can no longer be accepted. A plan for another day stays. A plan whose day has passed can't be accepted.
-6. Accepting replaces the day's planned sets with the plan (done sets stay, the plan goes after them) and stores the rationale and the check-in on the workout, as one change group with "Cofnij". The rationale shows on the day, and later changes are ordinary edits of planned sets. Deviations are fine.
+6. Accepting (with the device's local time, so a plan for yesterday is refused just after local midnight, not by the server's UTC date) replaces the day's planned sets with the plan (done sets stay, the plan goes after them) and stores the rationale and the check-in on the workout, as one change group with "Cofnij". The rationale shows on the day, and later changes are ordinary edits of planned sets. Deviations are fine.
 
 #### 5.9.7 Voice input
 
@@ -596,6 +596,7 @@ Each line is meant to be one `/ticket` task.
 | LW-15 | Agent CPU on Workers Free: profile a chat turn in workerd, cut the CPU per model step (tool schemas, context, message persistence), measure again on the deployed Worker (§9) |
 | LW-16 | One-time import of the earlier training history (D2) |
 | LW-17 | A field to type a weight, next to the ± step (changes D1) |
+| LW-19 | Fix the bugs the test pass found: mic left on, silent failed undo, double taps, dropped agent edits, a blank start on unreadable storage, the proposal's UTC date |
 | LW-20 | Phase 2: MCP endpoint with token auth |
 | LW-21 | Phase 2: OAuth for claude.ai connectors |
 

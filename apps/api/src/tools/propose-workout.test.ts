@@ -107,6 +107,21 @@ describe('propose_workout', () => {
 });
 
 describe('accepting a plan', () => {
+  it("goes by the user's date, so a plan for yesterday is past just after local midnight", async () => {
+    await push(token, [dumbbells(40), bench()]);
+    const { proposalId } = await proposeWorkout(
+      { date: TODAY },
+      answering(planText(repsExercise.id, 30)),
+    );
+
+    const late = await confirmProposal(token, proposalId, `${addDays(TODAY, 1)}T00:30:00+01:00`);
+    expect(late.status).toBe(409);
+    expect(await late.json()).toEqual({ error: 'stale', reason: 'past_date' });
+
+    const onTime = await confirmProposal(token, proposalId, `${TODAY}T23:30:00+01:00`);
+    expect(onTime.status).toBe(200);
+  });
+
   it('fits the weights to the dumbbells of the moment it is accepted', async () => {
     const id = newId();
     await push(token, [dumbbells(40, id), bench()]);

@@ -318,6 +318,10 @@ export function editedSet(
   exercise: Parameters<typeof measured>[0],
   fields: SetFields,
 ): WorkoutSet {
+  // A value of the other measure would be dropped without a word.
+  if ((exercise.measure === 'reps' ? fields.duration_s : fields.reps) !== undefined) {
+    throw new ToolError('wrong_measure', { exercise: exercise.name_pl, measure: exercise.measure });
+  }
   const values = measured(exercise, {
     weight_kg: fields.weight_kg ?? set.weight_kg,
     reps: fields.reps ?? set.reps ?? undefined,

@@ -174,8 +174,7 @@ describe('voice', () => {
     expect(stop).toHaveBeenCalled();
   });
 
-  // voice.ts:34: `stop` has no session to stop until `listen` resolves, so the mic stays on.
-  it.fails('closing the sheet while the mic is still starting stops it too', async () => {
+  it('closing the sheet while the mic is still starting stops it too', async () => {
     vi.mocked(speechSupported).mockReturnValue(true);
     const stop = vi.fn<() => void>();
     let started: (session: { stop: () => void }) => void = () => undefined;

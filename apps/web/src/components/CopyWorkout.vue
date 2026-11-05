@@ -96,12 +96,15 @@ const preview = computed(() => {
 const selectable = (date: string) => date < props.targetDate && marks.value.has(date);
 
 async function submit() {
-  if (!source.value) return;
+  // A disabled ion-button stops clicks only from its next render. It stays busy after a copy: a
+  // tap while the sheet closes must not copy again.
+  if (!source.value || busy.value) return;
   busy.value = true;
   try {
     emit('done', source.value, await copyDay(source.value, props.targetDate, light.value));
-  } finally {
+  } catch (error) {
     busy.value = false;
+    throw error;
   }
 }
 </script>

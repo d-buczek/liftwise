@@ -172,6 +172,8 @@ describe('resolveProposal', () => {
     await resolveProposal('p1', action);
 
     expect(api.mock.calls[0]?.[0]).toBe(`/api/agent/proposals/p1/${action}`);
+    // The server goes by the user's date, not its own UTC one (§5.9.6).
+    expect(JSON.stringify(api.mock.calls[0])).toContain('localTime');
     expect(sync).toHaveBeenCalledTimes(1);
     expect(toasts()).toEqual([]);
   });
