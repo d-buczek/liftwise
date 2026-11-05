@@ -23,7 +23,12 @@ const { t } = useI18n();
         <ion-buttons v-if="backHref" slot="start">
           <ion-back-button :default-href="backHref" :text="t('common.back')" />
         </ion-buttons>
-        <ion-title>{{ title }}</ion-title>
+        <ion-title>
+          <span class="lw-page__title">
+            <span class="lw-page__title-text">{{ title }}</span>
+            <slot name="title-end" />
+          </span>
+        </ion-title>
         <ion-buttons slot="end">
           <slot name="actions" />
         </ion-buttons>
@@ -37,3 +42,18 @@ const { t } = useI18n();
     <slot name="footer" />
   </ion-page>
 </template>
+
+<style scoped>
+/* What follows the title stays whole: a long title gives way with its ellipsis. */
+.lw-page__title {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.lw-page__title-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+</style>

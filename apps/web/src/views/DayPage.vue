@@ -22,7 +22,7 @@ import {
   IonReorderGroup,
   type ReorderEndCustomEvent,
 } from '@ionic/vue';
-import { add, ellipsisVertical } from 'ionicons/icons';
+import { ellipsisVertical, pricetagOutline } from 'ionicons/icons';
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
@@ -273,6 +273,18 @@ async function reorderEnd(event: ReorderEndCustomEvent) {
 
 <template>
   <app-page :title="format.day(date)" :back-href="backHref">
+    <template #title-end>
+      <button
+        v-if="loaded && blocks.length > 0 && !reordering"
+        type="button"
+        class="lw-day__label"
+        :aria-label="dayLabel ? t('day.label', { name: dayLabel.name }) : t('day.addLabel')"
+        @click="labelPicker = true"
+      >
+        <label-chip v-if="dayLabel" :label="dayLabel" />
+        <ion-icon v-else :icon="pricetagOutline" aria-hidden="true" />
+      </button>
+    </template>
     <template #actions>
       <ion-button v-if="reordering" @click="reordering = null">{{
         t('day.reorderDone')
@@ -300,17 +312,6 @@ async function reorderEnd(event: ReorderEndCustomEvent) {
       </template>
 
       <template v-else-if="loaded && blocks.length > 0">
-        <button
-          type="button"
-          class="lw-day__label"
-          :aria-label="dayLabel ? t('day.label', { name: dayLabel.name }) : undefined"
-          @click="labelPicker = true"
-        >
-          <label-chip v-if="dayLabel" :label="dayLabel" />
-          <template v-else>
-            <ion-icon :icon="add" aria-hidden="true" />{{ t('day.addLabel') }}
-          </template>
-        </button>
         <ion-button v-if="loggable" expand="block" class="lw-day__start" @click="openWorkout()">
           {{ started ? t('day.resume') : t('day.start') }}
         </ion-button>
@@ -423,15 +424,16 @@ async function reorderEnd(event: ReorderEndCustomEvent) {
 </template>
 
 <style scoped>
+/* Beside the title: tall as the toolbar's targets, narrow to leave the date its room. */
 .lw-day__label {
   display: inline-flex;
+  flex: none;
   align-items: center;
-  gap: 4px;
+  justify-content: center;
+  min-width: 28px;
   min-height: 48px;
-  margin-top: 8px;
-  padding: 0 4px;
+  padding: 0 2px;
   font-family: inherit;
-  font-size: 14px;
   color: var(--lw-muted);
   background: transparent;
   border: 0;
@@ -439,7 +441,7 @@ async function reorderEnd(event: ReorderEndCustomEvent) {
 }
 
 .lw-day__label ion-icon {
-  font-size: 18px;
+  font-size: 20px;
 }
 
 .lw-day__start {

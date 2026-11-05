@@ -143,6 +143,8 @@ function label(date: string): string {
   --lw-mark: var(--ion-color-primary);
   position: relative;
   display: grid;
+  /* The cell's full width: the label's max-width is a share of this column. */
+  grid-template-columns: minmax(0, 1fr);
   place-content: center;
   justify-items: center;
   line-height: 1;
