@@ -133,7 +133,7 @@ On top of that, an AI agent with tools over the app's data logs and edits from a
 
 Calendar and planning (D29):
 
-- The **calendar** is the home screen: month view, days with a workout are marked as done or planned only, in the color and with the name of the day's label if it has one (D48). Tapping a day opens its workout. A workout belongs to one local date.
+- The **calendar** is the home screen: month view, days with a workout are marked as done or planned only, in the color and with the name of the day's label if it has one (D48). The arrows or a horizontal swipe turn the month with a quick crossfade moving in that direction (LW-18; no motion with reduced motion). Tapping a day opens its workout. A workout belongs to one local date.
 - **Workout labels** (D48): a workout can carry a label, a training set such as "A", "B" or "Push" (a name of 1–6 characters, unique among active labels regardless of case, checked on the client) with a color from a fixed palette of 6 (teal, violet, green, magenta, graphite, cobalt; no amber or rust); a new label starts with the first color no active label uses. A day's label is that of its oldest labelled workout; a day with sets shows it as a chip under the title ("Dodaj etykietę" without one), and a tap picks another label, "Bez etykiety" or a new one, written to every workout of the day in one change group. Settings → Etykiety treningów adds labels, renames them, changes their color and archives them; an archived label stays on its workouts but is no longer offered. No delete.
 - **Copy workout** works on any day, today or in the future:
   - Pick the source day in the calendar; the default is the most recent workout with sets before the target day. Above the month, **"Ostatni:"** offers each active label with a workout before the target day; one tap picks the most recent day with it.
@@ -338,6 +338,7 @@ A card on the calendar for the shown week (Monday–Sunday), computed in core fr
 ### 5.13 UI shell and visual design
 
 - **Layout:** phones get one column and bottom tabs (Kalendarz, Historia, Agent, Ustawienia). From 992 px (Ionic `lg`) an `ion-split-pane` side menu (240 px: wordmark, sections, sync status) replaces the tabs, and content sits in a column of at most 720 px. Ionic runs in `md` mode on every platform.
+- **Motion (LW-18):** a new tab's page slides 32 px in from the side it sits on and fades in (200 ms), the month crossfades with the same 32 px move (260 ms), both on Ionic's page curve; pages within a section keep Ionic's Material transition. A slide by the month's whole width stuttered at 120 Hz: over 20 px per frame, so one late frame jumped about 50 px. All of it runs on the compositor (`transform` in px, opacity) and stops with reduced motion.
 - **Visual direction "Grafit i kobalt"** (D42), taken from the materials of a home dumbbell setup:
   - Colors: graphite `#1B1E23` (dark background, light-mode text) with surfaces `#252931` and lines `#373C45`, chalk `#EDF0F4` (light background) and `#ECEEF2` (dark-mode text), lines `#D3D8E0` in light, cobalt `#2D5BC0` light / `#6E9BF5` dark (accent, actions, active section), signal amber `#E0A526` (records and warnings only), rust `#A33A2B` / `#E07A63` (danger). Text contrast at least 4.5:1. The icon keeps chalk plates with cobalt collars on graphite.
   - Type: Archivo variable with its width axis, bundled for offline use. The app paints only once the font is loaded (waiting at most 1 s), so text doesn't jump from the system font. Numbers and headings are narrow (`font-stretch: 75%`), bold, with tabular figures; body text is 400 at normal width. Scale 13 / 14 / 16 / 20 / 26 / 40 / 64 px, sentence case, no all-caps labels.
@@ -596,6 +597,7 @@ Each line is meant to be one `/ticket` task.
 | LW-15 | Agent CPU on Workers Free: profile a chat turn in workerd, cut the CPU per model step (tool schemas, context, message persistence), measure again on the deployed Worker (§9) |
 | LW-16 | One-time import of the earlier training history (D2) |
 | LW-17 | A field to type a weight, next to the ± step (changes D1) |
+| LW-18 | Motion: the month's slide and swipe, a quick transition between tabs |
 | LW-19 | Fix the bugs the test pass found: mic left on, silent failed undo, double taps, dropped agent edits, a blank start on unreadable storage, the proposal's UTC date |
 | LW-20 | Phase 2: MCP endpoint with token auth |
 | LW-21 | Phase 2: OAuth for claude.ai connectors |

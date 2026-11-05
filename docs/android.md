@@ -68,6 +68,11 @@ Some vendors add steps:
   debugging screen, not the pairing port. Without it adb uses the one connected device (`adb devices`).
 - `pnpm android:build`: the same without installing; the APK is in
   `apps/web/android/app/build/outputs/apk/release/app-release.apk`.
+- Profiling on the phone: `LIFTWISE_WEBVIEW_DEBUG=1 pnpm android:install <ip:port>` (in PowerShell
+  `$env:LIFTWISE_WEBVIEW_DEBUG='1'; pnpm android:install <ip:port>`) opens the WebView to Chrome DevTools, so `chrome://inspect` or a script over `adb forward tcp:9222
+  localabstract:webview_devtools_remote_<pid>` can trace real frames. Install again without the variable
+  afterwards. Some vendors refuse `adb shell input` without an extra debugging switch in the security
+  settings; DevTools doesn't need it.
 
 After the first install the app shows the pairing screen: on another paired device open Ustawienia →
 Urządzenia, create a code and type it in.

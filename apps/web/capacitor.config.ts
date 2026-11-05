@@ -16,7 +16,12 @@ const config: CapacitorConfig = {
   // The splash screen's graphite until the page paints.
   backgroundColor: '#1B1E23',
   server: { androidScheme: 'https', cleartext: insecureApi },
-  android: { allowMixedContent: insecureApi },
+  android: {
+    allowMixedContent: insecureApi,
+    // A profiling release build (docs/android.md) opens the WebView to Chrome DevTools; unset, debug
+    // builds keep Capacitor's default of being open.
+    webContentsDebuggingEnabled: process.env.LIFTWISE_WEBVIEW_DEBUG === '1' ? true : undefined,
+  },
   plugins: {
     // Ionic pads the header and the tab bar with env(safe-area-inset-*).
     SystemBars: { insetsHandling: 'native', initialViewportFitValueHint: 'cover' },

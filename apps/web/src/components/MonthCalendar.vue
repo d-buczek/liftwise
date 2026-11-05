@@ -2,13 +2,21 @@
 import type { WorkoutLabel } from '@liftwise/core';
 import { IonButton, IonIcon } from '@ionic/vue';
 import { chevronBack, chevronForward } from 'ionicons/icons';
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useToday } from '../composables/today';
-import { addMonths, dateValue, monthGrid, monthOf, type DayMark } from '../workout/calendar';
+import {
+  addMonths,
+  dateValue,
+  monthGrid,
+  monthOf,
+  swipeMonths,
+  type DayMark,
+} from '../workout/calendar';
 
 // The month view (§5.2): done days are solid tiles, planned-only days outlined, today underlined.
-// A labelled day takes its label's color and shows its name under the number (D48).
+// A labelled day takes its label's color and shows its name under the number (D48). The arrows or
+// a swipe turn the month with a quick slide.
 const props = defineProps<{
   marks: Map<string, DayMark>;
   labels?: Map<string, Pick<WorkoutLabel, 'name' | 'color'>>;
@@ -37,6 +45,28 @@ function label(date: string): string {
   if (!mark) return day;
   return [day, t(`calendar.${mark}`), ...(name ? [t('calendar.label', { name })] : [])].join(', ');
 }
+
+// The transition follows the change of month, wherever it came from.
+const direction = ref<'next' | 'previous'>('next');
+watch(month, (next, previous) => {
+  direction.value = next > previous ? 'next' : 'previous';
+});
+
+// One finger only; the browser's touchcancel drops a move it took over as a vertical scroll.
+let touchStart: { x: number; y: number } | null = null;
+
+function onTouchStart(event: TouchEvent) {
+  const touch = event.touches.length === 1 ? event.touches[0] : undefined;
+  touchStart = touch ? { x: touch.clientX, y: touch.clientY } : null;
+}
+
+function onTouchEnd(event: TouchEvent) {
+  const touch = event.changedTouches[0];
+  if (!touchStart || !touch) return;
+  const months = swipeMonths(touch.clientX - touchStart.x, touch.clientY - touchStart.y);
+  touchStart = null;
+  if (months) month.value = addMonths(month.value, months);
+}
 </script>
 
 <template>
@@ -59,43 +89,52 @@ function label(date: string): string {
       </ion-button>
     </header>
 
-    <div class="lw-month__grid" role="grid">
-      <div class="lw-month__row" role="row">
-        <span
-          v-for="weekday in weekdays"
-          :key="weekday"
-          class="lw-month__weekday"
-          role="columnheader"
-        >
-          {{ weekday }}
-        </span>
-      </div>
-      <div v-for="week in weeks" :key="week[0]" class="lw-month__row" role="row">
-        <button
-          v-for="date in week"
-          :key="date"
-          type="button"
-          role="gridcell"
-          class="lw-month__day lw-num"
-          :class="{
-            'is-outside': monthOf(date) !== month,
-            'is-today': date === now,
-            'is-selected': date === selected,
-            [`is-${marks.get(date)}`]: marks.has(date),
-            'has-label': labelOf(date),
-          }"
-          :style="labelOf(date) && { '--lw-mark': `var(--lw-label-${labelOf(date)?.color})` }"
-          :disabled="disabled?.(date)"
-          :aria-label="label(date)"
-          :aria-selected="date === selected || undefined"
-          @click="emit('select', date)"
-        >
-          {{ Number(date.slice(8)) }}
-          <span v-if="labelOf(date)" class="lw-month__label" aria-hidden="true">
-            {{ labelOf(date)?.name }}
-          </span>
-        </button>
-      </div>
+    <div
+      class="lw-month__viewport"
+      @touchstart.passive="onTouchStart"
+      @touchend.passive="onTouchEnd"
+      @touchcancel.passive="touchStart = null"
+    >
+      <transition :name="`lw-month-${direction}`">
+        <div :key="month" class="lw-month__grid" role="grid">
+          <div class="lw-month__row" role="row">
+            <span
+              v-for="weekday in weekdays"
+              :key="weekday"
+              class="lw-month__weekday"
+              role="columnheader"
+            >
+              {{ weekday }}
+            </span>
+          </div>
+          <div v-for="week in weeks" :key="week[0]" class="lw-month__row" role="row">
+            <button
+              v-for="date in week"
+              :key="date"
+              type="button"
+              role="gridcell"
+              class="lw-month__day lw-num"
+              :class="{
+                'is-outside': monthOf(date) !== month,
+                'is-today': date === now,
+                'is-selected': date === selected,
+                [`is-${marks.get(date)}`]: marks.has(date),
+                'has-label': labelOf(date),
+              }"
+              :style="labelOf(date) && { '--lw-mark': `var(--lw-label-${labelOf(date)?.color})` }"
+              :disabled="disabled?.(date)"
+              :aria-label="label(date)"
+              :aria-selected="date === selected || undefined"
+              @click="emit('select', date)"
+            >
+              {{ Number(date.slice(8)) }}
+              <span v-if="labelOf(date)" class="lw-month__label" aria-hidden="true">
+                {{ labelOf(date)?.name }}
+              </span>
+            </button>
+          </div>
+        </div>
+      </transition>
     </div>
   </section>
 </template>
@@ -123,6 +162,59 @@ function label(date: string): string {
 .lw-month__grid {
   display: grid;
   gap: 4px;
+}
+
+/* Keeps a slide inside the calendar. The 4 px around leave room for the selected day's outline. */
+.lw-month__viewport {
+  position: relative;
+  margin: -4px;
+  padding: 4px;
+  overflow: hidden;
+  touch-action: pan-y;
+}
+
+/* A short move with a crossfade, on Ionic's page curve. A whole month's width in this time would
+   jump over 20 px per frame even at 120 Hz (measured on a phone), which reads as stutter. */
+.lw-month-next-enter-active,
+.lw-month-previous-enter-active {
+  transition:
+    transform 260ms cubic-bezier(0.36, 0.66, 0.04, 1),
+    opacity 170ms linear 70ms;
+  will-change: transform, opacity;
+}
+
+/* The old month fades over the new one, which sets the height. */
+.lw-month-next-leave-active,
+.lw-month-previous-leave-active {
+  position: absolute;
+  inset: 4px 4px auto;
+  /* Invisible after 70 ms, on top until the end: a quick tap belongs to the new month. */
+  pointer-events: none;
+  transition:
+    transform 260ms cubic-bezier(0.36, 0.66, 0.04, 1),
+    opacity 70ms linear;
+  will-change: transform, opacity;
+}
+
+.lw-month-next-enter-from,
+.lw-month-previous-leave-to {
+  opacity: 0;
+  transform: translate3d(32px, 0, 0);
+}
+
+.lw-month-next-leave-to,
+.lw-month-previous-enter-from {
+  opacity: 0;
+  transform: translate3d(-32px, 0, 0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lw-month-next-enter-active,
+  .lw-month-next-leave-active,
+  .lw-month-previous-enter-active,
+  .lw-month-previous-leave-active {
+    transition: none;
+  }
 }
 
 .lw-month__row {

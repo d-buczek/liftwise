@@ -9,3 +9,14 @@ export const SECTIONS = [
 ] as const;
 
 export type Section = (typeof SECTIONS)[number]['tab'];
+
+const sectionIndex = (path: string) =>
+  SECTIONS.findIndex((section) => path === section.path || path.startsWith(`${section.path}/`));
+
+// Which way a move between two paths goes along the tabs: 1 to the right, -1 to the left, 0 within
+// a section or outside the tabs.
+export function sectionStep(from: string, to: string): -1 | 0 | 1 {
+  const [start, end] = [sectionIndex(from), sectionIndex(to)];
+  if (start < 0 || end < 0 || start === end) return 0;
+  return end > start ? 1 : -1;
+}

@@ -6,10 +6,20 @@ import {
   dayMarks,
   monthGrid,
   summaryWeek,
+  swipeMonths,
   today,
 } from './calendar';
 
 describe('calendar', () => {
+  it('reads a horizontal swipe as a month, and a tap or a scroll as none', () => {
+    expect(swipeMonths(-48, 0)).toBe(1);
+    expect(swipeMonths(48, 0)).toBe(-1);
+    expect(swipeMonths(-47, 0)).toBeNull();
+    expect(swipeMonths(-90, 60)).toBe(1);
+    expect(swipeMonths(-90, 61)).toBeNull();
+    expect(swipeMonths(0, 200)).toBeNull();
+  });
+
   it('formats the local date and parses it back at local midnight', () => {
     expect(today(new Date(2026, 0, 5, 23, 59))).toBe('2026-01-05');
     expect(dateValue('2026-01-05')).toEqual(new Date(2026, 0, 5));

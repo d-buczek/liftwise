@@ -31,6 +31,15 @@ export function addMonths(month: string, months: number): string {
   return `${Math.floor(total / 12)}-${String((total % 12) + 1).padStart(2, '0')}`;
 }
 
+const SWIPE_MIN_PX = 48;
+
+// A finger's move over the month view (§5.2) in months: a swipe to the left turns to the next
+// month. null for a tap, or a move that is mostly a scroll.
+export function swipeMonths(dx: number, dy: number): 1 | -1 | null {
+  if (Math.abs(dx) < SWIPE_MIN_PX || Math.abs(dx) < 1.5 * Math.abs(dy)) return null;
+  return dx < 0 ? 1 : -1;
+}
+
 // The month view: Monday-to-Sunday weeks covering the month, days of the neighbouring months
 // filling the first and the last week.
 export function monthGrid(month: string): string[][] {
