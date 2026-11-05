@@ -1,4 +1,4 @@
-import { ATHLETE_PROFILE_ID, newId, type ProposalToolOutput } from '@liftwise/core';
+import { ATHLETE_PROFILE_ID, newId, shortId, type ProposalToolOutput } from '@liftwise/core';
 import { MockLanguageModelV4, convertArrayToReadableStream } from 'ai/test';
 import { createExecutionContext, env, waitOnExecutionContext } from 'cloudflare:test';
 import { asc, eq } from 'drizzle-orm';
@@ -320,5 +320,31 @@ it('a risky call waits for the tap, which needs no model and shows in the next t
   const next = new MockLanguageModelV4({ doStream: answer('Usunięta.') });
   await chat(next, threadId, 'Usunięta?');
   expect(promptOf(next)).toContain('confirmed');
-  expect(promptOf(next)).toContain(String(groupId));
+  expect(promptOf(next)).toContain(shortId(String(groupId)));
+});
+
+describe('ids in the prompt (D55)', () => {
+  it('shows the model short ids and stores the full ones, in the turn and later', async () => {
+    const threadId = newId();
+    const model = new MockLanguageModelV4({
+      doStream: [toolCall('log_sets', log), answer('Zapisane.'), answer('Proszę.')],
+    });
+    await chat(model, threadId, 'wyciskanie 24 kg 10');
+
+    const [, assistant] = await threadMessages(threadId);
+    const { output } = toolPart(assistant?.parts, 'log_sets') as {
+      output: { groupId: string; changes: { id: string }[] };
+    };
+    const ids = [output.groupId, ...output.changes.map((change) => change.id)];
+    expect(ids.every((id) => id.length === 36)).toBe(true);
+
+    await chat(model, threadId, 'dzięki');
+    // The step after the call, then the history of the next turn.
+    for (const step of [1, 2]) {
+      const prompt = promptOf(model, step);
+      expect(prompt).toContain(`"groupId":"${shortId(output.groupId)}"`);
+      for (const id of ids) expect(prompt).not.toContain(id);
+      expect(prompt).toContain(repsExercise.id);
+    }
+  });
 });

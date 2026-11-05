@@ -2,7 +2,9 @@ import {
   copiedLabelId,
   copyWorkout,
   dayWorkout,
+  isShortId,
   logSets,
+  matchesId,
   newId,
   nextPosition,
   plannedSetsFor,
@@ -10,8 +12,11 @@ import {
   type Workout,
   type WorkoutSet,
 } from '@liftwise/core';
+import { like } from 'drizzle-orm';
 import { z } from 'zod';
 import { undoGroup } from '../changes';
+import type { Db } from '../db';
+import { changeLog } from '../db/schema';
 import { dateInput, dateOf, exerciseIdInput, exerciseOf, measured, setValuesInput } from './common';
 import { catalog, days, history, labels, setsById, trainingSettings } from './data';
 import { changeView, commit, defineTool, ToolError, type PlannedWrite } from './registry';
@@ -25,6 +30,18 @@ const upsert = (entity: 'workouts' | 'sets', row: Workout | WorkoutSet): Planned
 });
 
 const rirInput = z.number().int().min(0).max(4).describe('Reps in reserve, 0–4');
+
+// The change group a full or short id names (D55); an unknown one stays for `not_found`.
+async function fullGroupId(db: Db, id: string): Promise<string> {
+  if (!isShortId(id)) return id;
+  const groups = await db
+    .selectDistinct({ id: changeLog.change_group_id })
+    .from(changeLog)
+    .where(like(changeLog.change_group_id, `%${id.toLowerCase()}`))
+    .limit(2);
+  if (groups.length > 1) throw new ToolError('ambiguous_id', { id });
+  return groups[0]?.id ?? id;
+}
 
 // Sets are logged today and on past days only; a future day is planning (D45).
 function notFuture(date: string, today: string) {
@@ -68,7 +85,8 @@ export const writeTools = [
           rir: set.rir ?? null,
           warmup: set.warmup ?? false,
         })),
-        performedAt: ctx.now,
+        // A past day keeps its date, at the clock time of the message: only the day is known.
+        performedAt: date === ctx.today ? ctx.now : `${date}${ctx.now.slice(10)}`,
       });
       return commit(ctx, [
         ...result.workouts.map((workout) => upsert('workouts', workout)),
@@ -80,7 +98,8 @@ export const writeTools = [
     name: 'update_set',
     description:
       'Change one done set (weight, reps or seconds, RIR, warm-up, note). Planned sets are ' +
-      'changed with edit_planned_sets, several done sets with update_sets.',
+      'changed with edit_planned_sets. A request about several done sets is one update_sets ' +
+      'call, never several calls of this tool.',
     input: z.object({
       set_id: z.string(),
       weight_kg: z.number().min(0).optional(),
@@ -175,7 +194,8 @@ export const writeTools = [
       // Each planned set as edited so far, so two edits of one set combine.
       const edited = new Map<string, WorkoutSet>();
       const plannedSet = (id: string) => {
-        const set = edited.get(id) ?? day.sets.find((row) => row.id === id);
+        const row = day.sets.find((candidate) => matchesId(candidate.id, id));
+        const set = (row && edited.get(row.id)) ?? row;
         if (!set || set.status !== 'planned') throw new ToolError('not_planned', { set_id: id });
         return set;
       };
@@ -209,7 +229,7 @@ export const writeTools = [
       }
       for (const { set_id, ...fields } of input.update ?? []) {
         const set = plannedSet(set_id);
-        edited.set(set_id, editedSet(set, exerciseOf(exercises, set.exercise_id), fields));
+        edited.set(set.id, editedSet(set, exerciseOf(exercises, set.exercise_id), fields));
       }
       for (const { exercise_id, to_exercise_id } of input.swap ?? []) {
         const [from, to] = [
@@ -220,19 +240,20 @@ export const writeTools = [
           throw new ToolError('measure_mismatch', { exercise_id, to_exercise_id });
         }
         const swapped = day.sets.filter(
-          (set) => set.status === 'planned' && set.exercise_id === exercise_id,
+          (set) => set.status === 'planned' && set.exercise_id === from.id,
         );
         if (swapped.length === 0) throw new ToolError('not_planned', { exercise_id });
         for (const set of swapped) {
-          edited.set(set.id, { ...plannedSet(set.id), exercise_id: to_exercise_id });
+          edited.set(set.id, { ...plannedSet(set.id), exercise_id: to.id });
         }
       }
+      const removed = new Set<string>();
       for (const id of input.remove ?? []) {
-        plannedSet(id);
-        edited.delete(id);
-        writes.push({ entity: 'sets', op: 'delete', row: { id } });
+        const { id: setId } = plannedSet(id);
+        removed.add(setId);
+        edited.delete(setId);
+        writes.push({ entity: 'sets', op: 'delete', row: { id: setId } });
       }
-      const removed = new Set(input.remove);
       writes.push(
         ...[...edited.values()]
           .filter((set) => !removed.has(set.id))
@@ -289,7 +310,7 @@ export const writeTools = [
     }),
     risk: 'write',
     run: async (ctx, { group_id, confirm = false }) => {
-      const result = await undoGroup(ctx.db, group_id, {
+      const result = await undoGroup(ctx.db, await fullGroupId(ctx.db, group_id), {
         confirm,
         actor: 'agent',
         threadId: ctx.threadId,

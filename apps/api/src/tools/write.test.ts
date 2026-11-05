@@ -137,10 +137,11 @@ describe('log_sets', () => {
     });
 
     expect(opsOf(result)).toEqual(['workouts:update', 'sets:update']);
-    expect(result.changes[0]).toMatchObject({ id: workout.id, after: { started_at: NOW } });
+    const onThatDay = '2026-10-28T18:00:00+01:00';
+    expect(result.changes[0]).toMatchObject({ id: workout.id, after: { started_at: onThatDay } });
     expect(result.changes[1]).toMatchObject({
       id: warmup?.id,
-      after: { status: 'done', weight_kg: 10, reps: 12, warmup: true, performed_at: NOW },
+      after: { status: 'done', weight_kg: 10, reps: 12, warmup: true, performed_at: onThatDay },
     });
     expect(await setById(working?.id)).toMatchObject({ status: 'planned', performed_at: null });
   });

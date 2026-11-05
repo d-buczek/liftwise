@@ -69,7 +69,7 @@ export const readTools = [
     risk: 'read',
     run: async (ctx, { exercise_id, sessions = 5 }) => {
       const exercise = exerciseOf(await catalog(ctx.db), exercise_id);
-      const found = exerciseSessions(await history(ctx.db, [exercise_id]), exercise);
+      const found = exerciseSessions(await history(ctx.db, [exercise.id]), exercise);
       return {
         exercise: exercise.name_pl,
         measure: exercise.measure,
@@ -125,7 +125,7 @@ export const readTools = [
     risk: 'read',
     run: async (ctx, { exercise_id }) => {
       const exercise = exerciseOf(await catalog(ctx.db), exercise_id);
-      const sets = await history(ctx.db, [exercise_id]);
+      const sets = await history(ctx.db, [exercise.id]);
       return {
         exercise: exercise.name_pl,
         measure: exercise.measure,

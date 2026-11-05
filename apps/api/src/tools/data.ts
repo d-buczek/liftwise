@@ -4,6 +4,8 @@ import {
   BALANCE_WINDOW_DAYS,
   DEFAULT_BALANCE_SETTINGS,
   DEFAULT_TRAINING_SETTINGS,
+  isShortId,
+  matchesId,
   SETTING_IDS,
   type BalanceSettings,
   type DatedSet,
@@ -14,7 +16,7 @@ import {
   type WorkoutLabel,
   type WorkoutSet,
 } from '@liftwise/core';
-import { and, asc, eq, gte, inArray, isNull, lt, lte, sql, type SQL } from 'drizzle-orm';
+import { and, asc, eq, gte, inArray, isNull, like, lt, lte, or, sql, type SQL } from 'drizzle-orm';
 import type { Db } from '../db';
 import {
   athleteProfile,
@@ -25,6 +27,7 @@ import {
   workoutLabels,
   workouts,
 } from '../db/schema';
+import { ToolError } from './registry';
 
 // Live rows (no tombstones) for the agent's tools, in their core shape. Sets come joined with
 // their workout's date: D1 binds at most 100 parameters, so no lists of workout ids.
@@ -133,8 +136,21 @@ export async function balanceSets(db: Db, today: string): Promise<DatedSet[]> {
 }
 
 // Live sets by id with their date; missing ones are left out.
+// By full or short id (D55). Two sets ending alike are for the model to resolve, never to guess.
 export async function setsById(db: Db, ids: string[]): Promise<DatedSet[]> {
   if (ids.length === 0) return [];
-  const rows = await datedSetsQuery(db, inArray(sets.id, ids));
-  return rows.map(toDatedSet);
+  const rows = await datedSetsQuery(
+    db,
+    or(
+      inArray(
+        sets.id,
+        ids.filter((id) => !isShortId(id)),
+      ),
+      ...ids.filter(isShortId).map((id) => like(sets.id, `%${id.toLowerCase()}`)),
+    ),
+  );
+  const found = rows.map(toDatedSet);
+  const ambiguous = ids.find((id) => found.filter((set) => matchesId(set.id, id)).length > 1);
+  if (ambiguous) throw new ToolError('ambiguous_id', { id: ambiguous });
+  return found;
 }

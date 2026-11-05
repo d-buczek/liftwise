@@ -1,6 +1,7 @@
 import {
   ATHLETE_PROFILE_ID,
   equipmentTypeSchema,
+  matchesId,
   measureSchema,
   movementPatternSchema,
   muscleGroupSchema,
@@ -20,7 +21,7 @@ import { editedSet } from './write';
 
 async function existingSets(ctx: ToolContext, ids: string[]) {
   const found = await setsById(ctx.db, ids);
-  const missing = ids.filter((id) => !found.some((set) => set.id === id));
+  const missing = ids.filter((id) => !found.some((set) => matchesId(set.id, id)));
   if (missing.length > 0) throw new ToolError('set_not_found', { set_ids: missing });
   return found;
 }
@@ -110,9 +111,10 @@ export const riskyTools = [
       // Two updates of one set add up, like in edit_planned_sets.
       const edited = new Map<string, ReturnType<typeof editedSet>>();
       for (const { set_id, ...fields } of updates) {
-        const set = edited.get(set_id) ?? found.find((row) => row.id === set_id);
+        const row = found.find(({ id }) => matchesId(id, set_id));
+        const set = (row && edited.get(row.id)) ?? row;
         if (set?.status !== 'done') throw new ToolError('not_done', { set_id });
-        edited.set(set_id, editedSet(set, exerciseOf(exercises, set.exercise_id), fields));
+        edited.set(set.id, editedSet(set, exerciseOf(exercises, set.exercise_id), fields));
       }
       return [...edited.values()].map((row) => ({ entity: 'sets', op: 'upsert', row }));
     },

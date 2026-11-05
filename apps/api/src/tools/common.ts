@@ -1,5 +1,6 @@
 import {
   localDateSchema,
+  matchesId,
   roundWeightKg,
   type DatedSet,
   type Exercise,
@@ -23,7 +24,7 @@ export function dateOf(ctx: ToolContext, value: string | undefined): string {
 }
 
 export function exerciseOf(exercises: Exercise[], id: string): Exercise {
-  const exercise = exercises.find((row) => row.id === id);
+  const exercise = exercises.find((row) => matchesId(row.id, id));
   if (!exercise) throw new ToolError('exercise_not_found', { exercise_id: id });
   return exercise;
 }

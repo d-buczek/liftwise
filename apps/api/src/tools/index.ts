@@ -1,4 +1,5 @@
-import { tool, zodSchema, type ToolSet } from 'ai';
+import { tool, zodSchema, type JSONValue, type ToolSet } from 'ai';
+import { withShortIds } from './model-output';
 import { planTools } from './plan';
 import { readTools } from './read';
 import { runTool, type AgentTool, type ToolContext } from './registry';
@@ -34,6 +35,7 @@ export function agentTools(ctx: ToolContext): ToolSet {
         description: entry.description,
         inputSchema: INPUT_SCHEMAS.get(entry.name)!,
         execute: (input) => runTool(ctx, entry, input),
+        toModelOutput: ({ output }) => ({ type: 'json', value: withShortIds(output) as JSONValue }),
       }),
     ]),
   );
