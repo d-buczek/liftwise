@@ -41,7 +41,7 @@ const submitToken = () => run(() => auth.pairWithToken(token.value.trim()));
 </script>
 
 <template>
-  <ion-page>
+  <ion-page class="lw-page">
     <ion-content>
       <main class="lw-pair">
         <p class="lw-pair__brand">{{ APP_NAME }}</p>
@@ -113,16 +113,16 @@ const submitToken = () => run(() => auth.pairWithToken(token.value.trim()));
 
 .lw-pair__brand {
   margin: 0 0 40px;
-  font-size: 20px;
-  font-stretch: 62%;
+  font-size: 27px;
+  font-family: var(--lw-font-display);
   font-weight: 800;
 }
 
 .lw-pair__title {
   margin: 0 0 8px;
-  font-size: 40px;
-  font-stretch: var(--lw-narrow);
-  font-weight: 700;
+  font-size: 52px;
+  font-family: var(--lw-font-display);
+  font-weight: 800;
   line-height: 1.1;
 }
 
@@ -134,9 +134,9 @@ const submitToken = () => run(() => auth.pairWithToken(token.value.trim()));
 
 /* The code reads like numerals cast into a plate. */
 .lw-pair__code {
-  font-size: 40px;
-  font-stretch: var(--lw-narrow);
-  font-weight: 700;
+  font-size: 52px;
+  font-family: var(--lw-font-display);
+  font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
@@ -144,7 +144,7 @@ const submitToken = () => run(() => auth.pairWithToken(token.value.trim()));
 /* The label is light DOM, so it can drop the code's type. */
 .lw-pair__code-label {
   font-size: 16px;
-  font-stretch: 100%;
+  font-family: var(--lw-font);
   font-weight: 400;
   letter-spacing: normal;
   text-transform: none;

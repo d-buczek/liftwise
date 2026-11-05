@@ -42,7 +42,7 @@ const label = computed(() =>
 <style scoped>
 .lw-meter {
   display: grid;
-  grid-template-columns: 1fr 76px;
+  grid-template-columns: 1fr 92px;
   align-items: center;
   gap: 12px;
 }
@@ -59,7 +59,7 @@ const label = computed(() =>
 .lw-meter__band {
   position: absolute;
   inset-block: 0;
-  background: color-mix(in srgb, var(--ion-color-primary) 22%, transparent);
+  background: var(--lw-range);
 }
 
 .lw-meter__bar {
@@ -81,7 +81,7 @@ const label = computed(() =>
 }
 
 .lw-meter__count {
-  font-size: 20px;
+  font-size: 27px;
   line-height: 1;
   text-align: right;
   white-space: nowrap;

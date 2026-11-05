@@ -31,7 +31,7 @@ const rest = useRestStore();
           <span class="lw-num">{{ format.clock(rest.remainingS) }}</span>
         </div>
         <ion-button
-          fill="outline"
+          fill="clear"
           class="lw-rest__button"
           :aria-label="t('rest.lessLabel', { value: REST_ADJUST_S })"
           @click="rest.adjust(-REST_ADJUST_S)"
@@ -39,7 +39,7 @@ const rest = useRestStore();
           {{ t('rest.less', { value: REST_ADJUST_S }) }}
         </ion-button>
         <ion-button
-          fill="outline"
+          fill="clear"
           class="lw-rest__button"
           :aria-label="t('rest.moreLabel', { value: REST_ADJUST_S })"
           @click="rest.adjust(REST_ADJUST_S)"
@@ -62,7 +62,7 @@ const rest = useRestStore();
 
 <style scoped>
 .lw-rest {
-  background: var(--lw-surface);
+  background: var(--lw-nav-background);
   border-top: 1px solid var(--lw-border);
   box-shadow: none;
 }
@@ -85,41 +85,46 @@ const rest = useRestStore();
   align-items: center;
   gap: 8px;
   max-width: var(--lw-content-max);
-  min-height: 72px;
+  min-height: 56px;
   margin-inline: auto;
-  padding: 8px 16px;
+  padding: 4px 8px 4px 16px;
 }
 
 .lw-rest__time {
-  display: grid;
+  display: flex;
   flex: 1;
+  align-items: baseline;
+  gap: 6px;
   line-height: 1;
 }
 
 .lw-rest__label {
-  font-size: 13px;
+  font-size: 14px;
   color: var(--lw-muted);
 }
 
 .lw-rest__time .lw-num {
-  font-size: 40px;
+  font-size: 31px;
 }
 
 .lw-rest__button {
   --border-radius: 12px;
   --border-color: var(--lw-border);
   --color: var(--ion-text-color);
+  --padding-start: 10px;
+  --padding-end: 10px;
   height: 48px;
   margin: 0;
   font-size: 16px;
+  font-weight: 600;
 }
 
 .lw-rest__finished {
   flex: 1;
   margin: 0;
-  font-size: 26px;
-  font-stretch: var(--lw-narrow);
-  font-weight: 700;
+  font-size: 31px;
+  font-family: var(--lw-font-display);
+  font-weight: 800;
 }
 
 /* The one moment the timer asks for attention. */

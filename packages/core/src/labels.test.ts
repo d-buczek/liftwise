@@ -41,7 +41,7 @@ describe('nextLabelColor', () => {
     expect(nextLabelColor([label('A', { color: 'teal' }), label('B')])).toBe('violet');
     expect(nextLabelColor([label('A', { color: 'teal', archived: true })])).toBe('teal');
     expect(nextLabelColor(LABEL_COLORS.slice(0, -1).map((color) => label('X', { color })))).toBe(
-      'cobalt',
+      'straw',
     );
   });
 

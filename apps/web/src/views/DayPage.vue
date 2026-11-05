@@ -66,6 +66,7 @@ import {
   trainingSettings,
   workoutLabels,
 } from '../workout/queries';
+import { setsShare, steelStage } from '../workout/progress';
 
 // A day (§5.2): its exercises with planned and done sets; copy a workout onto it, add, swap,
 // remove and reorder exercises, edit sets with ± and apply progression hints. Today and past
@@ -121,6 +122,7 @@ const maxKg = useLiveQuery(async () => maxDumbbellKg(await equipment()), null);
 
 const blocks = computed(() => exerciseBlocks(view.value.sets));
 const started = computed(() => view.value.sets.some((set) => set.status === 'done'));
+const share = computed(() => setsShare(view.value.sets));
 // Why the accepted proposal looks like this.
 const rationale = computed(
   () => view.value.workouts.find((workout) => workout.rationale)?.rationale ?? null,
@@ -272,7 +274,12 @@ async function reorderEnd(event: ReorderEndCustomEvent) {
 </script>
 
 <template>
-  <app-page :title="format.day(date)" :back-href="backHref">
+  <app-page
+    :title="format.day(date)"
+    :back-href="backHref"
+    :progress="share"
+    :steel="loaded ? steelStage(share) : undefined"
+  >
     <template #title-end>
       <button
         v-if="loaded && blocks.length > 0 && !reordering"
@@ -445,12 +452,14 @@ async function reorderEnd(event: ReorderEndCustomEvent) {
 }
 
 .lw-day__start {
-  --border-radius: 14px;
-  height: 56px;
-  margin: 8px 0 0;
-  font-size: 20px;
-  font-stretch: var(--lw-narrow);
-  font-weight: 700;
+  --background: var(--lw-action-background);
+  --border-radius: 12px;
+  --box-shadow: var(--lw-action-shadow);
+  height: 60px;
+  margin: 12px 0 0;
+  font-size: 31px;
+  font-family: var(--lw-font-display);
+  font-weight: 800;
 }
 
 .lw-day__rationale {
@@ -462,11 +471,7 @@ async function reorderEnd(event: ReorderEndCustomEvent) {
 }
 
 .lw-day__blocks {
-  margin-top: 16px;
-  overflow: hidden;
-  background: var(--lw-surface);
-  border: 1px solid var(--lw-border);
-  border-radius: 12px;
+  margin-top: 12px;
 }
 
 .lw-day__more {
@@ -485,9 +490,9 @@ async function reorderEnd(event: ReorderEndCustomEvent) {
 
 .lw-day__lead {
   margin: 0 0 4px;
-  font-size: 20px;
-  font-stretch: var(--lw-narrow);
-  font-weight: 700;
+  font-size: 27px;
+  font-family: var(--lw-font-display);
+  font-weight: 800;
 }
 
 .lw-day__empty-actions {

@@ -2,8 +2,8 @@ import vue from '@vitejs/plugin-vue';
 import { VitePWA } from 'vite-plugin-pwa';
 import { defineConfig, lazyPlugins } from 'vite-plus';
 
-// The background of the graphite palette (SPEC §5.13): splash screen and window title bar.
-const GRAPHITE = '#1B1E23';
+// The background of Nalot, the default look (SPEC §5.13): splash screen and window title bar.
+const NAVY = '#0B1626';
 
 export default defineConfig({
   plugins: lazyPlugins(() => [
@@ -19,8 +19,8 @@ export default defineConfig({
         start_url: '/',
         scope: '/',
         display: 'standalone',
-        background_color: GRAPHITE,
-        theme_color: GRAPHITE,
+        background_color: NAVY,
+        theme_color: NAVY,
         icons: [
           { src: 'pwa-64x64.png', sizes: '64x64', type: 'image/png' },
           { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },

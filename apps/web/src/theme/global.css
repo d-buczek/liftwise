@@ -1,4 +1,5 @@
-/* Type scale (SPEC §5.13): 13 / 14 / 16 / 20 / 26 / 40 / 64 px. Sentence case, no all caps. */
+/* Type scale (SPEC §5.13): text 13 / 14 / 16 px, condensed 15 / 20 / 27 / 31 / 40 / 52 / 90 px. Sentence
+   case, no all caps. */
 body {
   font-size: 16px;
   line-height: 1.5;
@@ -6,15 +7,37 @@ body {
 
 /* Numbers and headings are narrow and heavy, like numerals cast into a plate. */
 .lw-num {
-  font-stretch: var(--lw-narrow);
-  font-weight: 700;
+  font-family: var(--lw-font-display);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Small figures stay in the body face, where they are easier to read. */
+.lw-fig {
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 
 ion-title {
-  font-size: 22px;
-  font-stretch: var(--lw-narrow);
-  font-weight: 700;
+  font-family: var(--lw-font-display);
+  font-size: 31px;
+  padding-inline: 12px 4px;
+  font-weight: 800;
+  text-shadow: var(--lw-cast);
+}
+
+/* The theme's background runs under the header; the content never scrolls beneath it, Ionic clips
+   it at the header's edge. A page stays opaque for the transitions between pages. */
+.lw-page {
+  background: var(--lw-page-background);
+}
+
+.lw-page > ion-content {
+  --background: transparent;
+}
+
+.lw-page > ion-header ion-toolbar {
+  --background: transparent;
 }
 
 .lw-heading {
@@ -32,13 +55,13 @@ ion-title {
 .lw-hint {
   min-height: 36px;
   margin-top: 8px;
-  padding: 0 12px;
+  padding: 4px 10px;
   font-family: inherit;
-  font-size: 16px;
+  font-size: 14px;
   color: var(--ion-color-primary);
   background: transparent;
-  border: 1px solid var(--ion-color-primary);
-  border-radius: 18px;
+  border: 1px solid var(--lw-border);
+  border-radius: 10px;
   cursor: pointer;
 }
 
@@ -70,8 +93,10 @@ ion-toolbar {
 .lw-column ion-list {
   padding: 0;
   overflow: hidden;
+  background: transparent;
   border: 1px solid var(--lw-border);
   border-radius: 12px;
+  box-shadow: var(--lw-card-shadow);
 }
 
 .lw-column ion-list ion-item:last-of-type {

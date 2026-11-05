@@ -41,7 +41,7 @@ async function save(range: Range) {
         @click="editing = group"
       >
         <ion-label>{{ format.sentence(format.muscle(group)) }}</ion-label>
-        <ion-note slot="end" class="lw-balance__range lw-num">
+        <ion-note slot="end" class="lw-balance__range lw-fig">
           {{ balance.weekly_sets[group].min }}–{{ balance.weekly_sets[group].max }}
         </ion-note>
       </ion-item>

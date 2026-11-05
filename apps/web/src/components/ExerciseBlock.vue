@@ -61,13 +61,13 @@ function setLabel(set: WorkoutSet, index: number): string {
       </ion-button>
     </header>
     <p v-if="exercise?.note" class="lw-block__note">{{ exercise.note }}</p>
-    <p v-if="targetRir !== null" class="lw-block__note lw-num">
+    <p v-if="targetRir !== null" class="lw-block__note lw-fig">
       {{ t('day.targetRir', { value: format.rir(targetRir) }) }}
     </p>
     <button
       v-if="hint"
       type="button"
-      class="lw-hint lw-num"
+      class="lw-hint lw-fig"
       :aria-label="t('hint.apply', { hint })"
       @click="emit('applyHint')"
     >
@@ -87,7 +87,7 @@ function setLabel(set: WorkoutSet, index: number): string {
           <span class="lw-tile__weight lw-num">
             {{ format.kg(set.weight_kg) }}<small>{{ t('set.kg') }}</small>
           </span>
-          <span class="lw-tile__value lw-num">
+          <span class="lw-tile__value lw-fig">
             {{
               set.duration_s === null
                 ? t('set.times', { value: set.reps ?? 0 })
@@ -118,10 +118,7 @@ function setLabel(set: WorkoutSet, index: number): string {
 
 <style scoped>
 .lw-block {
-  padding: 12px 16px 16px;
-}
-
-.lw-block + .lw-block {
+  padding: 14px 0;
   border-top: 1px solid var(--lw-border);
 }
 
@@ -134,10 +131,10 @@ function setLabel(set: WorkoutSet, index: number): string {
 .lw-block__name {
   flex: 1;
   margin: 0;
-  font-size: 20px;
-  font-stretch: var(--lw-narrow);
-  font-weight: 700;
-  line-height: 1.2;
+  font-size: 30px;
+  font-family: var(--lw-font-display);
+  font-weight: 800;
+  line-height: 1.15;
 }
 
 .lw-block__open {
@@ -179,32 +176,33 @@ function setLabel(set: WorkoutSet, index: number): string {
   display: grid;
   align-content: center;
   justify-items: start;
-  min-width: 76px;
-  min-height: 64px;
+  min-width: 82px;
+  min-height: 72px;
   padding: 6px 10px;
   font-family: inherit;
   color: var(--ion-text-color);
   text-align: left;
   background: transparent;
-  border: 1px solid var(--lw-border);
+  border: 2px solid var(--ion-color-primary);
   border-radius: 10px;
   cursor: pointer;
 }
 
 .lw-tile__weight {
-  font-size: 20px;
+  font-size: 26px;
   line-height: 1.1;
 }
 
 .lw-tile__weight small {
-  margin-left: 2px;
+  margin-left: 3px;
+  font-family: var(--lw-font);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
   opacity: 0.75;
 }
 
 .lw-tile__value {
-  font-size: 16px;
+  font-size: 15px;
   line-height: 1.2;
 }
 
@@ -233,10 +231,10 @@ function setLabel(set: WorkoutSet, index: number): string {
 
 .lw-tile.is-add {
   justify-items: center;
-  min-width: 56px;
+  min-width: 60px;
   font-size: 24px;
   color: var(--lw-muted);
-  border-style: dashed;
+  border: 1px dashed var(--lw-border);
 }
 
 .lw-tile:hover:not(.is-done) {

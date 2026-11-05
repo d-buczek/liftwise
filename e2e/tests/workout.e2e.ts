@@ -20,9 +20,13 @@ test('logging a typed weight reaches the server and another device', async ({ pa
   await addExercise(page, BENCH);
   await startWorkout(page);
 
-  // "Zrobione" with the field still open logs what was typed (§5.2, LW-17).
+  // "Zrobione" with the field still open logs what was typed (§5.2, LW-17), and the field closing
+  // on that press must not move the button under the finger.
+  const row = page.locator('.lw-logger .lw-stepper__row').first();
+  const closed = (await row.boundingBox())?.height;
   await weightButton(page).click();
   await expect(weightField(page)).toBeFocused();
+  expect((await row.boundingBox())?.height).toBe(closed);
   await weightField(page).fill('22,75');
   await doneButton(page).click();
   await expect(loggedSets(page).first()).toContainText('22,75 kg');

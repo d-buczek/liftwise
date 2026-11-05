@@ -166,9 +166,9 @@ const sets = format.hardSets;
 }
 
 .lw-bars__value {
-  font-size: 40px;
-  font-stretch: var(--lw-narrow);
-  font-weight: 700;
+  font-size: 52px;
+  font-family: var(--lw-font-display);
+  font-weight: 800;
   line-height: 1.2;
 }
 
@@ -193,7 +193,7 @@ const sets = format.hardSets;
 .lw-bars__swatch {
   fill: var(--ion-color-primary);
   fill-opacity: 0.1;
-  background: color-mix(in srgb, var(--ion-color-primary) 10%, transparent);
+  background: color-mix(in srgb, var(--lw-range) 45%, transparent);
 }
 
 .lw-bars__grid line {

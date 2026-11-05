@@ -23,10 +23,21 @@ describe('theme store', () => {
     setActivePinia(createPinia());
   });
 
-  it('follows the system by default, also when it changes', async () => {
-    const setSystemDark = mockSystemDark(true);
+  it('starts in the temper theme', () => {
+    mockSystemDark(false);
     const theme = useThemeStore();
-    expect(theme.preference).toBe('system');
+    expect(theme.preference).toBe('temper');
+    expect(isDark()).toBe(true);
+    expect(document.documentElement.dataset.theme).toBe('temper');
+    expect(document.documentElement.style.colorScheme).toBe('dark');
+    expect(document.querySelector('meta')?.getAttribute('content')).toBe('#0B1626');
+  });
+
+  it('follows the system when asked to, also when it changes', async () => {
+    const setSystemDark = mockSystemDark(true);
+    localStorage.setItem('liftwise.theme', 'system');
+    const theme = useThemeStore();
+    expect(theme.current).toBe('dark');
     expect(isDark()).toBe(true);
     expect(document.querySelector('meta')?.getAttribute('content')).toBe('#1B1E23');
 
@@ -43,6 +54,7 @@ describe('theme store', () => {
     await nextTick();
     expect(isDark()).toBe(false);
     expect(localStorage.getItem('liftwise.theme')).toBe('light');
+    expect(document.documentElement.style.colorScheme).toBe('light');
   });
 
   it('restores the stored choice and ignores unknown values', () => {
@@ -53,6 +65,16 @@ describe('theme store', () => {
 
     setActivePinia(createPinia());
     localStorage.setItem('liftwise.theme', 'sepia');
-    expect(useThemeStore().preference).toBe('system');
+    expect(useThemeStore().preference).toBe('temper');
+  });
+
+  it('keeps a theme dark whatever the system says', async () => {
+    mockSystemDark(false);
+    const theme = useThemeStore();
+    theme.preference = 'iron';
+    await nextTick();
+    expect(isDark()).toBe(true);
+    expect(document.documentElement.dataset.theme).toBe('iron');
+    expect(document.querySelector('meta')?.getAttribute('content')).toBe('#1A1B1D');
   });
 });

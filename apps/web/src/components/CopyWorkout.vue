@@ -168,7 +168,7 @@ async function submit() {
             <ion-item v-for="block in preview" :key="block.exerciseId">
               <ion-label class="ion-text-wrap">
                 <h3>{{ format.exerciseName(exercises.get(block.exerciseId)) }}</h3>
-                <p class="lw-num lw-copy__sets">
+                <p class="lw-fig lw-copy__sets">
                   {{ block.sets.map((set) => format.set(set)).join(', ') }}
                 </p>
               </ion-label>

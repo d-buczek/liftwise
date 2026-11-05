@@ -199,9 +199,9 @@ const sessions = computed(() =>
 
 .lw-exercise__name {
   margin: 0;
-  font-size: 26px;
-  font-stretch: var(--lw-narrow);
-  font-weight: 700;
+  font-size: 31px;
+  font-family: var(--lw-font-display);
+  font-weight: 800;
   line-height: 1.15;
 }
 
@@ -229,11 +229,11 @@ const sessions = computed(() =>
 }
 
 .lw-record__best {
-  font-size: 26px;
+  font-size: 31px;
 }
 
 .lw-record__load {
-  font-size: 20px;
+  font-size: 27px;
 }
 
 .lw-records__hint {
@@ -317,7 +317,7 @@ const sessions = computed(() =>
 }
 
 .lw-session__load {
-  font-size: 20px;
+  font-size: 27px;
 }
 
 .lw-session__set.is-warmup .lw-session__load {

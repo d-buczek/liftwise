@@ -92,9 +92,9 @@ const name = computed(() => format.sentence(format.muscle(props.group)));
 
 .lw-muscle__name {
   margin: 0;
-  font-size: 26px;
-  font-stretch: var(--lw-narrow);
-  font-weight: 700;
+  font-size: 31px;
+  font-family: var(--lw-font-display);
+  font-weight: 800;
   line-height: 1.15;
 }
 

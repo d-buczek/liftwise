@@ -19,6 +19,9 @@ const props = defineProps<{
 const emit = defineEmits<{ step: [direction: 1 | -1]; enter: [value: number] }>();
 const invalid = defineModel<boolean>('invalid', { default: false });
 
+// Longer than a weight like 26,25: over 100 kg the numerals shrink to fit between − and +.
+const LONG_VALUE = 5;
+
 const { t } = useI18n();
 const text = ref<string | null>(null); // null when not typing
 const rejected = ref(false); // shows the message only after an attempt, not at every keystroke
@@ -94,7 +97,12 @@ function step(direction: 1 | -1) {
 </script>
 
 <template>
-  <div class="lw-stepper" :class="`is-${size ?? 'md'}`" role="group" :aria-label="label">
+  <div
+    class="lw-stepper"
+    :class="[`is-${size ?? 'md'}`, { 'is-long': value.length > LONG_VALUE }]"
+    role="group"
+    :aria-label="label"
+  >
     <!-- The message takes the label's line: it appears during a press elsewhere (blur comes on
          mousedown), and a new line would move that press's target. -->
     <p v-if="rejected" class="lw-stepper__label lw-stepper__error" role="alert">
@@ -169,16 +177,19 @@ function step(direction: 1 | -1) {
 }
 
 .lw-stepper__value {
-  font-size: 40px;
-  line-height: 1.1;
+  font-size: 52px;
+  line-height: 1;
   text-align: center;
+  text-shadow: var(--lw-cast);
 }
 
 .lw-stepper__value small {
-  margin-left: 4px;
-  font-size: 16px;
+  margin-left: 5px;
+  font-family: var(--lw-font);
+  font-size: 15px;
   font-weight: 600;
   color: var(--lw-muted);
+  text-shadow: none;
 }
 
 /* The value as a tap target: the whole space between − and +. */
@@ -204,9 +215,12 @@ function step(direction: 1 | -1) {
   flex: none;
 }
 
+/* As tall as the button it replaces: closing the field must not move what's under the row, least of
+   all "Zrobione", which is what closes it. A browser won't let the line height of an input do this. */
 .lw-stepper__input {
   flex: 0 1 auto;
   min-width: 2ch;
+  height: 56px;
   field-sizing: content;
   padding: 0;
   border: 0;
@@ -216,7 +230,6 @@ function step(direction: 1 | -1) {
   background: none;
   color: inherit;
   font: inherit;
-  font-stretch: inherit;
   text-align: center;
 }
 
@@ -230,31 +243,45 @@ function step(direction: 1 | -1) {
 }
 
 .lw-stepper__button {
-  --border-radius: 12px;
+  --background: var(--lw-control);
+  --border-radius: var(--lw-control-radius);
   --border-width: 1px;
-  --border-color: var(--lw-border);
+  --border-color: var(--lw-control-border);
+  --box-shadow: var(--lw-control-shadow);
   --color: var(--ion-text-color);
   width: 56px;
   height: 56px;
   margin: 0;
 }
 
+/* Proportional figures and a tight row: 26,25 with its unit fits on a 375 px phone at this size, and
+   it scales down with a narrower one. Nothing here counts down, so the figures may differ in width. */
+.is-lg .lw-stepper__row {
+  gap: 4px;
+}
+
 .is-lg .lw-stepper__value {
-  font-size: 64px;
-  line-height: 1;
+  font-size: min(90px, 24vw);
+  font-variant-numeric: normal;
+  line-height: 0.92;
+}
+
+.is-lg.is-long .lw-stepper__value {
+  font-size: min(72px, 19vw);
 }
 
 .is-lg .lw-stepper__typed {
-  min-height: 64px;
+  min-height: 84px;
 }
 
 /* A weight like 112,25 with its unit fits between − and + on a phone. */
 .is-lg .lw-stepper__input {
+  height: 84px;
   font-size: 0.8em;
 }
 
 .is-lg .lw-stepper__button {
-  width: 64px;
-  height: 64px;
+  width: 60px;
+  height: 60px;
 }
 </style>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { compareLabels } from '@liftwise/core';
+import { addDays, compareLabels, weekOf } from '@liftwise/core';
 import { IonButton, IonItem, IonLabel, IonList, IonNote, useIonRouter } from '@ionic/vue';
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -8,10 +8,11 @@ import LabelChip from '../components/LabelChip.vue';
 import MonthCalendar from '../components/MonthCalendar.vue';
 import WeekSummary from '../components/WeekSummary.vue';
 import { useFormat } from '../composables/format';
-import { useLiveQuery } from '../composables/liveQuery';
+import { useLiveQuery, useLiveQueryState } from '../composables/liveQuery';
 import { useToday } from '../composables/today';
 import { dayLabels, dayMarks, monthGrid, monthOf } from '../workout/calendar';
 import { dayData, rangeData, workoutLabels } from '../workout/queries';
+import { steelStage, weekDone, weekShare } from '../workout/progress';
 
 // The home screen (§5.2): the month with done and planned days in their labels' colors (D48);
 // a tap opens the day; under it the weekly summary (§5.11).
@@ -51,13 +52,28 @@ const todayNote = computed(() => {
     : t('day.sets', todaySets.value.length);
 });
 
+// This week, whichever month is shown: its days on the line, its share of the workouts in the steel.
+const weekStart = computed(() => weekOf(now.value).start);
+const { data: weekMarks, loaded: weekLoaded } = useLiveQueryState(
+  async () => {
+    const { workouts, sets } = await rangeData(weekStart.value, addDays(weekStart.value, 6));
+    return dayMarks(workouts, sets);
+  },
+  new Map(),
+  now,
+);
+
 function open(date: string) {
   router.push(`/calendar/${date}`);
 }
 </script>
 
 <template>
-  <app-page :title="t('nav.calendar')">
+  <app-page
+    :title="t('nav.calendar')"
+    :week="weekDone(weekMarks, weekStart)"
+    :steel="weekLoaded ? steelStage(weekShare(weekMarks, weekStart)) : undefined"
+  >
     <template #actions>
       <ion-button v-if="month !== monthOf(now)" @click="month = monthOf(now)">
         {{ t('calendar.today') }}
@@ -100,9 +116,16 @@ function open(date: string) {
 }
 
 .lw-calendar__today h2 {
-  font-size: 20px;
-  font-stretch: var(--lw-narrow);
-  font-weight: 700;
+  font-size: 30px;
+  font-family: var(--lw-font-display);
+  font-weight: 800;
+}
+
+.lw-calendar__today ion-note {
+  align-self: center;
+  margin: 0;
+  font-size: 14px;
+  color: var(--lw-muted);
 }
 
 .lw-calendar__legend {
@@ -111,7 +134,7 @@ function open(date: string) {
   align-items: center;
   gap: 8px;
   margin: 16px 0 0;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--lw-muted);
 }
 

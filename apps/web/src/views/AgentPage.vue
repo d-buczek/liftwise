@@ -286,9 +286,9 @@ watch(
 .lw-agent__lead {
   max-width: 24ch;
   margin: 0 0 16px;
-  font-size: 26px;
-  font-stretch: var(--lw-narrow);
-  font-weight: 700;
+  font-size: 31px;
+  font-family: var(--lw-font-display);
+  font-weight: 800;
   line-height: 1.2;
 }
 

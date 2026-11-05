@@ -39,17 +39,16 @@ const values = Array.from({ length: RIR_MAX + 1 }, (_, i) => i);
 .lw-rir__chips {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 8px;
+  gap: 6px;
 }
 
 .lw-rir__chip {
   height: 48px;
-  font-family: inherit;
-  font-size: 20px;
+  font-size: 26px;
   color: var(--ion-text-color);
   background: transparent;
   border: 1px solid var(--lw-border);
-  border-radius: 12px;
+  border-radius: 10px;
   cursor: pointer;
 }
 

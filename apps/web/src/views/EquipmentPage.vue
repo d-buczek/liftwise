@@ -76,9 +76,9 @@ function summary(item: SyncRow<'equipment_items'>): string {
 }
 
 .lw-equipment h2 {
-  font-size: 20px;
-  font-stretch: var(--lw-narrow);
-  font-weight: 700;
+  font-size: 27px;
+  font-family: var(--lw-font-display);
+  font-weight: 800;
 }
 
 .lw-equipment__empty {

@@ -141,9 +141,9 @@ function resolve(action: 'confirm' | 'reject') {
 
 .lw-change__title {
   margin: 0;
-  font-size: 16px;
-  font-stretch: var(--lw-narrow);
-  font-weight: 700;
+  font-size: 20px;
+  font-family: var(--lw-font-display);
+  font-weight: 800;
 }
 
 .lw-change__lines {

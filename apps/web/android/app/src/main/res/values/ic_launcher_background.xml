@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- GRAPHITE of apps/web/vite.config.ts: icon background and splash screen. -->
-    <color name="ic_launcher_background">#1B1E23</color>
+    <!-- NAVY of apps/web/vite.config.ts: icon background and splash screen. -->
+    <color name="ic_launcher_background">#0B1626</color>
 </resources>

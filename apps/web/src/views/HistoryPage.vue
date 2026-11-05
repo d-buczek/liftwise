@@ -192,7 +192,7 @@ const lastLabel = (item: HistoryExercise) => {
 }
 
 .lw-leaf__day {
-  font-size: 26px;
+  font-size: 31px;
 }
 
 .lw-leaf__weekday {
@@ -225,8 +225,8 @@ h3 {
 
 .lw-history__lead {
   margin: 0 0 4px;
-  font-size: 20px;
-  font-stretch: var(--lw-narrow);
-  font-weight: 700;
+  font-size: 27px;
+  font-family: var(--lw-font-display);
+  font-weight: 800;
 }
 </style>

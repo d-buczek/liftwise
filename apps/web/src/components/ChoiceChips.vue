@@ -24,7 +24,7 @@ function choose(value: T) {
         :key="String(option.value)"
         type="button"
         role="radio"
-        class="lw-choice__chip lw-num"
+        class="lw-choice__chip lw-fig"
         :aria-checked="model === option.value"
         @click="choose(option.value)"
       >

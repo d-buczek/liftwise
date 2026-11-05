@@ -176,9 +176,9 @@ function choose(event: PointerEvent) {
 }
 
 .lw-chart__value {
-  font-size: 40px;
-  font-stretch: var(--lw-narrow);
-  font-weight: 700;
+  font-size: 52px;
+  font-family: var(--lw-font-display);
+  font-weight: 800;
   line-height: 1.2;
 }
 
@@ -227,7 +227,7 @@ function choose(event: PointerEvent) {
 /* A surface ring keeps a dot readable where it sits on the line. */
 .lw-chart__dot {
   fill: var(--ion-color-primary);
-  stroke: var(--lw-surface);
+  stroke: var(--lw-surface-solid);
   stroke-width: 2;
 }
 

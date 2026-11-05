@@ -143,7 +143,7 @@ const scale = computed(
             <span class="lw-week__marker" aria-hidden="true" />
             <span>
               {{ record.name }}
-              <span class="lw-week__value lw-num">{{ record.value }}</span>
+              <span class="lw-week__value lw-fig">{{ record.value }}</span>
             </span>
           </li>
         </ul>
@@ -220,9 +220,9 @@ const scale = computed(
 .lw-week__title {
   flex: 1;
   margin: 0;
-  font-size: 20px;
-  font-stretch: var(--lw-narrow);
-  font-weight: 700;
+  font-size: 27px;
+  font-family: var(--lw-font-display);
+  font-weight: 800;
 }
 
 .lw-week__head ion-button {
@@ -252,7 +252,7 @@ const scale = computed(
 
 .lw-week__stats dd {
   margin: 0;
-  font-size: 40px;
+  font-size: 52px;
   font-variant-numeric: normal;
   line-height: 1.1;
 }
@@ -288,7 +288,7 @@ const scale = computed(
   gap: 10px;
 }
 
-/* Records are the one place for amber (§5.13). */
+/* Records are the one place for the signal color (§5.13). */
 .lw-week__marker {
   flex: none;
   width: 8px;

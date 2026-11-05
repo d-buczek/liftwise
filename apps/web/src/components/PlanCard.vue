@@ -69,10 +69,10 @@ function undo() {
     <ul class="lw-plan__lines">
       <li v-for="line in lines" :key="line.id">
         <span class="lw-plan__name">{{ line.name }}</span>
-        <span v-if="line.warmup" class="lw-plan__detail lw-num">
+        <span v-if="line.warmup" class="lw-plan__detail lw-fig">
           {{ t('agent.plan.warmup', { load: line.warmup }) }}
         </span>
-        <span v-if="line.working" class="lw-plan__detail lw-num">
+        <span v-if="line.working" class="lw-plan__detail lw-fig">
           {{ line.working }}
           <template v-if="line.rir !== null">
             · {{ t('agent.plan.targetRir', { value: format.rir(line.rir) }) }}
@@ -136,9 +136,9 @@ function undo() {
 
 .lw-plan__title {
   margin: 0;
-  font-size: 16px;
-  font-stretch: var(--lw-narrow);
-  font-weight: 700;
+  font-size: 20px;
+  font-family: var(--lw-font-display);
+  font-weight: 800;
 }
 
 .lw-plan__lines {

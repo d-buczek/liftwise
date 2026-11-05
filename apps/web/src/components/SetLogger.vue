@@ -80,7 +80,7 @@ function stepAmount(direction: 1 | -1) {
 <style scoped>
 .lw-logger {
   display: grid;
-  gap: 16px;
+  gap: 10px;
 }
 
 .lw-logger__title {
@@ -92,11 +92,11 @@ function stepAmount(direction: 1 | -1) {
 
 .lw-logger__steppers {
   display: grid;
-  gap: 12px;
+  gap: 10px;
 }
 
-/* Side by side where the column has room. */
-@media (min-width: 576px) {
+/* Side by side where the column has room for the large numerals. */
+@media (min-width: 768px) {
   .lw-logger__steppers {
     grid-template-columns: 1fr 1fr;
     gap: 24px;
@@ -108,11 +108,13 @@ function stepAmount(direction: 1 | -1) {
 }
 
 .lw-logger__done {
-  --border-radius: 14px;
-  height: 64px;
-  margin: 4px 0 0;
-  font-size: 20px;
-  font-stretch: var(--lw-narrow);
-  font-weight: 700;
+  --background: var(--lw-action-background);
+  --border-radius: 12px;
+  --box-shadow: var(--lw-action-shadow);
+  height: 60px;
+  margin: 0;
+  font-size: 31px;
+  font-family: var(--lw-font-display);
+  font-weight: 800;
 }
 </style>

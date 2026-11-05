@@ -196,7 +196,10 @@
       "label": "Motyw",
       "system": "Systemowy",
       "light": "Jasny",
-      "dark": "Ciemny"
+      "dark": "Ciemny",
+      "temper": "Nalot",
+      "sheen": "Połysk",
+      "iron": "Żeliwo"
     },
     "equipmentCount": "Brak | {n} element | {n} elementy | {n} elementów"
   },
@@ -471,7 +474,8 @@
       "violet": "Fioletowy",
       "green": "Zielony",
       "magenta": "Malinowy",
-      "graphite": "Grafitowy"
+      "graphite": "Grafitowy",
+      "straw": "Słomkowy"
     },
     "archive": "W archiwum",
     "archiveHint": "Zostaje na dawnych treningach, ale nie ma jej przy wyborze.",

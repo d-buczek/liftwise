@@ -124,7 +124,10 @@ importers:
       '@capgo/capacitor-speech-recognition':
         specifier: ^8.4.6
         version: 8.4.6(@capacitor/core@8.6.0)
-      '@fontsource-variable/archivo':
+      '@fontsource-variable/sofia-sans':
+        specifier: ^5.3.0
+        version: 5.3.0
+      '@fontsource-variable/sofia-sans-extra-condensed':
         specifier: ^5.3.0
         version: 5.3.0
       '@ionic/vue':
@@ -1370,8 +1373,11 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@fontsource-variable/archivo@5.3.0':
-    resolution: {integrity: sha512-HogK8FJelrD1o7TlZlkIVtHgc20bO5PZRWE7mUeUTdMN055alznQV6/00J00IBeu8FQAH4s3zW9UJNvKExXf+g==}
+  '@fontsource-variable/sofia-sans-extra-condensed@5.3.0':
+    resolution: {integrity: sha512-WYzOY6O+GXeQ5j7mYP44yDMbAJlL7uJ9YucBgENcxKGuC2pOimhFDbX318W8ydtv6kUle40rrCXaAPsYFrJINg==}
+
+  '@fontsource-variable/sofia-sans@5.3.0':
+    resolution: {integrity: sha512-lVLpBgrjxSMjrrBF70Jr9qBLdFac5tDAvVn9oHlS+vAaVyhUN6dWmr0nNjWzwTh6tYIECP45h4zDfllQbXtqtA==}
 
   '@img/colour@1.1.0':
     resolution: {integrity: sha512-Td76q7j57o/tLVdgS746cYARfSyxk8iEfRxewL9h4OMzYhbW4TAcppl0mT4eyqXddh6L/jwoM75mo7ixa/pCeQ==}
@@ -5597,7 +5603,9 @@ snapshots:
   '@esbuild/win32-x64@0.28.2':
     optional: true
 
-  '@fontsource-variable/archivo@5.3.0': {}
+  '@fontsource-variable/sofia-sans-extra-condensed@5.3.0': {}
+
+  '@fontsource-variable/sofia-sans@5.3.0': {}
 
   '@img/colour@1.1.0': {}
 

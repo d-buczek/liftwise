@@ -1,0 +1,279 @@
+/*
+ * The three themes beside the standard light and dark of variables.css (SPEC §5.13, D42). No images:
+ * the depth is light on a smooth surface, drawn with gradients. Warm colors stay on thin, sharp
+ * elements, since spread over navy they turn to mud. All three use Ionic's dark palette class.
+ * Each Ionic color: shade = 12% black, tint = 10% white.
+ */
+:root[data-theme='temper'],
+:root[data-theme='sheen'] {
+  --lw-surface: rgb(232 237 243 / 5%);
+  --lw-surface-solid: color-mix(in srgb, #e8edf3 5%, var(--ion-background-color));
+  --lw-border: rgb(190 210 235 / 16%);
+  --lw-muted: #9aaabc;
+  --lw-menu-background: #090e15;
+  --lw-nav-background: #090e15;
+  --lw-primary-inverse: #755310;
+  --lw-control: rgb(232 237 243 / 7%);
+  --lw-control-border: rgb(190 210 235 / 16%);
+  --lw-card-shadow: inset 0 1px 0 rgb(255 255 255 / 9%);
+  /* A target range under a bar: straw spread this wide would turn to mud. */
+  --lw-range: rgb(154 170 188 / 26%);
+  /* The order heated steel takes these colors in. */
+  --lw-band-1: #e6c36a;
+  --lw-band-2: #d79a4f;
+  --lw-band-3: #bc7355;
+  --lw-band-4: #a9619f;
+  --lw-band-5: #8a6fd6;
+  --lw-band-6: #5c8fe8;
+  --lw-band-7: #6fc3d6;
+
+  --ion-text-color: #e8edf3;
+  --ion-text-color-rgb: 232, 237, 243;
+  --ion-color-primary: #e6c36a;
+  --ion-color-primary-rgb: 230, 195, 106;
+  --ion-color-primary-contrast: #1a1405;
+  --ion-color-primary-contrast-rgb: 26, 20, 5;
+  --ion-color-primary-shade: #caac5d;
+  --ion-color-primary-tint: #e9c979;
+  --ion-color-success: #e6c36a;
+  --ion-color-success-rgb: 230, 195, 106;
+  --ion-color-success-contrast: #1a1405;
+  --ion-color-success-contrast-rgb: 26, 20, 5;
+  --ion-color-success-shade: #caac5d;
+  --ion-color-success-tint: #e9c979;
+  --ion-color-warning: #f09a5b;
+  --ion-color-warning-rgb: 240, 154, 91;
+  --ion-color-warning-contrast: #1a1405;
+  --ion-color-warning-contrast-rgb: 26, 20, 5;
+  --ion-color-warning-shade: #d38850;
+  --ion-color-warning-tint: #f2a46b;
+  --ion-color-danger: #f4948a;
+  --ion-color-danger-rgb: 244, 148, 138;
+  --ion-color-danger-contrast: #1a1405;
+  --ion-color-danger-contrast-rgb: 26, 20, 5;
+  --ion-color-danger-shade: #d78279;
+  --ion-color-danger-tint: #f59f96;
+  --ion-color-medium: #9aaabc;
+  --ion-color-medium-rgb: 154, 170, 188;
+  --ion-color-medium-contrast: #0f1620;
+  --ion-color-medium-contrast-rgb: 15, 22, 32;
+  --ion-color-medium-shade: #8896a5;
+  --ion-color-medium-tint: #a4b3c3;
+  --ion-color-light: #172230;
+  --ion-color-light-rgb: 23, 34, 48;
+  --ion-color-light-contrast: #e8edf3;
+  --ion-color-light-contrast-rgb: 232, 237, 243;
+  --ion-color-light-shade: #141e2a;
+  --ion-color-light-tint: #2e3845;
+  --ion-color-dark: #e8edf3;
+  --ion-color-dark-rgb: 232, 237, 243;
+  --ion-color-dark-contrast: #0f1620;
+  --ion-color-dark-contrast-rgb: 15, 22, 32;
+  --ion-color-dark-shade: #ccd1d6;
+  --ion-color-dark-tint: #eaeff4;
+}
+
+:root[data-theme='temper'],
+:root[data-theme='sheen'],
+:root[data-theme='iron'] {
+  --lw-label-contrast: #0d141d;
+  --lw-label-straw: #e6c36a;
+  --lw-label-cobalt: #76adf2;
+  --lw-label-teal: #6fc3d6;
+  --lw-label-violet: #be93e6;
+  --lw-label-green: #9ccb7c;
+  --lw-label-magenta: #e58fc6;
+  --lw-label-graphite: #a9b8ca;
+}
+
+/* Nalot: a turned plate whose steel changes with the work done, bare grey to violet to blue. The
+   fan comes from a plate off-screen; only warm-free colors, so nothing turns to mud. */
+:root[data-theme='temper'] {
+  --lw-steel-ground: #0b1626;
+  --lw-steel-light: 110 160 232;
+  --lw-steel-shade: 110 190 225;
+  --ion-background-color: #0b1626;
+  --ion-background-color-rgb: 11, 22, 38;
+}
+
+/* Połysk: one fixed band of light across the plate, the way a window reflects in oxide. */
+:root[data-theme='sheen'] {
+  --lw-page-background: linear-gradient(
+    114deg,
+    #0a0f17 0%,
+    #0e1622 24%,
+    #17233a 41%,
+    #22304f 50%,
+    #1a2540 58%,
+    #0f1725 74%,
+    #0a0f17 100%
+  );
+  --ion-background-color: #0b111a;
+  --ion-background-color-rgb: 11, 17, 26;
+}
+
+/* Żeliwo: matte under one lamp, nothing shiny. The dumbbell lives in the controls: numerals cast
+   into the iron, steppers as small plates, a knurled handle for a line that glows as iron does when
+   heated. Chalk is the only accent. */
+:root[data-theme='iron'] {
+  --lw-page-background:
+    radial-gradient(118% 60% at 50% -6%, #3a3c40 0%, #2a2c2f 44%, rgb(42 44 47 / 0%) 100%), #1a1b1d;
+  --lw-surface: rgb(0 0 0 / 20%);
+  --lw-surface-solid: color-mix(in srgb, #000 20%, var(--ion-background-color));
+  --lw-border: rgb(255 255 255 / 9%);
+  --lw-muted: #b3b5b8;
+  --lw-menu-background: #131416;
+  --lw-nav-background: #131416;
+  --lw-primary-inverse: #17181a;
+  /* border-box: sized to the padding box, the gradients repeat under the transparent border and show
+     as thin arcs on the plate's top and bottom edge. */
+  --lw-control:
+    linear-gradient(rgb(255 255 255 / 9%), rgb(0 0 0 / 22%)) border-box,
+    radial-gradient(
+        circle closest-side,
+        #2a2c2f 0 45%,
+        #141517 48%,
+        #3a3c40 52%,
+        #2c2e31 76%,
+        #4a4c51 83%,
+        #2e3033 93%,
+        #1b1c1e 100%
+      )
+      border-box;
+  --lw-control-border: transparent;
+  --lw-control-radius: 50%;
+  --lw-control-shadow: 0 2px 4px rgb(0 0 0 / 60%);
+  --lw-card-shadow:
+    inset 0 0 0 1px rgb(0 0 0 / 28%), inset 0 2px 3px rgb(0 0 0 / 45%),
+    0 1px 0 rgb(255 255 255 / 7%);
+  --lw-cast: 0 -1px 0 rgb(0 0 0 / 75%), 0 1px 0 rgb(255 255 255 / 14%);
+  --lw-action-background: linear-gradient(#f2f1ec, #d9d7d1);
+  --lw-action-shadow: inset 0 1px 0 rgb(255 255 255 / 35%), 0 2px 4px rgb(0 0 0 / 55%);
+  --lw-line-height: 6px;
+  --lw-line-rest-opacity: 100%;
+  --lw-line-knurl:
+    repeating-linear-gradient(45deg, rgb(0 0 0 / 34%) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(-45deg, rgb(0 0 0 / 34%) 0 1px, transparent 1px 3px);
+  --lw-line-rest:
+    repeating-linear-gradient(45deg, rgb(255 255 255 / 13%) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(-45deg, rgb(255 255 255 / 13%) 0 1px, transparent 1px 3px), #232427;
+  /* Iron heating up: cherry to white. */
+  --lw-band-1: #8e2a16;
+  --lw-band-2: #b5381a;
+  --lw-band-3: #d6521c;
+  --lw-band-4: #e8741f;
+  --lw-band-5: #f59b2d;
+  --lw-band-6: #f9cf63;
+  --lw-band-7: #fff1c4;
+
+  --ion-background-color: #1a1b1d;
+  --ion-background-color-rgb: 26, 27, 29;
+  --ion-text-color: #ecebe6;
+  --ion-text-color-rgb: 236, 235, 230;
+  --ion-color-primary: #ecebe6;
+  --ion-color-primary-rgb: 236, 235, 230;
+  --ion-color-primary-contrast: #17181a;
+  --ion-color-primary-contrast-rgb: 23, 24, 26;
+  --ion-color-primary-shade: #d0cfca;
+  --ion-color-primary-tint: #eeede9;
+  --ion-color-success: #ecebe6;
+  --ion-color-success-rgb: 236, 235, 230;
+  --ion-color-success-contrast: #17181a;
+  --ion-color-success-contrast-rgb: 23, 24, 26;
+  --ion-color-success-shade: #d0cfca;
+  --ion-color-success-tint: #eeede9;
+  --ion-color-warning: #f59b2d;
+  --ion-color-warning-rgb: 245, 155, 45;
+  --ion-color-warning-contrast: #17181a;
+  --ion-color-warning-contrast-rgb: 23, 24, 26;
+  --ion-color-warning-shade: #d88828;
+  --ion-color-warning-tint: #f6a542;
+  --ion-color-danger: #f4948a;
+  --ion-color-danger-rgb: 244, 148, 138;
+  --ion-color-danger-contrast: #17181a;
+  --ion-color-danger-contrast-rgb: 23, 24, 26;
+  --ion-color-danger-shade: #d78279;
+  --ion-color-danger-tint: #f59f96;
+  --ion-color-medium: #b3b5b8;
+  --ion-color-medium-rgb: 179, 181, 184;
+  --ion-color-medium-contrast: #17181a;
+  --ion-color-medium-contrast-rgb: 23, 24, 26;
+  --ion-color-medium-shade: #9e9fa2;
+  --ion-color-medium-tint: #bbbcbf;
+  --ion-color-light: #2a2c2f;
+  --ion-color-light-rgb: 42, 44, 47;
+  --ion-color-light-contrast: #ecebe6;
+  --ion-color-light-contrast-rgb: 236, 235, 230;
+  --ion-color-light-shade: #252729;
+  --ion-color-light-tint: #3f4144;
+  --ion-color-dark: #ecebe6;
+  --ion-color-dark-rgb: 236, 235, 230;
+  --ion-color-dark-contrast: #17181a;
+  --ion-color-dark-contrast-rgb: 23, 24, 26;
+  --ion-color-dark-shade: #d0cfca;
+  --ion-color-dark-tint: #eeede9;
+}
+
+/* The steel of Nalot. A page without progress has the last stage, the ground of the theme. */
+:root[data-theme='temper'] .lw-page,
+.lw-steel i {
+  background:
+    conic-gradient(
+      from 196deg at 128% -26%,
+      transparent 0deg,
+      rgb(var(--lw-steel-light) / 20%) 13deg,
+      rgb(var(--lw-steel-light) / 5%) 25deg,
+      rgb(var(--lw-steel-shade) / 17%) 37deg,
+      rgb(var(--lw-steel-shade) / 0%) 54deg,
+      transparent 360deg
+    ),
+    var(--lw-steel-ground);
+}
+
+/* The stages on a screen that measures progress. */
+.lw-steel {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* Stacked and crossfaded: opacity runs on the compositor, a gradient's colors would repaint. */
+.lw-steel i {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0s linear 600ms;
+}
+
+/* The new stage fades in over the old one, which leaves only then: the page never shows through. */
+.lw-steel i.is-on {
+  z-index: 1;
+  opacity: 1;
+  transition: opacity 600ms linear;
+}
+
+.lw-steel i[data-stage='0'] {
+  --lw-steel-ground: #13161b;
+  --lw-steel-light: 150 160 176;
+  --lw-steel-shade: 128 136 154;
+}
+
+.lw-steel i[data-stage='1'] {
+  --lw-steel-ground: #13151e;
+  --lw-steel-light: 150 150 204;
+  --lw-steel-shade: 130 128 200;
+}
+
+.lw-steel i[data-stage='2'] {
+  --lw-steel-ground: #0e1526;
+  --lw-steel-light: 128 150 234;
+  --lw-steel-shade: 150 124 226;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lw-steel i,
+  .lw-steel i.is-on {
+    transition: none;
+  }
+}

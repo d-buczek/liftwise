@@ -49,6 +49,7 @@ import {
   type Draft,
 } from '../workout/logging';
 import { catalog, dayData, equipment, historySets, trainingSettings } from '../workout/queries';
+import { setsShare, steelStage } from '../workout/progress';
 
 // The active workout (§5.2, §5.3): one exercise at a time with the draft of its next set,
 // logged with "Zrobione"; the rest timer runs at the bottom.
@@ -93,6 +94,7 @@ const training = useLiveQuery(trainingSettings, DEFAULT_TRAINING_SETTINGS);
 const maxKg = useLiveQuery(async () => maxDumbbellKg(await equipment()), null);
 
 const blocks = computed(() => exerciseBlocks(view.value.sets));
+const share = computed(() => setsShare(view.value.sets));
 const current = computed(() => currentId.value ?? startExercise(blocks.value));
 const exercise = computed(() => (current.value ? exercises.value.get(current.value) : undefined));
 const sets = computed(
@@ -259,7 +261,12 @@ function details(set: WorkoutSet): string {
 </script>
 
 <template>
-  <app-page :title="format.day(date)" :back-href="dayHref">
+  <app-page
+    :title="format.day(date)"
+    :back-href="dayHref"
+    :progress="share"
+    :steel="loaded ? steelStage(share) : undefined"
+  >
     <template #actions>
       <ion-button :aria-label="t('workout.choose')" @click="chooseExercise">
         <ion-icon slot="icon-only" :icon="listOutline" aria-hidden="true" />
@@ -309,7 +316,7 @@ function details(set: WorkoutSet): string {
           <button
             v-if="hint"
             type="button"
-            class="lw-hint lw-num"
+            class="lw-hint lw-fig"
             :aria-label="t('hint.apply', { hint: hint.label })"
             @click="applyHint"
           >
@@ -320,7 +327,7 @@ function details(set: WorkoutSet): string {
               <span class="lw-muted">{{
                 t('workout.lastSession', { date: format.dayMonth(lastSession.date) })
               }}</span>
-              <span class="lw-num">{{ format.session(loadGroups(lastSession.sets)) }}</span>
+              <span class="lw-fig">{{ format.session(loadGroups(lastSession.sets)) }}</span>
             </template>
             <span v-else class="lw-muted">{{ t('workout.firstSession') }}</span>
           </p>
@@ -356,7 +363,7 @@ function details(set: WorkoutSet): string {
               :class="{ 'is-next': set.id === source.planned?.id }"
               @click="edit(set)"
             >
-              <span slot="start" class="lw-workout__index lw-num">{{ n + 1 }}</span>
+              <span slot="start" class="lw-workout__index lw-fig">{{ n + 1 }}</span>
               <ion-label>
                 <span class="lw-workout__load lw-num">{{ format.set(set) }}</span>
                 <p v-if="details(set)">{{ details(set) }}</p>
@@ -463,9 +470,10 @@ function details(set: WorkoutSet): string {
 .lw-workout__name {
   flex: 1;
   margin: 0;
-  font-size: 26px;
-  font-stretch: var(--lw-narrow);
-  font-weight: 700;
+  text-shadow: var(--lw-cast);
+  font-size: 30px;
+  font-family: var(--lw-font-display);
+  font-weight: 800;
   line-height: 1.15;
 }
 
@@ -483,20 +491,17 @@ function details(set: WorkoutSet): string {
   display: flex;
   flex-wrap: wrap;
   gap: 0 8px;
-  margin: 10px 0 0;
+  margin: 8px 0 0;
   font-size: 14px;
 }
 
-.lw-workout__last .lw-num {
-  font-size: 16px;
-}
-
 .lw-workout__card {
-  margin-top: 16px;
-  padding: 16px;
+  margin-top: 8px;
+  padding: 12px;
   background: var(--lw-surface);
   border: 1px solid var(--lw-border);
   border-radius: 12px;
+  box-shadow: var(--lw-card-shadow);
 }
 
 .lw-workout__onward {
@@ -505,7 +510,9 @@ function details(set: WorkoutSet): string {
   margin: 12px 0 0;
 }
 
+/* Opaque: the swipe actions lie under a sliding row. */
 .lw-workout__sets ion-item {
+  --background: var(--lw-surface-solid);
   --border-width: 0;
   --inner-border-width: 0;
 }
@@ -515,7 +522,6 @@ function details(set: WorkoutSet): string {
 }
 
 .lw-workout__sets ion-item.is-next {
-  --background: var(--lw-surface);
   box-shadow: inset 3px 0 var(--ion-color-primary);
 }
 
@@ -526,7 +532,7 @@ function details(set: WorkoutSet): string {
 }
 
 .lw-workout__load {
-  font-size: 20px;
+  font-size: 27px;
 }
 
 .lw-workout__empty {
@@ -536,8 +542,8 @@ function details(set: WorkoutSet): string {
 
 .lw-workout__lead {
   margin: 0 0 16px;
-  font-size: 20px;
-  font-stretch: var(--lw-narrow);
-  font-weight: 700;
+  font-size: 27px;
+  font-family: var(--lw-font-display);
+  font-weight: 800;
 }
 </style>

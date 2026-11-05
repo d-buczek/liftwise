@@ -21,16 +21,25 @@ test('the wide layout has the side menu instead of tabs', async ({ page }) => {
 
 const isDark = (page: Page) =>
   page.evaluate(() => document.documentElement.classList.contains('ion-palette-dark'));
+const look = (page: Page) => page.evaluate(() => document.documentElement.dataset.theme);
 
 test('the theme setting changes the palette and stays after a reload', async ({ page }) => {
   await pair(page);
   await page.goto('/settings');
-  await page.locator('ion-segment-button').filter({ hasText: 'Ciemny' }).click();
+  // A new device starts in the default look, so the first step has to tell Ciemny from it.
+  await expect.poll(() => look(page)).toBe('temper');
+  await page.locator('ion-radio').filter({ hasText: 'Ciemny' }).click();
+  await expect.poll(() => look(page)).toBe('dark');
   await expect.poll(() => isDark(page)).toBe(true);
   await page.reload();
-  await expect.poll(() => isDark(page)).toBe(true);
-  await page.locator('ion-segment-button').filter({ hasText: 'Jasny' }).click();
+  await expect.poll(() => look(page)).toBe('dark');
+  await page.locator('ion-radio').filter({ hasText: 'Jasny' }).click();
+  await expect.poll(() => look(page)).toBe('light');
   await expect.poll(() => isDark(page)).toBe(false);
+  // A theme is dark whatever was chosen before, and takes its own colors.
+  await page.locator('ion-radio').filter({ hasText: 'Żeliwo' }).click();
+  await expect.poll(() => look(page)).toBe('iron');
+  await expect.poll(() => isDark(page)).toBe(true);
 });
 
 test('typing a weight works with the keyboard alone', async ({ page }) => {

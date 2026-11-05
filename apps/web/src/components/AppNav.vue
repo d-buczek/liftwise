@@ -55,8 +55,8 @@ const route = useRoute();
 
 .lw-nav__brand {
   margin: 28px 12px 20px;
-  font-size: 26px;
-  font-stretch: 62%;
+  font-size: 31px;
+  font-family: var(--lw-font-display);
   font-weight: 800;
   line-height: 1;
 }

@@ -7,8 +7,8 @@ import {
   IonList,
   IonModal,
   IonNote,
-  IonSegment,
-  IonSegmentButton,
+  IonRadio,
+  IonRadioGroup,
   toastController,
 } from '@ionic/vue';
 import {
@@ -181,11 +181,15 @@ async function exportData(kind: 'json' | 'csv') {
     </ion-list>
 
     <h2 class="lw-heading">{{ t('settings.appearance') }}</h2>
-    <ion-segment v-model="theme.preference" :aria-label="t('settings.theme.label')">
-      <ion-segment-button v-for="value in THEME_PREFERENCES" :key="value" :value="value">
-        <ion-label>{{ t(`settings.theme.${value}`) }}</ion-label>
-      </ion-segment-button>
-    </ion-segment>
+    <ion-list>
+      <ion-radio-group v-model="theme.preference" :aria-label="t('settings.theme.label')">
+        <ion-item v-for="value in THEME_PREFERENCES" :key="value">
+          <ion-radio :value="value" justify="space-between">{{
+            t(`settings.theme.${value}`)
+          }}</ion-radio>
+        </ion-item>
+      </ion-radio-group>
+    </ion-list>
 
     <ion-modal
       :is-open="editingTraining"

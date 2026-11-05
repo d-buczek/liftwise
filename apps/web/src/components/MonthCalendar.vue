@@ -75,6 +75,7 @@ function onTouchEnd(event: TouchEvent) {
       <h2 class="lw-month__title">{{ d(dateValue(`${month}-01`), 'month') }}</h2>
       <ion-button
         fill="clear"
+        class="lw-month__turn"
         :aria-label="t('calendar.previous')"
         @click="month = addMonths(month, -1)"
       >
@@ -82,6 +83,7 @@ function onTouchEnd(event: TouchEvent) {
       </ion-button>
       <ion-button
         fill="clear"
+        class="lw-month__turn"
         :aria-label="t('calendar.next')"
         @click="month = addMonths(month, 1)"
       >
@@ -150,9 +152,14 @@ function onTouchEnd(event: TouchEvent) {
 .lw-month__title {
   flex: 1;
   margin: 0;
-  font-size: 26px;
-  font-stretch: var(--lw-narrow);
-  font-weight: 700;
+  text-shadow: var(--lw-cast);
+  font-size: 40px;
+  font-family: var(--lw-font-display);
+  font-weight: 800;
+}
+
+.lw-month__turn {
+  --color: var(--ion-text-color);
 }
 
 .lw-month__title::first-letter {
@@ -240,20 +247,15 @@ function onTouchEnd(event: TouchEvent) {
   place-content: center;
   justify-items: center;
   line-height: 1;
-  /* Square where the width allows; on a narrow phone at least 48 px high, never wider than its
-     column (the aspect ratio would turn the min-height into a min-width). */
   min-width: 0;
-  min-height: 48px;
-  aspect-ratio: 1;
-  max-height: 72px;
+  height: 56px;
   width: 100%;
   padding: 0;
-  font-family: inherit;
-  font-size: 20px;
+  font-size: 27px;
   color: var(--ion-text-color);
   background: transparent;
   border: 0;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
 }
 
@@ -261,9 +263,9 @@ function onTouchEnd(event: TouchEvent) {
   background: var(--ion-background-color-step-50);
 }
 
+/* Muted by color alone: fading the text would drop it under 4.5:1. */
 .lw-month__day.is-outside {
   color: var(--lw-muted);
-  opacity: 0.6;
 }
 
 /* Planned only: an outline in the accent. */
@@ -281,6 +283,12 @@ function onTouchEnd(event: TouchEvent) {
   color: var(--lw-label-contrast);
 }
 
+/* Another month's done day recedes on the dark palettes; on a light one its text would fall under
+   4.5:1. */
+:root.ion-palette-dark .lw-month__day.is-done.is-outside {
+  background: color-mix(in srgb, var(--lw-mark) 78%, transparent);
+}
+
 /* Ionic's shade: 12% black. */
 .lw-month__day.is-done:hover {
   background: color-mix(in srgb, var(--lw-mark) 88%, #000);
@@ -291,15 +299,15 @@ function onTouchEnd(event: TouchEvent) {
   max-width: calc(100% - 4px);
   margin-top: 2px;
   overflow: hidden;
-  font-size: 13px;
-  font-stretch: var(--lw-narrow);
-  font-weight: 700;
+  font-size: 15px;
+  font-family: var(--lw-font-display);
+  font-weight: 800;
   white-space: nowrap;
 }
 
 .lw-month__day.is-today::after {
   position: absolute;
-  bottom: 6px;
+  bottom: 4px;
   width: 18px;
   height: 3px;
   content: '';
