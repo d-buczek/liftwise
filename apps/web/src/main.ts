@@ -1,3 +1,5 @@
+import './zodConfig';
+
 import { IonicVue } from '@ionic/vue';
 import { createPinia } from 'pinia';
 import { createApp } from 'vue';

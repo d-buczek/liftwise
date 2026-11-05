@@ -1,0 +1,4 @@
+# Cloudflare static assets. The rest of the policy is a <meta> tag from the build (vite.config.ts,
+# SPEC §6.8), so the APK has it too; a tag can't carry frame-ancestors.
+/*
+  Content-Security-Policy: frame-ancestors 'none'

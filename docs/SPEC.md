@@ -82,6 +82,7 @@ On top of that, an AI agent with tools over the app's data logs and edits from a
 | D53 | Workout proposal path | **Through the chat:** the check-in sheet sends an ordinary message to today's thread, which runs `propose_workout`; that makes one `planner` call without tools and stores the checked plan as a proposal of the internal `propose_plan`. **The check-in and "Wygeneruj ponownie" send their answers as data and run the tool without a model; `fast` calls it only for typed text.** The turn is stored like a tool call of the model, and a plan that can't be made fails the turn. Accepting doesn't start the workout; target RIR goes on the planned sets, logging a set replaces it | One path for the card, the offline queue and later changes by chat. First designed with `fast` routing the sheet too, but on production it answered a repeated check-in with text instead of a new plan (LW-11). A forced `tool_choice` isn't portable: `fast` is a setting, and Sonnet 5.5 and Opus 5.5 reject it with a 400. Without the routing call a button always gives a card, at one model call less; confirming never calls a model; the day can be in the future, and RIR records what a set actually felt like |
 | D54 | Agent evals | **The cases run in workerd through the real chat route** (`createChatRoutes` with a metered model, D1 reset per case), on the settings path of the app; every case is replayed on a mock model in `ci:check`. A live run is manual | Same prompt, tools, handlers and message storage as production, without a `wrangler dev` per run or a database reset from outside; the replay keeps cases valid at no cost |
 | D55 | Ids the model sees | **Short ids**: the model reads and sends the last 8 characters of a UUID; tools take a full or a short id; stored outputs keep full ones | In the evals `claude-haiku-5-5` copied whole UUIDs badly (`…ad35-058b1ee45aed` became `…ad35-58b1ee45aed`, repeated ids, invented group ids): `edit-several-sets` failed 5 of 11 runs that way, `undo-after-log` 1 of 6; with short ids both pass 5 of 5. A wrong id never hit another set, it failed or left a set out. Costs a scan with `LIKE` per edit; no CPU rise in `profile:chat` |
+| D56 | Content security policy | **A `<meta>` tag from the build, the same in the PWA and the APK** (§6.8): scripts only from the app's origin, requests only to it and the API. Styles stay `'unsafe-inline'`; zod runs `jitless` | On the PC the device token is in IndexedDB, so an injected script could read it. The app has no HTML sink, so this is a second layer. A header wouldn't reach the APK. Ionic adds `<style>` elements at runtime. zod's generated code needs `unsafe-eval`; without it 1,000 rows parse in about 1 ms instead of 0.25 ms on a PC |
 
 ## 4. Scope
 
@@ -510,6 +511,7 @@ Client-only (Dexie): `outbox` (pending mutations), `prompt_queue`, `sync_state` 
   - Android: Keystore-backed secure storage plugin.
   - PC PWA: IndexedDB. Accepted risk: anyone with access to the Windows user profile can read it; mitigated by revocation.
 - **CORS:** same origin for the PWA (served by the Worker) plus `https://localhost` (Capacitor Android WebView origin).
+- **Content security policy (D56):** `default-src 'self'`, `style-src 'self' 'unsafe-inline'`, `img-src` and `font-src 'self' data:`, `connect-src 'self'` plus the origin of `VITE_API_URL`, and `'none'` for `object-src`, `base-uri` and `form-action`. A `<meta>` tag added to `index.html` by builds only (`apps/web/vite.config.ts`), so no inline script can go there; `frame-ancestors 'none'` is in `apps/web/public/_headers`.
 - **Data sent to LLM providers:** training data and the athlete profile go to the selected provider. Documented, acceptable for personal use.
 - **Repo hygiene:**
   - No personal data or secrets.
@@ -611,6 +613,7 @@ Each line is meant to be one `/ticket` task.
 | LW-19 | Fix the bugs the test pass found: mic left on, silent failed undo, double taps, dropped agent edits, a blank start on unreadable storage, the proposal's UTC date |
 | LW-22 | Redesign: the themes Nalot, Połysk and Żeliwo beside the standard light and dark, new type, the line under the toolbar, the straw label color (changes D42) |
 | LW-23 | Remove personal details from the docs and test data ahead of publishing |
+| LW-24 | Content security policy for the PWA and the APK (D56) |
 | LW-20 | Phase 2: MCP endpoint with token auth |
 | LW-21 | Phase 2: OAuth for claude.ai connectors |
 

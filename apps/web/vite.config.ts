@@ -1,13 +1,50 @@
 import vue from '@vitejs/plugin-vue';
 import { VitePWA } from 'vite-plugin-pwa';
-import { defineConfig, lazyPlugins } from 'vite-plus';
+import { defineConfig, lazyPlugins, type Plugin } from 'vite-plus';
 
 // The background of Nalot, the default look (SPEC §5.13): splash screen and window title bar.
 const NAVY = '#0B1626';
 
+// SPEC §6.8. A <meta> tag, so the APK has it as well as the PWA. Builds only: the dev server's hot
+// reload needs more than this allows.
+function contentSecurityPolicy(): Plugin {
+  let apiOrigin = '';
+  return {
+    name: 'liftwise:csp',
+    apply: 'build',
+    configResolved({ env }) {
+      // The APK's page is https://localhost and its API another origin (`api/client.ts`).
+      if (env.VITE_API_URL) apiOrigin = ` ${new URL(env.VITE_API_URL).origin}`;
+    },
+    transformIndexHtml: () => [
+      {
+        tag: 'meta',
+        injectTo: 'head-prepend',
+        attrs: {
+          'http-equiv': 'Content-Security-Policy',
+          content: [
+            "default-src 'self'",
+            // Ionic's components and transitions add <style> elements at runtime.
+            "style-src 'self' 'unsafe-inline'",
+            // Ionic's CSS has its marks as data URLs.
+            "img-src 'self' data:",
+            // Vite inlines the small subsets of the app's fonts.
+            "font-src 'self' data:",
+            `connect-src 'self'${apiOrigin}`,
+            "object-src 'none'",
+            "base-uri 'none'",
+            "form-action 'none'",
+          ].join('; '),
+        },
+      },
+    ],
+  };
+}
+
 export default defineConfig({
   plugins: lazyPlugins(() => [
     vue(),
+    contentSecurityPolicy(),
     VitePWA({
       // A new version waits for "Odśwież", so it never reloads in the middle of a workout.
       registerType: 'prompt',

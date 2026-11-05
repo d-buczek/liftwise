@@ -56,6 +56,8 @@ test('a cold start shows the month with its tiles from the first frame', async (
   });
   await page.goto('/calendar');
   await expect(visible(page, '.lw-month__day.is-planned')).toBeVisible();
+  // The tile can show before the next frame has counted it.
+  await page.evaluate(() => new Promise(requestAnimationFrame));
   const frames = await page.evaluate(() => (window as unknown as { frames_: number[] }).frames_);
   expect(frames.length).toBeGreaterThan(0);
   expect(Math.min(...frames)).toBeGreaterThan(0);
