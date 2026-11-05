@@ -38,6 +38,29 @@ async function swipe(page: Page, fromX: number, toX: number, toY = 400) {
   );
 }
 
+test('a cold start shows the month with its tiles from the first frame', async ({ page }) => {
+  await pair(page);
+  await openDay(page, '2026-11-03');
+  await addExercise(page, BENCH);
+  // Every frame that shows the month, how many tiles it has.
+  await page.addInitScript(() => {
+    const frames: number[] = [];
+    Object.assign(window, { frames_: frames });
+    const tick = () => {
+      const month = document.querySelector('.lw-month__viewport');
+      if (month && getComputedStyle(month).visibility === 'visible')
+        frames.push(document.querySelectorAll('.lw-month__day.is-planned').length);
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+  await page.goto('/calendar');
+  await expect(visible(page, '.lw-month__day.is-planned')).toBeVisible();
+  const frames = await page.evaluate(() => (window as unknown as { frames_: number[] }).frames_);
+  expect(frames.length).toBeGreaterThan(0);
+  expect(Math.min(...frames)).toBeGreaterThan(0);
+});
+
 test('the arrows and a swipe turn the month, and a scroll does not', async ({ page }) => {
   await pair(page);
   await expect(title(page)).toHaveText(/listopad 2026/i);

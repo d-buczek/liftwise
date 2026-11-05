@@ -8,7 +8,7 @@ import LabelChip from '../components/LabelChip.vue';
 import MonthCalendar from '../components/MonthCalendar.vue';
 import WeekSummary from '../components/WeekSummary.vue';
 import { useFormat } from '../composables/format';
-import { useLiveQuery, useLiveQueryState } from '../composables/liveQuery';
+import { useLiveQueryState } from '../composables/liveQuery';
 import { useToday } from '../composables/today';
 import { dayLabels, dayMarks, monthGrid, monthOf } from '../workout/calendar';
 import { dayData, rangeData, workoutLabels } from '../workout/queries';
@@ -27,7 +27,7 @@ watch(now, (date, before) => {
   if (month.value === monthOf(before)) month.value = monthOf(date);
 });
 
-const view = useLiveQuery(
+const { data: view, loaded: viewLoaded } = useLiveQueryState(
   async () => {
     const weeks = monthGrid(month.value);
     const { workouts, sets } = await rangeData(weeks[0]?.[0] ?? '', weeks.at(-1)?.[6] ?? '');
@@ -43,7 +43,11 @@ const monthLabels = computed(() => {
   return [...new Set(used.map(([, label]) => label))].sort(compareLabels);
 });
 
-const todaySets = useLiveQuery(async () => (await dayData(now.value)).sets, [], now);
+const { data: todaySets, loaded: todayLoaded } = useLiveQueryState(
+  async () => (await dayData(now.value)).sets,
+  [],
+  now,
+);
 const todayNote = computed(() => {
   if (todaySets.value.length === 0) return t('calendar.restDay');
   const done = todaySets.value.filter((set) => set.status === 'done').length;
@@ -63,6 +67,8 @@ const { data: weekMarks, loaded: weekLoaded } = useLiveQueryState(
   now,
 );
 
+const loaded = computed(() => viewLoaded.value && todayLoaded.value && weekLoaded.value);
+
 function open(date: string) {
   router.push(`/calendar/${date}`);
 }
@@ -72,7 +78,7 @@ function open(date: string) {
   <app-page
     :title="t('nav.calendar')"
     :week="weekDone(weekMarks, weekStart)"
-    :steel="weekLoaded ? steelStage(weekShare(weekMarks, weekStart)) : undefined"
+    :steel="loaded ? steelStage(weekShare(weekMarks, weekStart)) : undefined"
   >
     <template #actions>
       <ion-button v-if="month !== monthOf(now)" @click="month = monthOf(now)">
@@ -80,37 +86,53 @@ function open(date: string) {
       </ion-button>
     </template>
 
-    <ion-list class="lw-calendar__today">
-      <ion-item button :detail="true" @click="open(now)">
-        <ion-label>
-          <h2>{{ t('calendar.today') }}</h2>
-          <p>{{ format.day(now) }}</p>
-        </ion-label>
-        <ion-note slot="end">{{ todayNote }}</ion-note>
-      </ion-item>
-    </ion-list>
+    <div :class="{ 'lw-calendar--reading': !loaded }">
+      <ion-list class="lw-calendar__today">
+        <ion-item button :detail="true" @click="open(now)">
+          <ion-label>
+            <h2>{{ t('calendar.today') }}</h2>
+            <p>{{ format.day(now) }}</p>
+          </ion-label>
+          <ion-note slot="end">{{ todayNote }}</ion-note>
+        </ion-item>
+      </ion-list>
 
-    <month-calendar
-      v-model:month="month"
-      :marks="view.marks"
-      :labels="view.labels"
-      @select="open"
-    />
+      <month-calendar
+        v-model:month="month"
+        :marks="view.marks"
+        :labels="view.labels"
+        @select="open"
+      />
 
-    <p class="lw-calendar__legend">
-      <span class="lw-calendar__key is-done" aria-hidden="true" />{{ t('calendar.done') }}
-      <span class="lw-calendar__key is-planned" aria-hidden="true" />{{ t('calendar.planned') }}
-    </p>
-    <p v-if="monthLabels.length > 0" class="lw-calendar__legend">
-      {{ t('calendar.labels') }}
-      <label-chip v-for="label in monthLabels" :key="label.id" :label="label" />
-    </p>
+      <p class="lw-calendar__legend">
+        <span class="lw-calendar__key is-done" aria-hidden="true" />{{ t('calendar.done') }}
+        <span class="lw-calendar__key is-planned" aria-hidden="true" />{{ t('calendar.planned') }}
+      </p>
+      <p v-if="monthLabels.length > 0" class="lw-calendar__legend">
+        {{ t('calendar.labels') }}
+        <label-chip v-for="label in monthLabels" :key="label.id" :label="label" />
+      </p>
 
-    <week-summary :month="month" />
+      <week-summary :month="month" />
+    </div>
   </app-page>
 </template>
 
 <style scoped>
+/* Nothing shows half read: on a cold start the first reads come just after the first paint, and the
+   tiles would pop in over an empty month. A read that fails must not leave the screen blank, hence
+   the limit. */
+.lw-calendar--reading {
+  visibility: hidden;
+  animation: lw-calendar-show 0s 1s forwards;
+}
+
+@keyframes lw-calendar-show {
+  to {
+    visibility: visible;
+  }
+}
+
 .lw-calendar__today {
   margin-top: 16px;
 }
