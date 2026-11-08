@@ -6,8 +6,10 @@ import { makeExercise, makeSet, resetDb } from '../testing';
 import {
   addExercise,
   copyDay,
+  deleteDay,
   deleteSets,
   logSet,
+  restoreDay,
   restoreSets,
   saveLabel,
   setDayLabel,
@@ -190,5 +192,42 @@ describe('day actions', () => {
     await restoreSets(rows);
     const restored = await dayData('2026-10-01');
     expect(restored.sets.map((set) => set.id).sort()).toEqual(rows.map((row) => row.id).sort());
+  });
+
+  it('deletes every workout of a day with its sets in one group; undo writes them back', async () => {
+    const a = label('A');
+    await saveLabel(a);
+    const first = await seedDay('2026-10-01', [{ status: 'done' }, {}], a.id);
+    const second = await seedDay('2026-10-01', [{}]);
+    await seedDay('2026-10-02', [{}]);
+    const before = await dayData('2026-10-01');
+
+    const deleted = await deleteDay('2026-10-01');
+    expect(await dayData('2026-10-01')).toEqual({ workouts: [], sets: [] });
+    expect((await dayData('2026-10-02')).sets).toHaveLength(1);
+    const deletes = (await db.outbox.toArray()).filter((entry) => entry.mutation.op === 'delete');
+    expect(deletes.map((entry) => entry.entityId).sort()).toEqual(
+      [first.workout, second.workout, ...first.rows, ...second.rows].map((row) => row.id).sort(),
+    );
+    expect(new Set(deletes.map((entry) => entry.mutation.groupId))).toHaveLength(1);
+
+    await restoreDay(deleted);
+    const restored = await dayData('2026-10-01');
+    const ids = (rows: { id: string }[]) => rows.map((row) => row.id).sort();
+    expect(ids(restored.workouts)).toEqual(ids(before.workouts));
+    expect(ids(restored.sets)).toEqual(ids(before.sets));
+    expect(restored.workouts.find((row) => row.id === first.workout.id)?.label_id).toBe(a.id);
+  });
+
+  it('deletes an empty labelled workout; a day without one writes nothing', async () => {
+    const a = label('A');
+    await saveLabel(a);
+    await seedDay('2026-10-01', [], a.id);
+    await deleteDay('2026-10-01');
+    expect((await dayData('2026-10-01')).workouts).toEqual([]);
+
+    const queued = await db.outbox.count();
+    expect(await deleteDay('2026-10-03')).toEqual({ workouts: [], sets: [] });
+    expect(await db.outbox.count()).toBe(queued);
   });
 });

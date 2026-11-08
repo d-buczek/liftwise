@@ -148,6 +148,30 @@ export function restoreSets(sets: WorkoutSet[]) {
   return saveSets(sets);
 }
 
+// What "Usuń trening" deleted, for "Cofnij".
+export type DeletedDay = { workouts: Workout[]; sets: WorkoutSet[] };
+
+// "Usuń trening" (§5.2): every workout of the day (normally one) with its sets, in one change
+// group. A deleted workout keeps its sets on the server, so they are deleted explicitly.
+export async function deleteDay(date: string): Promise<DeletedDay> {
+  const { workouts, sets } = await dayData(date);
+  if (workouts.length > 0) {
+    await applyLocal([
+      ...sets.map((set) => remove('sets', set.id)),
+      ...workouts.map((workout) => remove('workouts', workout.id)),
+    ]);
+  }
+  return { workouts, sets };
+}
+
+// "Cofnij" after "Usuń trening": the workouts, then their sets, written back (D44).
+export function restoreDay({ workouts, sets }: DeletedDay) {
+  return applyLocal([
+    ...workouts.map((workout) => upsert('workouts', workout)),
+    ...sets.map((set) => upsert('sets', set)),
+  ]);
+}
+
 export function swapExercise(sets: WorkoutSet[], exercise: Pick<Exercise, 'id'>) {
   return saveSets(sets.map((set) => ({ ...set, exercise_id: exercise.id })));
 }

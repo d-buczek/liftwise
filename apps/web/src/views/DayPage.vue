@@ -12,6 +12,7 @@ import {
 } from '@liftwise/core';
 import {
   actionSheetController,
+  alertController,
   IonButton,
   IonIcon,
   IonItem,
@@ -42,7 +43,9 @@ import { useToday } from '../composables/today';
 import { showUndo } from '../composables/undo';
 import {
   addExercise,
+  deleteDay,
   deleteSets,
+  restoreDay,
   restoreSets,
   saveLabel,
   saveSets,
@@ -250,10 +253,40 @@ async function dayActions() {
       ...(plannable.value
         ? [{ text: t('agent.plan.action'), handler: () => void (checkingIn.value = true) }]
         : []),
+      // Also an empty workout, which still puts its label on the calendar.
+      ...(view.value.workouts.length > 0
+        ? [{ text: t('day.removeDay'), role: 'destructive' }]
+        : []),
       { text: t('common.cancel'), role: 'cancel' },
     ],
   });
   await sheet.present();
+  // Only once the sheet has gone: an alert presented while it closes left the page aria-hidden.
+  const { role } = await sheet.onDidDismiss();
+  if (role === 'destructive') await removeDay();
+}
+
+// "Usuń trening" (§5.2): immediate with "Cofnij"; done sets leave history, so it asks first.
+async function removeDay() {
+  if (started.value && !(await confirmRemoveDay())) return;
+  const deleted = await deleteDay(props.date);
+  if (deleted.workouts.length > 0) {
+    await showUndo(t('day.dayRemoved'), () => restoreDay(deleted));
+  }
+}
+
+async function confirmRemoveDay(): Promise<boolean> {
+  const alert = await alertController.create({
+    header: t('day.removeDayTitle'),
+    message: t('day.removeDayMessage'),
+    buttons: [
+      { text: t('common.cancel'), role: 'cancel' },
+      { text: t('day.removeDay'), role: 'destructive' },
+    ],
+  });
+  await alert.present();
+  const { role } = await alert.onDidDismiss();
+  return role === 'destructive';
 }
 
 // Reorder mode works on a copy with the saved positions, so the next move compares with them.
