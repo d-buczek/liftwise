@@ -42,19 +42,20 @@ describe('showUndo', () => {
     expect(undo).toHaveBeenCalledTimes(1);
   });
 
-  it('sits above the rest timer of the shown page, not of one Ionic keeps hidden', async () => {
+  it('sits under the header of the shown page, not of a hidden page or a dialog', async () => {
     document.body.innerHTML = `
-      <div class="ion-page ion-page-hidden"><ion-footer class="lw-rest" id="behind"></ion-footer></div>
-      <div class="ion-page"><ion-footer class="lw-rest" id="visible"></ion-footer></div>`;
+      <div class="ion-page ion-page-hidden"><ion-header id="behind"></ion-header></div>
+      <div class="ion-page"><ion-header id="visible"></ion-header></div>
+      <ion-modal><ion-header id="dialog"></ion-header></ion-modal>`;
     await showUndo('Usunięto serię', async () => undefined);
+    expect(shown().options).toMatchObject({ position: 'top', swipeGesture: 'vertical' });
     expect(shown().options?.positionAnchor).toBe(document.getElementById('visible'));
   });
 
-  it('takes the plain bottom position when the shown page has no rest timer', async () => {
-    document.body.innerHTML = `
-      <div class="ion-page ion-page-hidden"><ion-footer class="lw-rest"></ion-footer></div>
-      <div class="ion-page"><ion-footer class="lw-composer"></ion-footer></div>`;
+  it('takes the plain top position when the shown page has no header', async () => {
+    document.body.innerHTML = `<div class="ion-page ion-page-hidden"><ion-header></ion-header></div>`;
     await showUndo('Usunięto serię', async () => undefined);
+    expect(shown().options?.position).toBe('top');
     expect(shown().options?.positionAnchor).toBeUndefined();
   });
 

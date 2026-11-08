@@ -87,7 +87,13 @@ test('a set can be edited and deleted, and the delete can be undone', async ({ p
   await expect(editor).toBeVisible();
   await editor.getByRole('button', { name: 'Usuń' }).click();
   await expect(loggedSets(page)).toHaveCount(0);
-  await page.getByRole('button', { name: 'Cofnij' }).click();
+  // The toast sits under the toolbar, off the buttons at the bottom (LW-25).
+  const undo = page.getByRole('button', { name: 'Cofnij' });
+  const viewport = page.viewportSize();
+  await expect
+    .poll(async () => (await undo.boundingBox())?.y ?? Infinity)
+    .toBeLessThan((viewport?.height ?? 0) / 3);
+  await undo.click();
   await expect(loggedSets(page)).toHaveCount(1);
   await expect(loggedSets(page).first()).toContainText('31,25 kg');
 });

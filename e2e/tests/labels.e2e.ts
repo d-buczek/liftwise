@@ -32,6 +32,14 @@ test('a label set on a day shows beside its title, on the calendar and on its co
   // A copy keeps the label (D48).
   await openDay(page, '2026-09-14');
   await page.getByRole('button', { name: 'Kopiuj trening' }).click();
+  // Pinned at the bottom: in sight without scrolling, under the month and the preview (LW-25).
+  await expect(page.locator('.lw-copy__submit')).toBeInViewport({ ratio: 1 });
+  // The light copy's hint wraps instead of being cut off at the toggle (LW-25).
+  const lightLabelCut = await page.locator('.lw-copy__light ion-toggle').evaluate((toggle) => {
+    const label = toggle.shadowRoot?.querySelector('.label-text-wrapper');
+    return !label || label.scrollWidth > label.clientWidth;
+  });
+  expect(lightLabelCut).toBe(false);
   await page.locator('.lw-copy__submit').click();
   await expect(visible(page, 'ion-toolbar .lw-day__label')).toHaveText('Push');
   await expect(visible(page, '.lw-day__blocks')).toContainText(BENCH);

@@ -4,6 +4,7 @@ import {
   IonButton,
   IonButtons,
   IonContent,
+  IonFooter,
   IonHeader,
   IonItem,
   IonLabel,
@@ -154,9 +155,9 @@ async function submit() {
         <ion-list class="lw-copy__light">
           <ion-item>
             <ion-toggle v-model="light">
-              <ion-label>
+              <ion-label class="ion-text-wrap">
                 {{ t('copy.light') }}
-                <p>{{ t('copy.lightHint') }}</p>
+                <p class="lw-copy__light-hint">{{ t('copy.lightHint') }}</p>
               </ion-label>
             </ion-toggle>
           </ion-item>
@@ -174,13 +175,18 @@ async function submit() {
               </ion-label>
             </ion-item>
           </ion-list>
-          <ion-button expand="block" class="lw-copy__submit" :disabled="busy" @click="submit">
-            {{ t('copy.submit', { date: format.dayMonth(targetDate) }) }}
-          </ion-button>
         </template>
       </template>
     </div>
   </ion-content>
+  <!-- Pinned under the list: a long preview pushed it out of sight (LW-25). -->
+  <ion-footer v-if="source && !(data && !last)" class="lw-copy__footer">
+    <div class="lw-column">
+      <ion-button expand="block" class="lw-copy__submit" :disabled="busy" @click="submit">
+        {{ t('copy.submit', { date: format.dayMonth(targetDate) }) }}
+      </ion-button>
+    </div>
+  </ion-footer>
 </template>
 
 <style scoped>
@@ -221,6 +227,11 @@ async function submit() {
   margin-top: 16px;
 }
 
+/* Ionic keeps a toggle's label on one line and cuts the rest off; the hint needs two (LW-25). */
+.lw-copy__light ion-toggle::part(label) {
+  white-space: normal;
+}
+
 .lw-copy__sets {
   font-size: 16px;
   font-weight: 600;
@@ -231,8 +242,17 @@ h3 {
   font-weight: 600;
 }
 
+.lw-copy__light-hint {
+  font-size: 13px;
+}
+
+.lw-copy__footer {
+  padding: 8px 0 calc(8px + var(--ion-safe-area-bottom, 0px));
+  background: var(--ion-background-color);
+}
+
 .lw-copy__submit {
   height: 56px;
-  margin-top: 20px;
+  margin: 0;
 }
 </style>

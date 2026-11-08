@@ -149,7 +149,7 @@ Calendar and planning (D29):
   - A day shows the sets of all its workouts (two devices offline can each create one); new sets go to the oldest (D44).
 - **Swap suggestions:** the picker opened from "Zamień" lists similar exercises first: available with the current equipment, not archived, the same `measure` (the sets stay) and at least one shared primary muscle; ranked by shared primary muscles, then shared movement patterns, then by recent use. The rest of the list keeps the same `measure`.
 - **Progression hint** per exercise (§5.7): a chip with the load the planned sets get, such as "↑ 22,5 kg × 11, 11, 10", "↑ 25 kg × 8" or "↑ 50, 45 s" (at 0 kg). One tap applies it to that exercise's planned working sets in order (weight and reps or seconds; the sets done that day keep their place in the order, so the chip stays away mid-workout; sets beyond the hint take its last value, the number of sets stays); ignoring it changes nothing. No chip when the planned sets already match.
-- A copy and a manual delete offer **"Cofnij"** in a toast: it deletes the copied sets (and the workout the copy created, unless it has got other sets since, and takes off the label the copy gave an existing workout unless it has been changed since) or writes the deleted rows back, locally as a new change group, so it works offline (D44).
+- A copy and a manual delete offer **"Cofnij"** in a toast under the toolbar, off the buttons at the bottom, that a swipe dismisses (LW-25): it deletes the copied sets (and the workout the copy created, unless it has got other sets since, and takes off the label the copy gave an existing workout unless it has been changed since) or writes the deleted rows back, locally as a new change group, so it works offline (D44).
 
 Active workout (hybrid logging):
 
@@ -614,6 +614,7 @@ Each line is meant to be one `/ticket` task.
 | LW-22 | Redesign: the themes Nalot, Połysk and Żeliwo beside the standard light and dark, new type, the line under the toolbar, the straw label color (changes D42) |
 | LW-23 | Remove personal details from the docs and test data ahead of publishing |
 | LW-24 | Content security policy for the PWA and the APK (D56) |
+| LW-25 | Small UI fixes before the deploy: the copy button pinned, the undo toast under the toolbar, the light copy hint wrapped |
 | LW-20 | Phase 2: MCP endpoint with token auth |
 | LW-21 | Phase 2: OAuth for claude.ai connectors |
 

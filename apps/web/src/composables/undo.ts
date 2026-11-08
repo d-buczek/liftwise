@@ -17,17 +17,19 @@ async function undoFailed(error: unknown) {
 async function presentToast(options: ToastOptions) {
   const toast = await toastController.create({
     duration: 6000,
-    position: 'bottom',
-    positionAnchor: restTimer(),
+    // Under the toolbar: at the bottom it covered the buttons under the thumb (LW-25).
+    position: 'top',
+    positionAnchor: pageHeader(),
+    swipeGesture: 'vertical',
     ...options,
   });
   await toast.present();
 }
 
-// The rest timer of the shown page, so the toast sits above it instead of covering it; pages
-// Ionic keeps in the background are hidden.
-function restTimer(): HTMLElement | undefined {
-  return [...document.querySelectorAll<HTMLElement>('ion-footer.lw-rest')].find(
-    (footer) => !footer.closest('.ion-page-hidden'),
-  );
+// The header of the shown page. Ionic keeps background pages hidden, and a dialog that is closing
+// still has its own header.
+function pageHeader(): HTMLElement | undefined {
+  return [...document.querySelectorAll<HTMLElement>('ion-header')]
+    .filter((header) => !header.closest('.ion-page-hidden, ion-modal'))
+    .at(-1);
 }
